@@ -1,0 +1,1 @@
+{\"model\":\"llama3.2\",\"created_at\":\"2025-02-16T14:18:20.897241967Z\",\"response\":\"The\",\"done\":false}
