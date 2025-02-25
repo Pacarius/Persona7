@@ -3,10 +3,10 @@ use crate::misc::time::Time;
 use super::mem::ShortTerm;
 
 pub struct Person{
-    location : (i8, i8),
+    location : (i64, i64),
     first_name: String,
     last_name: String,
-    age : i8,
+    age : i64,
     core_traits : Vec<String>,
     stable_traits : Vec<String>,
     current_action : String,
@@ -14,7 +14,7 @@ pub struct Person{
     living_area : String,
     short_term_mem : ShortTerm,
     time : Option<Time>,
-    daily_plan_req : Option<i8>,    
+    daily_plan_req : Option<i64>,    
 }
 
 impl Person{

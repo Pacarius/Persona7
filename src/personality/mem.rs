@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use crate::misc::time::Time;
 pub struct Action{
     location : String,
@@ -16,46 +18,48 @@ pub struct Action{
     chat_target_buffer : Vec<String>,
     chat_end_time : i64,
 }
-impl Action{
-    pub fn completed(&self, time: Time){
-        // let end_time = match self.chat_end_time
+impl Action {
+    pub fn completed(&self, time: Time) -> bool {
+        let (end_time, day) = self.start_time + Time::from_hms((0, 0, self.intended_duration));
+        if day > 0 {return true}
+        time >= end_time
     }
 }
 pub struct ShortTerm{
-    view_range : i32,
+    view_range : i64,
     //Don't think this is relevant
-    concept_forget : i8,
-    reflection_time : i8,
-    reflection_size : i8,
-    overlap : i8,
-    kw_event_reflect : i8,
-    kw_thought_reflect : i8,
+    concept_forget : i64,
+    reflection_time : i64,
+    reflection_size : i64,
+    overlap : i64,
+    kw_event_reflect : i64,
+    kw_thought_reflect : i64,
     //
-    recency : i8,
-    relevancy : i8,
-    importance : i8,
+    recency : i64,
+    relevancy : i64,
+    importance : i64,
     recency_decay : f32,
-    importance_trig_max : i8,
-    importance_trig_curr : i8,
-    importance_ele : i8,
-    thought_count : i8,
+    importance_trig_max : i64,
+    importance_trig_curr : i64,
+    importance_ele : i64,
+    thought_count : i64,
     //
-    goal_list : Vec<(String, i32)>,
+    goal_list : Vec<(String, i64)>,
     //All values will be in seconds
-    plan_layout_expanded : Vec<(String, i32)>,
-    plan_layout_raw : Vec<(String, i32)>,
+    plan_layout_expanded : Vec<(String, i64)>,
+    plan_layout_raw : Vec<(String, i64)>,
 
     curr_action : Action,
     //Pathing
-    path : Option<Vec<(i32, i32)>>,
+    path : Option<Vec<(i64, i64)>>,
 }
 impl ShortTerm{
-    pub fn get_curr_index(&self, advance: i32, raw: bool, curr_time: Option<Time>) -> i32{
+    pub fn get_curr_index(&self, advance: i64, raw: bool, curr_time: Option<Time>) -> i64{
         match &curr_time{
             None => -1,
             Some(time) => {
                 let sec_elapsed = time.time() + advance;
-                let mut seek: i32 = 0;
+                let mut seek: i64 = 0;
                 let mut value = 0;
                 let target = match raw{
                     true => &self.plan_layout_raw,
@@ -75,4 +79,21 @@ impl ShortTerm{
         self.curr_action = action;
         self.path = None;
     }
+}
+enum NodeType{
+    THOUGHT,
+    EVENT,
+    CHAT
+}
+struct Node{
+    node_id: i64,
+    node_count: i64,
+    type_count: i64,
+    depth: i64,
+    creation: SystemTime,
+    expiration: SystemTime,
+    
+}
+struct Associative{
+
 }
