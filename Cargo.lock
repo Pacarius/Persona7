@@ -11,6 +11,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "serde_rusqlite",
  "text_io",
  "tokio",
  "tokio-macros",
@@ -1038,6 +1039,16 @@ dependencies = [
  "itoa",
  "memchr",
  "ryu",
+ "serde",
+]
+
+[[package]]
+name = "serde_rusqlite"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1c7e71c56bd6ca8caa221b987112592a404db2895d9010c0ce0615b0148497f"
+dependencies = [
+ "rusqlite",
  "serde",
 ]
 

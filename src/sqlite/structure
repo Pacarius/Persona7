@@ -1,0 +1,10 @@
+Simulation_Name {
+    [TABLES]
+    Character_Locations(Region, Coordinates),
+    Metadata(Simulation_ID, Date, Steps),
+    Character{
+        Short_Term,
+        Spatial,
+        Associative
+    }
+}

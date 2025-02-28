@@ -114,19 +114,23 @@ impl ChatOptions {
         }
     }
 }
-pub enum ChatRole{
+pub enum ChatRole {
     SYSTEM,
     USER,
     ASSISTANT,
-    TOOL
+    TOOL,
 }
-impl Display for ChatRole{
+impl Display for ChatRole {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self{
-            ChatRole::SYSTEM => "system",
-            ChatRole::USER => "user",
-            ChatRole::ASSISTANT => "assistant",
-            ChatRole::TOOL => "tool",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                ChatRole::SYSTEM => "system",
+                ChatRole::USER => "user",
+                ChatRole::ASSISTANT => "assistant",
+                ChatRole::TOOL => "tool",
+            }
+        )
     }
 }

@@ -1,4 +1,8 @@
-use std::{collections::HashMap, error::{self, Error}, fs};
+use std::{
+    collections::HashMap,
+    error::{self, Error},
+    fs,
+};
 
 use reqwest::Client;
 use serde::Deserialize;
@@ -17,7 +21,11 @@ impl Ollama {
             client: Client::new(),
         }
     }
-    pub async fn get_response<T: serde::Serialize>(&self, options: T, append: &str) -> Result<Value, Box<dyn Error>>{
+    pub async fn get_response<T: serde::Serialize>(
+        &self,
+        options: T,
+        append: &str,
+    ) -> Result<Value, Box<dyn Error>> {
         let (client, endpoint) = (&self.client, format!("{}{}", &self.endpoint, append));
         // println!("{}", endpoint);
         let response = client.post(endpoint).json(&options).send().await;
@@ -29,17 +37,28 @@ impl Ollama {
     //         serde_json::from_str(s).or_else(|_| Ok(Value::Null))
     //     }).collect::<Result<Vec<_>, _>>()
     // }
-    pub async fn chat(&self, options: options::ChatOptions) -> Value{
+    pub async fn chat(&self, options: options::ChatOptions) -> Value {
         self.get_response(options, "chat").await.unwrap()
     }
-    pub async fn generate(&self, options: options::GenerateOptions) -> Value{
+    pub async fn generate(&self, options: options::GenerateOptions) -> Value {
         self.get_response(options, "generate").await.unwrap()
     }
-    pub async fn test_generate(&self) -> Value{
-        self.generate(GenerateOptions::new("llama3.2".to_string(), "Why do I want to die".to_string())).await
+    pub async fn test_generate(&self) -> Value {
+        self.generate(GenerateOptions::new(
+            "llama3.2".to_string(),
+            "Why do I want to die".to_string(),
+        ))
+        .await
     }
-    pub async fn test_chat(&self) -> Value{
-        self.chat(ChatOptions::new("llama3.2".to_string(), vec![Message::new(ChatRole::USER.to_string(), "Why do I want to die".to_string())])).await
+    pub async fn test_chat(&self) -> Value {
+        self.chat(ChatOptions::new(
+            "llama3.2".to_string(),
+            vec![Message::new(
+                ChatRole::USER.to_string(),
+                "Why do I want to die".to_string(),
+            )],
+        ))
+        .await
     }
     // pub async fn chat(&self, model: String, prompt: String) -> Result<Value, Box<dyn Error>>{
 
