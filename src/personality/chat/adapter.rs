@@ -7,7 +7,7 @@ use std::{
     path,
 };
 
-use crate::ollama::{
+use crate::misc::ollama::{
     ollama::Ollama,
     options::{ChatOptions, ChatRole, Message},
 };

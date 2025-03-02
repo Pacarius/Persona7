@@ -1,0 +1,30 @@
+{
+    "floor_types": [
+        "wood",
+        "tile",
+        "carpet",
+        "grass"
+    ],
+    "furniture_types": [
+        {
+            "type": "chair",
+            "description": "A piece of furniture for sitting."
+        },
+        {
+            "type": "table",
+            "description": "A piece of furniture with a flat top and one or more legs."
+        },
+        {
+            "type": "sofa",
+            "description": "A comfortable seating furniture for multiple people."
+        },
+        {
+            "type": "bed",
+            "description": "A piece of furniture for sleeping or resting."
+        }
+    ],
+    "character_types": [
+        "male",
+        "female"
+    ]
+}

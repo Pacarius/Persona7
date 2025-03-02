@@ -1,4 +1,4 @@
-use std::error::{Error};
+use std::error::Error;
 
 use reqwest::Client;
 use serde_json::Value;

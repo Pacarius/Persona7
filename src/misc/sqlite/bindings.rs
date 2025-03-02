@@ -1,8 +1,5 @@
 // use crate::sqlite::data::DBData;
-use std::{
-    fmt::Debug,
-    fs,
-};
+use std::{fmt::Debug, fs};
 
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
@@ -31,9 +28,7 @@ impl DBConnector {
         // self.conn.execute()
     }
 }
-pub struct DBController{}
-impl DBController{
-    fn character_locations(){
-        
-    }
+pub struct DBController {}
+impl DBController {
+    fn character_locations() {}
 }

@@ -1,4 +1,3 @@
-
 use crate::misc::time::Time;
 pub struct Action {
     location: String,

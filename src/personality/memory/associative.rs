@@ -29,13 +29,13 @@ impl Node {
         format!("{} {} {}", self.subject, self.predicate, self.object)
     }
 }
-struct AssociativeMemory {
+struct MemoryStream {
     id_node: Map<i64, Node>,
     seq_nodes: Vec<Node>,
     embeddings: Vec<i64>,
     // keyword_nodes:
 }
-impl AssociativeMemory {
+impl MemoryStream {
     fn select_nodes(&self, node_type: NodeType) -> Vec<&Node> {
         self.seq_nodes
             .iter()

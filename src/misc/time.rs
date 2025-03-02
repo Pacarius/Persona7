@@ -1,7 +1,4 @@
-use std::{
-    fmt::Display,
-    ops::Add,
-};
+use std::{fmt::Display, ops::Add};
 #[derive(Clone, Copy)]
 pub struct Time {
     //Seconds Elapsed Since 0.0
