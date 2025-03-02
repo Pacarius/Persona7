@@ -1,14 +1,18 @@
-use std::fs;
+// use crate::sqlite::data::DBData;
+use std::{
+    fmt::Debug,
+    fs,
+};
 
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
-use serde_rusqlite::{from_rows, to_params_named};
 
 pub struct DBConnector {
     conn: Connection,
     name: String,
 }
 pub trait DBData: Serialize + for<'a> Deserialize<'a> + std::fmt::Debug {}
+
 impl DBConnector {
     pub fn new(name: String) -> Result<DBConnector> {
         let folder = "./simulations";
@@ -22,5 +26,14 @@ impl DBConnector {
         };
         Ok(DBConnector { name, conn })
     }
-    pub fn write(data: &impl DBData) {}
+    pub fn create(&self, data: &impl DBData) {}
+    pub fn write(&self, data: &(impl Serialize + Debug)) {
+        // self.conn.execute()
+    }
+}
+pub struct DBController{}
+impl DBController{
+    fn character_locations(){
+        
+    }
 }

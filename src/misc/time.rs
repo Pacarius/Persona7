@@ -1,7 +1,6 @@
-use core::time;
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign},
+    ops::Add,
 };
 #[derive(Clone, Copy)]
 pub struct Time {
@@ -54,10 +53,10 @@ impl Add for Time {
         let mut min = self.min + rhs.min + sec / 60;
         sec %= 60;
 
-        let mut hour = self.hour + rhs.hour + min / 60;
+        let hour = self.hour + rhs.hour + min / 60;
         min %= 60;
 
-        let mut day = hour / 24;
+        let day = hour / 24;
         (Time { hour, min, sec }, day)
     }
 }

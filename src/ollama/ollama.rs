@@ -1,11 +1,6 @@
-use std::{
-    collections::HashMap,
-    error::{self, Error},
-    fs,
-};
+use std::error::{Error};
 
 use reqwest::Client;
-use serde::Deserialize;
 use serde_json::Value;
 
 use super::options::{self, ChatOptions, ChatRole, GenerateOptions, Message};

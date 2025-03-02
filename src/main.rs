@@ -1,12 +1,9 @@
-use std::collections::HashMap;
-use std::fmt::DebugMap;
-use std::{fs, io};
 
-use chat::adapter::Adapter;
-use ollama::ollama::Ollama;
-use sqlite::bindings::DBConnector;
-use text_io::read;
 // use misc::time::{Month, Time};
+
+use std::collections::HashMap;
+
+// use sqlite::data::{DBData, DBDataMap, DBDataType};
 
 mod chat;
 mod misc;
@@ -25,4 +22,5 @@ async fn main() {
     // adapter.main().await;
 
     // let ollama = Ollama::new("localhost:11434".to_string());
+    // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
 }

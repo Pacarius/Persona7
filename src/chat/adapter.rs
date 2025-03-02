@@ -1,11 +1,9 @@
 //Temporary adapter for stanford personality storage
 use indexmap::IndexMap;
 use serde::Deserialize;
-use serde_json::value::Index;
 use std::{
-    collections::HashMap,
     fmt::Display,
-    fs::{self, exists, read_dir, File},
+    fs::{self, exists, read_dir},
     path,
 };
 
@@ -89,7 +87,7 @@ impl Adapter {
                 .map(|(i, item)| { format!("{}: {}\n", i, item.0) })
                 .collect::<String>()
         );
-        let target = characters.iter().nth({ text_io::read!("{}") }).unwrap();
+        let target = characters.iter().nth(text_io::read!("{}")).unwrap();
         vec![String::from(format!("{}", target.1))]
     }
     pub async fn main(&self) {
