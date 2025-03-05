@@ -1,11 +1,17 @@
+use std::collections::{HashSet, VecDeque};
+use std::marker::PhantomData;
+
 use std::{
-    any::Any, collections::HashMap, fmt::{Debug, Display}, hash::Hash
+    any::Any,
+    collections::HashMap,
+    fmt::{Debug, Display},
+    hash::Hash,
 };
 
-#[derive(PartialEq)]
-pub struct Coordinates((usize, usize));
-pub struct Character<'a>(Identity, String);
-pub struct GenericObject(Identity, String);
+#[derive(PartialEq, Debug)]
+pub struct Coordinates(pub (usize, usize));
+pub struct Character(Identity, String);
+pub struct GenericObject(Identity, String, bool);
 // impl MapObject for GenericObject{
 //     fn identity(&self) -> &Identity {
 //         &self.0
@@ -27,7 +33,7 @@ pub struct GenericObject(Identity, String);
 //     fn name(&self) -> String;
 // }
 // impl Debug for dyn MapObject{
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
 //         write!(f, "{}", self.name())
 //     }
 // }
@@ -38,12 +44,22 @@ pub struct Identity {
     rotation: Rotation,
     location: Coordinates,
 }
+impl Identity {
+    pub fn new(len: i64, width: i64, rotation: Rotation, location: Coordinates) -> Self {
+        Self {
+            len,
+            width,
+            rotation,
+            location,
+        }
+    }
+}
 #[derive(PartialEq)]
-enum Rotation {
+pub enum Rotation {
     N,
-    E,
-    S,
-    W,
+    // E,
+    // S,
+    // W,
 }
 pub struct Region {
     //Position: (XTop, YTop); Size: (XSize, YSize)
@@ -52,16 +68,35 @@ pub struct Region {
     size: Coordinates,
     holes: Vec<Coordinates>,
 }
-pub struct WorldMap<'a> {
+impl Region {
+    pub fn new(name: String, position: Coordinates, size: Coordinates, holes: Vec<Coordinates>) -> Self {
+        Self {
+            name,
+            position,
+            size,
+            holes,
+        }
+    }
+}
+impl Character {
+    pub fn new(identity: Identity, name: String) -> Self {
+        Self(identity, name)
+    }
+}
+impl GenericObject {
+    pub fn new(identity: Identity, name: String, is_solid: bool) -> Self {
+        Self(identity, name, is_solid)
+    }
+}
+pub struct WorldMap {
     size: Coordinates,
     regions: Vec<Region>,
     objects: Vec<GenericObject>,
-    characters: Vec<Character<'a>>,
+    characters: Vec<Character>,
     walls: Vec<Coordinates>,
     pub colliders: Vec<Vec<Option<String>>>,
-    pub character_list: HashMap<String, &'a Character<'a>>
 }
-impl WorldMap<'_> {
+impl WorldMap {
     pub fn new(size: Coordinates) -> Self {
         let (x, y) = (size.0 .0, size.0 .1);
         Self {
@@ -70,7 +105,6 @@ impl WorldMap<'_> {
             objects: Vec::new(),
             characters: Vec::new(),
             walls: Vec::new(),
-            character_list: HashMap::new(),
             colliders: vec![vec![None; x]; y],
         }
     }
@@ -112,64 +146,40 @@ impl WorldMap<'_> {
             self.colliders[w.0 .0][w.0 .1] = Some("Wall".to_string());
         }
         for o in &self.objects {
+            if !o.2 { continue; }
             let identity = &o.0;
-            let Coordinates((x, y)) = identity.location;
+            let Coordinates((y, x)) = identity.location;
             let len = identity.len as usize;
             let width = identity.width as usize;
 
-            match identity.rotation {
-                Rotation::N | Rotation::S => {
-                    for i in 0..len {
-                        for j in 0..width {
-                            let x_pos = if identity.rotation == Rotation::N {
-                                x - i
-                            } else {
-                                x + i
-                            };
-                            let y_pos = y + j;
-                            if self.colliders[x_pos][y_pos].is_none() {
-                                self.colliders[x_pos][y_pos] = Some(o.1.clone());
-                            } else {
-                                println!(
-                                    "Collider already exists at ({}, {}): {}",
-                                    x_pos,
-                                    y_pos,
-                                    self.colliders[x_pos][y_pos].as_ref().unwrap()
-                                );
-                            }
-                        }
-                    }
-                }
-                Rotation::E | Rotation::W => {
-                    for i in 0..width {
-                        for j in 0..len {
-                            let x_pos = x + i;
-                            let y_pos = if identity.rotation == Rotation::E {
-                                y + j
-                            } else {
-                                y - j
-                            };
-                            if self.colliders[x_pos][y_pos].is_none() {
-                                self.colliders[x_pos][y_pos] = Some(o.1.clone());
-                            } else {
-                                println!(
-                                    "Collider already exists at ({}, {}): {}",
-                                    x_pos,
-                                    y_pos,
-                                    self.colliders[x_pos][y_pos].as_ref().unwrap()
-                                );
-                            }
-                        }
+            for i in 0..len {
+                for j in 0..width {
+                    let (x_pos, y_pos) = match identity.rotation {
+                        //The rotation code doesn't work LOL
+                        //I'm just spamming copilot for this because I just need a functional 2d world.
+                        //I promise I'll make the frontend slightly less scuffed (maybe)
+                        Rotation::N => (x - i, y + j),
+                        // Rotation::S => (x + i, y + j),
+                        // Rotation::E => (x + i, y + j),
+                        // Rotation::W => (x - i, y - j),
+                    };
+                    if self.colliders[x_pos][y_pos].is_none() {
+                        self.colliders[x_pos][y_pos] = Some(o.1.clone());
+                    } else {
+                        println!(
+                            "Collider already exists at ({}, {}): {}",
+                            x_pos,
+                            y_pos,
+                            self.colliders[x_pos][y_pos].as_ref().unwrap()
+                        );
                     }
                 }
             }
         }
         for c in &self.characters {
-            let (identity, name) = (&c.0, &c.1);
-            let Coordinates((x, y)) = identity.location;
+            let Coordinates((y, x)) = c.0.location;
             if self.colliders[x][y].is_none() {
                 self.colliders[x][y] = Some(c.1.clone());
-                self.character_list.insert(c.1.clone(), c);
             } else {
                 println!(
                     "Collider already exists at ({}, {}): {}",
@@ -184,41 +194,25 @@ impl WorldMap<'_> {
         self.objects.push(object);
     }
     pub fn add_character(&mut self, character: Character) {
+        if self.characters.iter().any(|f| f.1 == character.1){
+            println!("{} already exists.", character.1);
+        }
         self.characters.push(character);
     }
-    pub fn test_world() -> Self{
-        let mut world = WorldMap::new(Coordinates((30, 30)));
-        world.add_region(Region {
-            name: "1".to_string(),
-            position: Coordinates((0, 0)),
-            size: Coordinates((10, 10)),
-            holes: vec![Coordinates((9, 5)), Coordinates((9, 6))],
-        });
-        world.add_walls();
-        world.add_character(Character {
-            0: Identity {
-                len: 1,
-                width: 1,
-                rotation: Rotation::E,
-                location: Coordinates((1, 1)),
-            },
-            1: "Man".to_string(),
-        });
-        world.add_object(GenericObject {
-            0: Identity {
-                len: 4,
-                width: 4,
-                rotation: Rotation::E,
-                location: Coordinates { 0: (15, 15) },
-            },
-            1: "Block".to_string(),
-        });
-        world.calculate_colliders();
-        world
+    fn as_chars(&self) -> Vec<Vec<char>>{
+        self.colliders.iter().map(|row| {
+            row.iter().map(|cell| {
+            if let Some(ref obj) = cell {
+                obj.chars().next().unwrap()
+            } else {
+                ' '
+            }
+            }).collect::<Vec<char>>()
+        }).collect::<Vec<Vec<char>>>()
     }
 }
-impl Display for WorldMap<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for WorldMap {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         {
             let c = self
                 .colliders
@@ -226,18 +220,118 @@ impl Display for WorldMap<'_> {
                 .map(|m| {
                     m.iter()
                         .map(|o| {
-                            if o.is_some() {
-                                o.clone().unwrap()
+                            if let Some(ref obj) = o {
+                                format!("{} ", obj.chars().next().unwrap())
                             } else {
-                                "___".to_string()
+                                "  ".to_string()
                             }
                         })
-                        .collect::<Vec<String>>()
-                        .join("___")
+                        .collect::<String>()
                 })
                 .collect::<Vec<String>>()
                 .join("\n");
             write!(f, "{}", c)
         }
+    }
+}
+impl WorldMap {
+    fn get_character(&self, name: String) -> &Character{
+        self.characters.iter().filter(|n| n.1.eq(&name)).nth(0).unwrap()
+    }
+    pub fn get_path(&self, name: String, target: Coordinates) -> Option<Vec<Coordinates>> {
+        let start = &self.get_character(name).0.location;
+        let goal = &target;
+
+        let (start_x, start_y) = (start.0 .1, start.0 .0);
+        let (goal_x, goal_y) = (goal.0 .1, goal.0 .0);
+
+        let mut queue = VecDeque::new();
+        let mut visited = HashSet::new();
+        let mut came_from = HashMap::new();
+
+        queue.push_back((start_x, start_y));
+        visited.insert((start_x, start_y));
+
+        while let Some((x, y)) = queue.pop_front() {
+            if (x, y) == (goal_x, goal_y) {
+                let mut path = Vec::new();
+                let mut current = (goal_x, goal_y);
+
+                while current != (start_x, start_y) {
+                    path.push(Coordinates(current));
+                    current = came_from[&current];
+                }
+
+                path.push(Coordinates((start_x, start_y)));
+                path.reverse();
+                return Some(path);
+            }
+
+            for (dx, dy) in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
+                let new_x = (x as isize + dx) as usize;
+                let new_y = (y as isize + dy) as usize;
+
+                if new_x < self.size.0 .0 && new_y < self.size.0 .1 && self.colliders[new_x][new_y].is_none() && !visited.contains(&(new_x, new_y)) {
+                    queue.push_back((new_x, new_y));
+                    visited.insert((new_x, new_y));
+                    came_from.insert((new_x, new_y), (x, y));
+                }
+            }
+        }
+
+        None
+    }
+    //Test function.
+    fn get_path_visual(&self, name: String, target: Coordinates) -> String{
+        let path = self.get_path(name, target);
+        if path.is_none(){"No Path.".to_string()}
+        else {
+            let source = self.as_chars();
+            let mut visual_map = source.clone();
+            for Coordinates((x, y)) in path.unwrap() {
+                visual_map[x][y] = '*';
+            }
+            visual_map
+                .iter()
+                .map(|row| row.iter().collect::<String>())
+                .collect::<Vec<String>>()
+                .join("\n")
+        }
+    }
+    pub fn get_visible_colliders(&self, name: String, range: usize) -> Vec<String> {
+        let character = self.get_character(name);
+        let Coordinates((start_x, start_y)) = character.0.location;
+        let mut visible_colliders = HashSet::new();
+        let mut queue = VecDeque::new();
+        let mut visited = HashSet::new();
+
+        queue.push_back((start_x, start_y));
+        visited.insert((start_x, start_y));
+
+        while let Some((x, y)) = queue.pop_front() {
+            if ((x as isize - start_x as isize).abs() as usize) + ((y as isize - start_y as isize).abs() as usize) > range {
+                continue;
+            }
+
+            if let Some(ref collider) = self.colliders[x][y] {
+                if collider != "Wall" && collider != &character.1 {
+                    visible_colliders.insert(collider.clone());
+                }
+            }
+
+            for (dx, dy) in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
+                let new_x = (x as isize + dx) as usize;
+                let new_y = (y as isize + dy) as usize;
+
+                if new_x < self.size.0 .0 && new_y < self.size.0 .1 && !visited.contains(&(new_x, new_y)) {
+                    if self.colliders[new_x][new_y].is_none() || self.colliders[new_x][new_y].as_ref().unwrap() != "Wall" {
+                        queue.push_back((new_x, new_y));
+                    }
+                    visited.insert((new_x, new_y));
+                }
+            }
+        }
+
+        visible_colliders.into_iter().collect()
     }
 }
