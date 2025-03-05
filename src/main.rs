@@ -3,7 +3,8 @@
 use std::{collections::HashMap, path::Path};
 
 use misc::ollama::ollama::Ollama;
-use crate::world::helpers::MapHelper;
+// use world::world_map::test_world;
+// use crate::world::helpers::MapHelper;
 use xcf::Xcf;
 
 // use sqlite::data::{DBData, DBDataMap, DBDataType};
@@ -11,12 +12,12 @@ use xcf::Xcf;
 mod misc;
 mod personality;
 mod world;
-#[tokio::main]
-async fn main() {
+// #[tokio::main]
+fn main() {
     // let xcf = Xcf::open("test/Sample.xcf").unwrap();
     // println!("{:?}", xcf.layers.iter().nth(0).unwrap().pixel(0, 0));
     // map::run();
-    let wm = MapHelper::new(Path::new("test/Sample.json"));
+    // let wm = MapHelper::new(Path::new("test/Sample.json"));
     // println!("{:?}", wm);
     // let ollama = Ollama::new("localhost:11434".to_string());
     // let test_generate = ollama.test_generate().await["response"].as_str().unwrap().replace("\\n", "\n");
@@ -29,4 +30,6 @@ async fn main() {
     // adapter.main().await;
 
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
+    // let world = test_world();
+    // println!("{}", world);
 }
