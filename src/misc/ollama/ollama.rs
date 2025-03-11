@@ -1,19 +1,21 @@
 use std::error::Error;
 
 use reqwest::Client;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use super::options::{self, ChatOptions, ChatRole, GenerateOptions, Message};
 
 pub struct Ollama {
     endpoint: String,
     client: Client,
+    logging: bool
 }
 impl Ollama {
-    pub fn new(endpoint: String) -> Ollama {
+    pub fn new(endpoint: String, logging: bool) -> Ollama {
         Ollama {
             endpoint: format!("http://{}/api/", endpoint),
             client: Client::new(),
+            logging
         }
     }
     pub async fn get_response<T: serde::Serialize>(
@@ -23,8 +25,11 @@ impl Ollama {
     ) -> Result<Value, Box<dyn Error>> {
         let (client, endpoint) = (&self.client, format!("{}{}", &self.endpoint, append));
         // println!("{}", endpoint);
+        if self.logging {println!("Posting {} to {}", json!(&options), endpoint)};
         let response = client.post(endpoint).json(&options).send().await;
-        let object: Value = serde_json::from_str(&response?.text().await?)?;
+        let response = &response?.text().await?;
+        if self.logging {println!("{}", response)}
+        let object: Value = serde_json::from_str(&response)?;
         Ok(object)
     }
     // async fn parse(result: Result<reqwest::Response, reqwest::Error>) -> Result<Vec<Value>, Box<dyn Error>>{

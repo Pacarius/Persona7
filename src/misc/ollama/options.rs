@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Map, Value};
 
 #[derive(Serialize)]
 pub struct ModelFile {
@@ -44,7 +45,7 @@ pub struct GenerateOptions {
     prompt: String,
     suffix: Option<String>,
     images: Option<Vec<String>>,
-    format: Option<String>,
+    pub format: Option<Value>,
     options: Option<ModelFile>,
     system: Option<String>,
     template: Option<String>,
@@ -53,7 +54,7 @@ pub struct GenerateOptions {
     keep_alive: Option<String>,
     context: Option<String>,
 }
-
+pub struct FormatPair<T: Serialize>(pub String, pub T);
 impl GenerateOptions {
     pub fn new(model: String, prompt: String) -> Self {
         Self {
@@ -70,6 +71,23 @@ impl GenerateOptions {
             keep_alive: None,
             context: None,
         }
+    }
+    pub fn format(&mut self, targets: Vec<FormatPair<&impl Serialize>>){
+        let mut properties = Map::new();
+        let mut required = Vec::new();
+
+        for FormatPair(name, value) in targets {
+            properties.insert(name.clone(), json!({"type": value}));
+            required.push(name);
+        }
+
+        let json = json!({
+            "type": "object",
+            "properties": properties,
+            "required": required,
+        });
+        self.format = Some(json);
+        // println!("{}", json.to_string());
     }
 }
 #[derive(Serialize)]

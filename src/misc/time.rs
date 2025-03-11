@@ -1,5 +1,5 @@
 use std::{fmt::Display, ops::Add};
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Time {
     //Seconds Elapsed Since 0.0
     hour: i64,
@@ -50,10 +50,91 @@ impl Add for Time {
         let mut min = self.min + rhs.min + sec / 60;
         sec %= 60;
 
-        let hour = self.hour + rhs.hour + min / 60;
+        let mut hour = self.hour + rhs.hour + min / 60;
         min %= 60;
 
         let day = hour / 24;
+        hour %= 24;
+
         (Time { hour, min, sec }, day)
+    }
+}
+#[derive(Debug)]
+pub enum Month {
+    January = 1,
+    February = 2,
+    March = 3,
+    April = 4,
+    May = 5,
+    June = 6,
+    July = 7,
+    August = 8,
+    September = 9,
+    October = 10,
+    November = 11,
+    December = 12,
+}
+impl Month {
+    fn get_days_in_month(&self) -> i64 {
+        match self {
+            Month::January => 31,
+            Month::February => 28,
+            Month::March => 31,
+            Month::April => 30,
+            Month::May => 31,
+            Month::June => 30,
+            Month::July => 31,
+            Month::August => 31,
+            Month::September => 30,
+            Month::October => 31,
+            Month::November => 30,
+            Month::December => 31,
+        }
+    }
+    fn next_month(&self) -> Month {
+        match self {
+            Month::January => Month::February,
+            Month::February => Month::March,
+            Month::March => Month::April,
+            Month::April => Month::May,
+            Month::May => Month::June,
+            Month::June => Month::July,
+            Month::July => Month::August,
+            Month::August => Month::September,
+            Month::September => Month::October,
+            Month::October => Month::November,
+            Month::November => Month::December,
+            Month::December => Month::January,
+        }
+    }
+}
+#[derive(Debug)]
+pub struct Date {
+    day: i64,
+    month: Month,
+}
+impl Date {
+    pub fn increment_month(&mut self) {
+        self.month = self.month.next_month();
+    }
+    pub fn add_days(&mut self, mut target: i64) {
+        while target > self.month.get_days_in_month() - self.day {
+            target -= self.month.get_days_in_month() - self.day + 1;
+            self.day = 1;
+            self.increment_month();
+        }
+        self.day += target;
+    }
+    pub fn new(day: i64, month: Month) -> Self {
+        Self { day, month }
+    }
+}
+#[derive(Debug)]
+pub struct DateTime(pub Date, pub Time);
+impl DateTime {
+    pub fn add(&mut self, time: Time) {
+        let output = self.1 + time;
+        self.1 = output.0;
+        self.0.add_days(output.1);
     }
 }

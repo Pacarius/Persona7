@@ -1,4 +1,14 @@
+use std::{collections::VecDeque, fmt::Display};
+
+use rayon::option;
 use serde::Deserialize;
+use serde_json::{json, Value};
+
+use crate::{misc::ollama::{ollama::Ollama, options::{FormatPair, GenerateOptions}}, personality::memory::short_term::{Path, ShortTerm}};
+
+use super::world_map::Coordinates;
+
+// use super::world::WorldListener;
 
 #[derive(Debug, Deserialize)]
 pub enum Placeholder {
@@ -14,36 +24,85 @@ pub enum Direction {
     WEST,
 }
 
-#[derive(Debug, Deserialize)]
+// #[derive(Debug)]
 pub struct Character {
-    pub placeholder: Placeholder,
+    // first_name: String,
+    // last_name: String,
+    age: i64,
+    core_traits: Vec<String>,
+    stable_traits: Vec<String>,
+    // current_action: String,
+    lifestyle: String,
+    living_area: String,
+    short_term_mem: ShortTerm,
+    sprite: Placeholder,
     pub name: String,
-    pub location: (usize, usize),
-    pub path: Option<Vec<(usize, usize)>>,
-    pub direction: Direction,
+    pub location: Coordinates,
+    // path: Option<Vec<Coordinates>>,
+    direction: Direction,
+    // pub daily_tasks: Vec<String>,
 }
 
 impl Character {
     pub fn new(
-        placeholder: Placeholder,
+        age: i64,
+        core_traits: Vec<String>,
+        stable_traits: Vec<String>,
+        lifestyle: String,
+        living_area: String,
+        short_term_mem: ShortTerm,
+        sprite: Placeholder,
         name: String,
-        location: (usize, usize),
+        location: Coordinates,
+        path: Option<Vec<Coordinates>>,
         direction: Direction,
+        daily_tasks: Vec<String>,
     ) -> Self {
         Character {
-            placeholder,
             name,
+            sprite,
             location,
-            path: None,
+            // path: None,
             direction,
+            age,
+            core_traits,
+            stable_traits,
+            lifestyle,
+            living_area,
+            short_term_mem,
+            // daily_tasks,
         }
     }
+    pub fn short_term_mem(&self) -> &ShortTerm {&self.short_term_mem}
+    pub fn short_term_mem_mut(&mut self) -> &mut ShortTerm {&mut self.short_term_mem}
 
-    pub fn override_path(&mut self, path: Vec<(usize, usize)>) {
-        self.path = Some(path);
+    pub fn get_descriptor(&self) -> String {
+        format!(
+            "{name} is {age}. {name} is {core}, {stable}. {lifestyle}",
+            name = self.name,
+            age = self.age,
+            core = self.core_traits.join(","),
+            stable = self.stable_traits.join(","),
+            lifestyle = self.lifestyle
+        )
     }
-
-    pub fn get_path(&self) -> Option<&Vec<(usize, usize)>> {
-        self.path.as_ref()
+    pub fn tick(&self, time: &crate::misc::time::Time) {
+    }
+    //Characters ticking : New Day; Activity Ended; if Activity is moving from point A to point B.
+    pub fn day_start(&self) {
+        
+    }
+    pub async fn day_start_str(&self, llama: &Ollama) -> String {
+        let mut options = GenerateOptions::new("llama3.2".to_string(), self.rest());
+        options.format(vec![FormatPair("time".to_string(), &json!("string"))]);
+        let response = llama.generate(options).await;
+        let response_str = response["response"].as_str().unwrap_or("");
+        let response_json: Value = serde_json::from_str(response_str).unwrap_or(Value::Null);
+        response_json["time"].as_str().unwrap_or("").to_string()
+    }
+}
+impl Display for Character{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} \n", self.get_descriptor())
     }
 }
