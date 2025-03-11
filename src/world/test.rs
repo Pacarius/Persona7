@@ -31,7 +31,7 @@ pub fn test_world() -> WorldMap {
     region.add_room(Room::new(
         "Living Room".to_string(),
         Coordinates((0, 0)),
-        Coordinates((5, 5)),
+        Coordinates((10, 10)),
         vec![Coordinates((9, 5)), Coordinates((9, 6))]
     ));
     world.add_region(region);

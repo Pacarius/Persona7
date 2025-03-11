@@ -35,7 +35,7 @@ async fn main() {
 
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
     let world = world::test::test_world();
-    // println!("{}", world);
+    println!("{}", world);
     // println!("{:?}", world.get_visible_colliders("Man".to_string(), 5));
     // let a = world.get_characters().iter().nth(0).unwrap().rest();
     // let mut test = GenerateOptions::new("llama3.2".to_string(), "Give me a random time in HH:MM:SS format.".to_string());
@@ -43,9 +43,9 @@ async fn main() {
     // test.format = Some("{'time': {'type': 'string'}}".to_string());
     // let out = &ollama.generate(test).await["response"];
     // println!("{}", out);
-    let man = test_char();
-    println!("{:?}", man.day_start_str(&ollama).await);
-    // println!("{}", world.get_pa`th_visual("Man".to_string(), Coordinates((0, 16))));
+    // let man = test_char();
+    // println!("{:?}", man.day_start_str(&ollama).await);
+    println!("{}", world.get_path_visual("Man".to_string(), Coordinates((0, 16))));
     // let mut datetime = DateTime(Date::new(1, Month::January), Time::from_hms((2, 0, 0)));
     // datetime.add(Time::from_hms((23, 0, 0)));
     // loop{

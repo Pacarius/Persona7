@@ -386,7 +386,7 @@ impl WorldMap {
             }
             visual_map
                 .iter()
-                .map(|row| row.iter().collect::<String>())
+                .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
                 .collect::<Vec<String>>()
                 .join("\n")
         }
