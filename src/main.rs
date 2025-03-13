@@ -33,7 +33,7 @@ async fn main() {
     // map::run();
     // let wm = MapHelper::new(Path::new("test/Sample.json"));
     // println!("{:?}", wm);
-    let ollama = Ollama::new("localhost:11434".to_string(), true);
+    let ollama = Ollama::new("localhost:11434".to_string(), false);
     // let test_generate = ollama.test_generate().await["response"].as_str().unwrap().replace("\\n", "\n");
     // println!("{}", test_generate);
     // let test_chat = ollama.test_chat().await["message"]["content"].as_str().unwrap().replace("\\n", "\n");
@@ -47,7 +47,7 @@ async fn main() {
     let mut world = world::test::test_world();
     world.day_start(&ollama).await;
     println!(
-        "{:?}",
+        "{}",
         world
             .get_map()
             .get_character("Man".to_string())

@@ -27,10 +27,10 @@ impl World {
     pub fn get_map(&self) -> &WorldMap {
         &self.map
     }
-    // pub async fn tick(&mut self) {
-    //     self.datetime.1 + Time::from_hms((0, 0, 20));
-    //     for ele in &self.map.get_characters() {
-    //         ele.tick(&self.datetime.1);
-    //     }
-    // }
+    pub async fn tick(&mut self) {
+        self.datetime.1 + Time::from_hms((0, 0, 20));
+        for ele in &self.map.get_characters() {
+            ele.tick(&self.datetime.1);
+        }
+    }
 }

@@ -1,0 +1,59 @@
+{
+    "context": null,
+    "format": {
+        "properties": {
+            "actions": {
+                "items": [
+                    {
+                        "properties": {
+                            "type": "action_description",
+                            "value": "string"
+                        },
+                        "required": [
+                            "type",
+                            "value"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "properties": {
+                            "type": "start_time",
+                            "value": "string"
+                        },
+                        "required": [
+                            "type",
+                            "value"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "properties": {
+                            "type": "end_time",
+                            "value": "string"
+                        },
+                        "required": [
+                            "type",
+                            "value"
+                        ],
+                        "type": "object"
+                    }
+                ],
+                "type": "array"
+            }
+        },
+        "required": [
+            "actions"
+        ],
+        "type": "object"
+    },
+    "images": null,
+    "keep_alive": null,
+    "model": "llama3.2",
+    "options": null,
+    "prompt": "Man is 22. Man is Creative,Resourceful,Independent, Laid-back,Ambitious,Practical. He spends his free time tinkering in his DIY workshop, experimenting with woodworking projects and home brewing, and dreaming of one day opening his own craft brewery or furniture making business. \n\n            Today is January 1.\n            Manstarts his day at 6:0:0 and ends it at 22:30:0\n            Here is a list of his plans today in broad strokes in the format of a json list of (Action_Description, Start_Time(HH:MM:SS form), End_Time(HH:MM:SS form))\n            ",
+    "raw": null,
+    "stream": false,
+    "suffix": null,
+    "system": null,
+    "template": null
+}

@@ -95,73 +95,7 @@ impl Character {
     //Characters ticking : New Day; Activity Ended; if Activity is moving from point A to point B.
     pub async fn day_start(&mut self, llama: &Ollama, date: &Date) {
         self.wake_time(llama).await;
-        // self.daily_schedule(llama, date).await;
-    }
-    async fn wake_time(&mut self, llama: &Ollama) {
-        let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), self.rest_wake());
-        options.format_pair(vec![
-            FormatPair("wake_time".to_string(), &json!("string")),
-            FormatPair("sleep_time".to_string(), &json!("string")),
-        ]);
-
-        if let Some(response_str) = llama.generate(options).await["response"].as_str() {
-            if let Ok(response_json) = serde_json::from_str::<Value>(response_str) {
-                if let Some(wake_time_str) = response_json["wake_time"].as_str() {
-                    if let Some(wake_time) = Time::parse_time_pair(wake_time_str) {
-                        let wake_action = ActionBare::new(ProperAction::WAKE.to_string(), Time::from_seconds(0), wake_time.0);
-                        self.short_term_mem.plan_vague.clear();
-                        self.short_term_mem.plan_vague.push(wake_action);
-                    }
-                }
-                if let Some(sleep_time_str) = response_json["sleep_time"].as_str() {
-                    if let Some(sleep_time) = Time::parse_time_pair(sleep_time_str) {
-                        let sleep_action = ActionBare::new(ProperAction::SLEEP.to_string(), sleep_time.0, Time::from_seconds(DAY_LENGTH - 1));
-                        self.short_term_mem.plan_vague.push(sleep_action);
-                    }
-                }
-            }
-        }
-    }
-
-    async fn daily_schedule(&mut self, llama: &Ollama, date: &Date) {
-        let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), self.vague(date));
-        options.format_triple(FormatTriple("actions".to_string(), vec![
-            FormatPair("action_description".to_string(), &json!("string")),
-            FormatPair("start_time".to_string(), &json!("string")),
-            FormatPair("end_time".to_string(), &json!("string")),
-        ]));
-
-        if let Some(response_str) = llama.generate(options).await["response"].as_str() {
-            if let Ok(response_json) = serde_json::from_str::<Value>(response_str) {
-                let mut plans = vec![];
-
-                for plan in response_json.as_array().unwrap_or(&vec![]) {
-                    if let (Some(action_desc), Some(start_time), Some(end_time)) = (
-                        plan["action_description"].as_str(),
-                        plan["start_time"].as_str(),
-                        plan["end_time"].as_str(),
-                    ) {
-                        if let (Some(start), Some(end)) = (
-                            Time::parse_time_pair(start_time),
-                            Time::parse_time_pair(end_time),
-                        ) {
-                            let action_bare = ActionBare::new(action_desc.to_string(), start.0, end.0);
-                            plans.push(action_bare);
-                        }
-                    }
-                }
-
-                // Assuming the first and last entries in plan_vague are wake and sleep actions
-                if let Some(wake_action) = self.short_term_mem.plan_vague.first().cloned() {
-                    if let Some(sleep_action) = self.short_term_mem.plan_vague.last().cloned() {
-                        self.short_term_mem.plan_vague.clear();
-                        self.short_term_mem.plan_vague.push(wake_action);
-                        self.short_term_mem.plan_vague.extend(plans);
-                        self.short_term_mem.plan_vague.push(sleep_action);
-                    }
-                }
-            }
-        }
+        self.daily_schedule(llama, date).await;
     }
 }
 impl Display for Character {

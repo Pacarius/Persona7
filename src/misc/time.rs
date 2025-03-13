@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::Add};
+use std::{error::Error, fmt::Display, ops::{Add, Sub}};
 #[derive(Clone, Copy, Debug)]
 pub struct Time {
     //Seconds Elapsed Since 0.0
@@ -21,7 +21,7 @@ impl Time {
         let sec = seconds % 60;
         Time { hour, min, sec }
     }
-    pub fn time(&self) -> i64 {
+    pub fn in_seconds(&self) -> i64 {
         self.hour * 60 * 60 + self.min * 60 + self.sec
     }
     pub fn parse_time_pair(time_str: &str) -> Option<(Time, Time)> {
@@ -38,10 +38,15 @@ impl Time {
         }
         None
     }
+    pub fn diff(lhs: Time, rhs: Time) -> Time{
+        let mut list = [lhs, rhs];
+        list.sort_by(|a, b| a.in_seconds().cmp(&b.in_seconds()));
+        list[1] - list[0]
+    }
 }
 impl Display for Time {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}:{}", self.hour, self.min, self.sec)
+        write!(f, "{:0>2}:{:0>2}:{:0>2}", self.hour, self.min, self.sec)
     }
 }
 impl PartialEq for Time {
@@ -63,6 +68,7 @@ impl PartialOrd for Time {
     }
 }
 
+
 impl Add for Time {
     type Output = (Time, i64);
 
@@ -78,6 +84,15 @@ impl Add for Time {
         hour %= 24;
 
         (Time { hour, min, sec }, day)
+    }
+}
+impl Sub for Time{
+    type Output = Time;
+    fn sub(self, rhs: Self) -> Self::Output {
+        let total_seconds_self = self.in_seconds();
+        let total_seconds_rhs = rhs.in_seconds();
+            let total_seconds_diff = total_seconds_self - total_seconds_rhs;
+            Time::from_seconds(total_seconds_diff)
     }
 }
 // #[derive(Debug)]

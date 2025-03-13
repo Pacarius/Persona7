@@ -18,17 +18,18 @@ impl Character {
         source
     }
     pub fn vague(&self, date: &Date) -> String {
+        let plan_vague = &self.short_term_mem().plan_vague.0;
         let source = format!(
             "{common}
             Today is {curr_date}.
-            {name}'s day starts at {wake} and ends at {sleep}
-            Here is a list of {name}'s plans today in broad strokes in the format of a list of (Action_Description, Start_Time(HH:MM:SS form), End_Time(HH:MM:SS form))
+            {name}starts his day at {wake} and ends it at {sleep}
+            Here is a list of his plans today in broad strokes in the format of a json list of (Action_Description, Start_Time(HH:MM:SS form), End_Time(HH:MM:SS form))
             ",
             common = self,
             name = self.name,
             curr_date = date,
-            wake = self.short_term_mem().plan_vague.get(0).unwrap().end,
-            sleep = self.short_term_mem().plan_vague.get(1).unwrap().start
+            wake = plan_vague.get(0).unwrap().end,
+            sleep = plan_vague.get(1).unwrap().start
         );
         source
     }

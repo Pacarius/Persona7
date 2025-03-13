@@ -266,7 +266,7 @@ impl WorldMap {
         }
     }
     pub fn calculate_colliders(&mut self) {
-        self.colliders = vec![vec![None; self.size.0.0]; self.size.0.1];
+        self.colliders = vec![vec![None; self.size.0 .0]; self.size.0 .1];
         for w in &self.walls {
             self.colliders[w.0 .0][w.0 .1] = Some("Wall".to_string());
         }

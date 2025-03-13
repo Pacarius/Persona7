@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::{
     misc::time::Time,
-    personality::action::{Action, ActionBare},
+    personality::action::{Action, ActionBare, ActionBareVec},
     world::world_map::Coordinates,
 };
 #[derive(Debug)]
@@ -20,7 +20,7 @@ impl Path {
 pub struct ShortTerm {
     //Daily
     pub goals: Vec<String>,
-    pub plan_vague: Vec<ActionBare>,
+    pub plan_vague: ActionBareVec,
     pub plan_detailed: Vec<ActionBare>,
     //Constant. Path only contains something when character is actively moving.
     pub action: Action,
@@ -30,7 +30,7 @@ impl Default for ShortTerm {
     fn default() -> Self {
         Self {
             goals: vec![],
-            plan_vague: vec![],
+            plan_vague: ActionBareVec(vec![]),
             plan_detailed: vec![],
             action: Action::default(),
             path: None,

@@ -90,26 +90,25 @@ impl GenerateOptions {
         self.format = Some(json);
         // println!("{}", json.to_string());
     }
-    pub fn format_triple(&mut self, targets: FormatTriple<&impl Serialize>) {
-        let mut properties = Map::new();
-        let mut required = Vec::new();
-
-        let FormatTriple(name, pairs) = targets;
-        let items: Vec<Value> = pairs
-            .into_iter()
-            .map(|FormatPair(item_type, value)| json!({"type": item_type, "value": value}))
-            .collect();
-
-        properties.insert(name.clone(), json!({
-            "type": "array",
-            "items": items
-        }));
-        required.push(name);
+    pub fn format_triple<T: Serialize>(&mut self, source: FormatTriple<T>) {
+        let mut properties = serde_json::Map::new();
+        for pair in source.1 {
+            properties.insert(pair.0, json!({"type": pair.1}));
+        }
 
         let json = json!({
             "type": "object",
-            "properties": properties,
-            "required": required,
+            "properties": {
+                source.0.clone(): {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": properties,
+                        "required": properties.keys().collect::<Vec<&String>>()
+                    }
+                }
+            },
+            "required": [source.0]
         });
         self.format = Some(json);
     }

@@ -72,18 +72,30 @@ impl Display for ProperAction {
         )
     }
 }
-#[derive(Debug, Clone)]
-pub struct ActionBare{
+#[derive(Clone)]
+pub struct ActionBare {
     pub description: String,
     pub start: Time,
-    pub end: Time
+    pub end: Time,
 }
-impl ActionBare{
+impl ActionBare {
     pub fn new(description: String, start: Time, end: Time) -> Self {
         ActionBare {
             description,
             start,
             end,
         }
+    }
+}
+impl Display for ActionBare{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}, From: {} To: {}", self.description, self.start, self.end)
+    }
+}
+pub struct ActionBareVec(pub Vec<ActionBare>);
+
+impl Display for ActionBareVec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}]", self.0.iter().map(|f| f.to_string()).collect::<Vec<String>>().join(", "))
     }
 }
