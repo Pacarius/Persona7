@@ -55,6 +55,7 @@ pub struct GenerateOptions {
     context: Option<String>,
 }
 pub struct FormatPair<T: Serialize>(pub String, pub T);
+pub struct FormatTriple<T: Serialize>(pub String, pub Vec<FormatPair<T>>);
 impl GenerateOptions {
     pub fn new(model: String, prompt: String) -> Self {
         Self {
@@ -72,7 +73,7 @@ impl GenerateOptions {
             context: None,
         }
     }
-    pub fn format(&mut self, targets: Vec<FormatPair<&impl Serialize>>){
+    pub fn format_pair(&mut self, targets: Vec<FormatPair<&impl Serialize>>) {
         let mut properties = Map::new();
         let mut required = Vec::new();
 
@@ -88,6 +89,29 @@ impl GenerateOptions {
         });
         self.format = Some(json);
         // println!("{}", json.to_string());
+    }
+    pub fn format_triple(&mut self, targets: FormatTriple<&impl Serialize>) {
+        let mut properties = Map::new();
+        let mut required = Vec::new();
+
+        let FormatTriple(name, pairs) = targets;
+        let items: Vec<Value> = pairs
+            .into_iter()
+            .map(|FormatPair(item_type, value)| json!({"type": item_type, "value": value}))
+            .collect();
+
+        properties.insert(name.clone(), json!({
+            "type": "array",
+            "items": items
+        }));
+        required.push(name);
+
+        let json = json!({
+            "type": "object",
+            "properties": properties,
+            "required": required,
+        });
+        self.format = Some(json);
     }
 }
 #[derive(Serialize)]

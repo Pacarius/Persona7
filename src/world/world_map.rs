@@ -1,5 +1,6 @@
 use core::time;
 use std::collections::{HashSet, VecDeque};
+use std::future;
 use std::marker::PhantomData;
 
 use std::{
@@ -9,25 +10,36 @@ use std::{
     hash::Hash,
 };
 
-use crate::misc::time::Time;
+// use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+use tokio::join;
+
+use crate::misc::ollama::ollama::Ollama;
+use crate::misc::time::{Date, Time};
 
 use super::character::Character;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Coordinates(pub (usize, usize));
 // pub struct Character(Identity, String);
 #[derive(Debug)]
-pub struct MapObject{
+pub struct MapObject {
     len: i64,
     width: i64,
     rotation: Rotation,
     location: Coordinates,
     name: String,
     collision: bool,
-    action: Option<String>
+    action: Option<String>,
 }
-impl MapObject{
-    pub fn new(len: i64, width: i64, rotation: Rotation, location: Coordinates, name: String, collision: bool) -> Self {
+impl MapObject {
+    pub fn new(
+        len: i64,
+        width: i64,
+        rotation: Rotation,
+        location: Coordinates,
+        name: String,
+        collision: bool,
+    ) -> Self {
         Self {
             len,
             width,
@@ -35,11 +47,15 @@ impl MapObject{
             location,
             name,
             collision,
-            action: None
+            action: None,
         }
     }
-    pub fn name(&self) -> &String{&self.name}
-    pub fn action(&self) -> &Option<String>{&self.action}
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+    pub fn action(&self) -> &Option<String> {
+        &self.action
+    }
 }
 // (Identity, String, bool);
 // impl MapObject for GenericObject{
@@ -92,23 +108,29 @@ pub enum Rotation {
     S,
     W,
 }
-pub struct Region{
-    name: String,
+#[derive(Debug)]
+pub struct Region {
+    pub name: String,
     position: Coordinates,
     size: Coordinates,
-    rooms: Vec<Room>
+    rooms: Vec<Room>,
 }
-impl Display for Region{
+impl Display for Region {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.name)
     }
 }
-impl Default for Region{
+impl Default for Region {
     fn default() -> Self {
-        Self { name: "Void".to_string(), position: Coordinates((0, 0)), size: Coordinates((0, 0)), rooms: vec![] }
+        Self {
+            name: "Void".to_string(),
+            position: Coordinates((0, 0)),
+            size: Coordinates((0, 0)),
+            rooms: vec![],
+        }
     }
 }
-impl Region{
+impl Region {
     pub fn new(name: String, position: Coordinates, size: Coordinates) -> Self {
         Self {
             name,
@@ -117,23 +139,39 @@ impl Region{
             rooms: Vec::new(),
         }
     }
-    pub fn add_room(&mut self, room: Room){self.rooms.push(room);}
+    pub fn add_room(&mut self, mut room: Room) {
+        if room.region_name.is_none() {
+            room.region_name = Some(self.name.clone())
+        }
+        self.rooms.push(room);
+    }
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
 }
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub struct Room {
     //Position: (XTop, YTop); Size: (XSize, YSize)
     name: String,
     position: Coordinates,
     size: Coordinates,
     holes: Vec<Coordinates>,
+    pub region_name: Option<String>,
 }
-impl Display for Room{
+impl Display for Room {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.name)
     }
 }
-impl Default for Room{
+impl Default for Room {
     fn default() -> Self {
-        Self { name: "Void".to_string(), position: Coordinates((0, 0)), size: Coordinates((0, 0)), holes: vec![] }
+        Self {
+            name: "Void".to_string(),
+            position: Coordinates((0, 0)),
+            size: Coordinates((0, 0)),
+            holes: vec![],
+            region_name: Some("Void".to_string()),
+        }
     }
 }
 impl Room {
@@ -142,13 +180,18 @@ impl Room {
         position: Coordinates,
         size: Coordinates,
         holes: Vec<Coordinates>,
+        region_name: Option<String>,
     ) -> Self {
         Self {
             name,
             position,
             size,
             holes,
+            region_name,
         }
+    }
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 }
 // impl Character {
@@ -168,6 +211,8 @@ pub struct WorldMap {
     characters: Vec<Character>,
     walls: Vec<Coordinates>,
     pub colliders: Vec<Vec<Option<String>>>,
+    //This is fucking stupid but I'm out of ideas on how to do this elegantly.
+    // pub room_region_map: HashMap<Room, String>
 }
 impl WorldMap {
     pub fn new(size: Coordinates) -> Self {
@@ -179,44 +224,49 @@ impl WorldMap {
             characters: Vec::new(),
             walls: Vec::new(),
             colliders: vec![vec![None; x]; y],
+            // room_region_map: HashMap::new()
         }
     }
     pub fn add_region(&mut self, region: Region) {
         self.regions.push(region);
+        // for room in &region.rooms{
+        //     self.room_region_map.insert(room, region.name.clone());
+        // }
     }
     pub fn add_walls(&mut self) {
         for region in &self.regions {
-            for room in &region.rooms{
-            let (x_top, y_top) = (room.position.0 .0, room.position.0 .1);
-            let (x_size, y_size) = (room.size.0 .0, room.size.0 .1);
+            for room in &region.rooms {
+                let (x_top, y_top) = (room.position.0 .0, room.position.0 .1);
+                let (x_size, y_size) = (room.size.0 .0, room.size.0 .1);
 
-            // Add top and bottom walls
-            for x in x_top..(x_top + x_size) {
-                let top_wall = Coordinates((x, y_top));
-                let bottom_wall = Coordinates((x, y_top + y_size - 1));
-                if !room.holes.contains(&top_wall) {
-                    self.walls.push(top_wall);
+                // Add top and bottom walls
+                for x in x_top..(x_top + x_size) {
+                    let top_wall = Coordinates((x, y_top));
+                    let bottom_wall = Coordinates((x, y_top + y_size - 1));
+                    if !room.holes.contains(&top_wall) {
+                        self.walls.push(top_wall);
+                    }
+                    if !room.holes.contains(&bottom_wall) {
+                        self.walls.push(bottom_wall);
+                    }
                 }
-                if !room.holes.contains(&bottom_wall) {
-                    self.walls.push(bottom_wall);
+
+                // Add left and right walls
+                for y in y_top..(y_top + y_size) {
+                    let left_wall = Coordinates((x_top, y));
+                    let right_wall = Coordinates((x_top + x_size - 1, y));
+                    if !room.holes.contains(&left_wall) {
+                        self.walls.push(left_wall);
+                    }
+                    if !room.holes.contains(&right_wall) {
+                        self.walls.push(right_wall);
+                    }
                 }
             }
-
-            // Add left and right walls
-            for y in y_top..(y_top + y_size) {
-                let left_wall = Coordinates((x_top, y));
-                let right_wall = Coordinates((x_top + x_size - 1, y));
-                if !room.holes.contains(&left_wall) {
-                    self.walls.push(left_wall);
-                }
-                if !room.holes.contains(&right_wall) {
-                    self.walls.push(right_wall);
-                }
-            }
-        }
         }
     }
     pub fn calculate_colliders(&mut self) {
+        self.colliders = vec![vec![None; self.size.0.0]; self.size.0.1];
         for w in &self.walls {
             self.colliders[w.0 .0][w.0 .1] = Some("Wall".to_string());
         }
@@ -316,16 +366,27 @@ impl Display for WorldMap {
     }
 }
 impl WorldMap {
-    fn get_character(&self, name: String) -> &Character {
+    pub fn get_character(&self, name: String) -> &Character {
         self.characters
             .iter()
             .filter(|n| n.name.eq(&name))
             .nth(0)
             .unwrap()
     }
+    // pub fn get_character_mut(&mut self, name: String) -> &mut Character{
+    //         self.characters
+    //         .iter()
+    //         .filter(|n| n.name.eq(&name))
+    //         .nth(0)
+    //         .unwrap()
+    //         .as_mut()
+    // }
     pub fn get_characters(&self) -> Vec<&Character> {
         self.characters.iter().collect()
     }
+    // pub fn get_character(&self, name: String) -> &Character{
+    //     self.characters.iter().filter(|f| f.name == name).nth(0).unwrap()
+    // }
     pub fn get_path(&self, name: String, target: Coordinates) -> Option<Vec<Coordinates>> {
         let start = &self.get_character(name).location;
         let goal = &target;
@@ -434,5 +495,17 @@ impl WorldMap {
         }
 
         visible_colliders.into_iter().collect()
+    }
+}
+impl WorldMap {
+    pub async fn day_start(&mut self, llama: &Ollama, date: &Date) {
+        // self.characters.par_iter_mut().for_each(|f| {
+        //     f.day_start(llama);
+        // });
+        // join!(self.characters.iter().map(|f| f.day_start(llama)).collect());
+        //This is gonna be stuck synchronous for a while because I'm braindead.
+        for c in &mut self.characters {
+            c.day_start(llama, date).await;
+        }
     }
 }

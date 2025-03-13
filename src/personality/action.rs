@@ -1,12 +1,17 @@
-use crate::{misc::time::Time, world::world_map::{MapObject, Region, Room}};
+use std::fmt::Display;
+
+use crate::{
+    misc::time::Time,
+    world::world_map::{MapObject, Region, Room},
+};
 #[derive(Debug)]
-pub struct Chat{
+pub struct Chat {
     target: String,
     log: Vec<String>,
-    end_time: i64
+    end_time: i64,
 }
 
-// #[derive(Debug)]
+#[derive(Debug)]
 pub struct Action {
     location: (Region, Room),
     start_time: Time,
@@ -46,7 +51,39 @@ impl Default for Action {
             description_emoji: String::new(),
             object: None,
             chat: None,
-            chat_target_buffer: Vec::new()
+            chat_target_buffer: Vec::new(),
+        }
+    }
+}
+pub enum ProperAction {
+    SLEEP,
+    WAKE,
+}
+impl Display for ProperAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::SLEEP => "SLEEP",
+                Self::WAKE => "WAKE",
+                _ => "",
+            }
+        )
+    }
+}
+#[derive(Debug, Clone)]
+pub struct ActionBare{
+    pub description: String,
+    pub start: Time,
+    pub end: Time
+}
+impl ActionBare{
+    pub fn new(description: String, start: Time, end: Time) -> Self {
+        ActionBare {
+            description,
+            start,
+            end,
         }
     }
 }

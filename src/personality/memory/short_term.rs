@@ -1,35 +1,40 @@
 use std::collections::VecDeque;
 
-use crate::{misc::time::Time, personality::action::Action, world::world_map::Coordinates};
+use crate::{
+    misc::time::Time,
+    personality::action::{Action, ActionBare},
+    world::world_map::Coordinates,
+};
 #[derive(Debug)]
-pub struct Path{
+pub struct Path {
     source: Coordinates,
     path: VecDeque<Coordinates>,
-    target: Coordinates
+    target: Coordinates,
 }
-impl Path{
-    pub fn move_next(&mut self){
+impl Path {
+    pub fn move_next(&mut self) {
         self.path.remove(0);
     }
 }
-pub struct ShortTerm{
+// #[derive(Debug)]
+pub struct ShortTerm {
     //Daily
-    goals: Vec<String>,
-    plan_vague: Vec<(String, i64)>,
-    plan_detailed: Vec<(String, i64)>,
+    pub goals: Vec<String>,
+    pub plan_vague: Vec<ActionBare>,
+    pub plan_detailed: Vec<ActionBare>,
     //Constant. Path only contains something when character is actively moving.
-    action: Action,
-    pub path: Option<Path>
+    pub action: Action,
+    pub path: Option<Path>,
 }
-impl ShortTerm{
-    pub fn set_action(&mut self, action: Action){self.action = action}
-    pub fn get_action(&self) -> &Action{&self.action}
-    pub fn set_daily(&mut self, goals: Vec<String>){self.goals = goals}
-    pub fn get_daily(&self) -> &Vec<String>{&self.goals}
-}
-impl Default for ShortTerm{
+impl Default for ShortTerm {
     fn default() -> Self {
-        Self { goals: vec![], plan_vague: vec![], plan_detailed: vec![], action: Action::default(), path: None }
+        Self {
+            goals: vec![],
+            plan_vague: vec![],
+            plan_detailed: vec![],
+            action: Action::default(),
+            path: None,
+        }
     }
 }
 // #[derive(Debug)]

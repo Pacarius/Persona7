@@ -3,11 +3,18 @@
 use std::{collections::HashMap, path::Path};
 
 use misc::{
-    ollama::{self, ollama::Ollama, options::{FormatPair, GenerateOptions}},
+    ollama::{
+        self,
+        ollama::Ollama,
+        options::{FormatPair, GenerateOptions},
+    },
     time::{Date, DateTime, Month, Time},
 };
 use serde_json::json;
-use world::{test::test_char, world_map::{Coordinates, WorldMap}};
+use world::{
+    // test::test_char,
+    world_map::{Coordinates, WorldMap},
+};
 // use crate::world::helpers::MapHelper;
 use xcf::Xcf;
 
@@ -16,6 +23,9 @@ use xcf::Xcf;
 mod misc;
 mod personality;
 mod world;
+const TEXT_MODEL: &str = "llama3.2";
+const EMBEDDING_MODEL: &str = "nomic-embed-text";
+
 #[tokio::main]
 async fn main() {
     // let xcf = Xcf::open("test/Sample.xcf").unwrap();
@@ -34,8 +44,17 @@ async fn main() {
     // adapter.main().await;
 
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
-    let world = world::test::test_world();
-    println!("{}", world);
+    let mut world = world::test::test_world();
+    world.day_start(&ollama).await;
+    println!(
+        "{:?}",
+        world
+            .get_map()
+            .get_character("Man".to_string())
+            .short_term_mem()
+            .plan_vague
+    );
+    // println!("{}", world);
     // println!("{:?}", world.get_visible_colliders("Man".to_string(), 5));
     // let a = world.get_characters().iter().nth(0).unwrap().rest();
     // let mut test = GenerateOptions::new("llama3.2".to_string(), "Give me a random time in HH:MM:SS format.".to_string());
@@ -44,8 +63,8 @@ async fn main() {
     // let out = &ollama.generate(test).await["response"];
     // println!("{}", out);
     // let man = test_char();
-    // println!("{:?}", man.day_start_str(&ollama).await);
-    println!("{}", world.get_path_visual("Man".to_string(), Coordinates((0, 16))));
+    // println!("{:?}", world.get_character("Man".to_string()).day_start(&ollama).await);
+    // println!("{}", world.get_path_visual("Man".to_string(), Coordinates((0, 16))));
     // let mut datetime = DateTime(Date::new(1, Month::January), Time::from_hms((2, 0, 0)));
     // datetime.add(Time::from_hms((23, 0, 0)));
     // loop{

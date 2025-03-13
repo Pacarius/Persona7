@@ -6,6 +6,7 @@ pub struct Time {
     min: i64,
     sec: i64,
 }
+pub const DAY_LENGTH: i64 = 60 * 60 * 24;
 impl Time {
     pub fn from_hms(datetime: (i64, i64, i64)) -> Time {
         Time {
@@ -14,8 +15,28 @@ impl Time {
             sec: datetime.2,
         }
     }
+    pub fn from_seconds(seconds: i64) -> Time {
+        let hour = (seconds / 3600) % 24;
+        let min = (seconds / 60) % 60;
+        let sec = seconds % 60;
+        Time { hour, min, sec }
+    }
     pub fn time(&self) -> i64 {
         self.hour * 60 * 60 + self.min * 60 + self.sec
+    }
+    pub fn parse_time_pair(time_str: &str) -> Option<(Time, Time)> {
+        let time_parts: Vec<_> = time_str.split(':').collect();
+        if time_parts.len() == 3 {
+            if let (Ok(hour), Ok(minute), Ok(second)) = (
+                time_parts[0].parse::<i64>(),
+                time_parts[1].parse::<i64>(),
+                time_parts[2].parse::<i64>(),
+            ) {
+                let time = Time::from_hms((hour, minute, second));
+                return Some((time, Time::from_seconds(DAY_LENGTH - 1)));
+            }
+        }
+        None
     }
 }
 impl Display for Time {
@@ -59,7 +80,7 @@ impl Add for Time {
         (Time { hour, min, sec }, day)
     }
 }
-#[derive(Debug)]
+// #[derive(Debug)]
 pub enum Month {
     January = 1,
     February = 2,
@@ -108,7 +129,26 @@ impl Month {
         }
     }
 }
-#[derive(Debug)]
+impl Display for Month {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let month_str = match self {
+            Month::January => "January",
+            Month::February => "February",
+            Month::March => "March",
+            Month::April => "April",
+            Month::May => "May",
+            Month::June => "June",
+            Month::July => "July",
+            Month::August => "August",
+            Month::September => "September",
+            Month::October => "October",
+            Month::November => "November",
+            Month::December => "December",
+        };
+        write!(f, "{}", month_str)
+    }
+}
+// #[derive(Debug)]
 pub struct Date {
     day: i64,
     month: Month,
@@ -129,12 +169,22 @@ impl Date {
         Self { day, month }
     }
 }
-#[derive(Debug)]
+impl Display for Date {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", self.month, self.day)
+    }
+}
+// #[derive(Debug)]
 pub struct DateTime(pub Date, pub Time);
 impl DateTime {
     pub fn add(&mut self, time: Time) {
         let output = self.1 + time;
         self.1 = output.0;
         self.0.add_days(output.1);
+    }
+}
+impl Display for DateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", self.0, self.1)
     }
 }

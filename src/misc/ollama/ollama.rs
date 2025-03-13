@@ -3,19 +3,21 @@ use std::error::Error;
 use reqwest::Client;
 use serde_json::{json, Value};
 
+use crate::TEXT_MODEL;
+
 use super::options::{self, ChatOptions, ChatRole, GenerateOptions, Message};
 
 pub struct Ollama {
     endpoint: String,
     client: Client,
-    logging: bool
+    logging: bool,
 }
 impl Ollama {
     pub fn new(endpoint: String, logging: bool) -> Ollama {
         Ollama {
             endpoint: format!("http://{}/api/", endpoint),
             client: Client::new(),
-            logging
+            logging,
         }
     }
     pub async fn get_response<T: serde::Serialize>(
@@ -25,10 +27,14 @@ impl Ollama {
     ) -> Result<Value, Box<dyn Error>> {
         let (client, endpoint) = (&self.client, format!("{}{}", &self.endpoint, append));
         // println!("{}", endpoint);
-        if self.logging {println!("Posting {} to {}", json!(&options), endpoint)};
+        if self.logging {
+            println!("Posting {} to {}", json!(&options), endpoint)
+        };
         let response = client.post(endpoint).json(&options).send().await;
         let response = &response?.text().await?;
-        if self.logging {println!("{}", response)}
+        if self.logging {
+            println!("{}", response)
+        }
         let object: Value = serde_json::from_str(&response)?;
         Ok(object)
     }
@@ -45,14 +51,14 @@ impl Ollama {
     }
     pub async fn test_generate(&self) -> Value {
         self.generate(GenerateOptions::new(
-            "llama3.2".to_string(),
+            TEXT_MODEL.to_string(),
             "Why do I want to die".to_string(),
         ))
         .await
     }
     pub async fn test_chat(&self) -> Value {
         self.chat(ChatOptions::new(
-            "llama3.2".to_string(),
+            TEXT_MODEL.to_string(),
             vec![Message::new(
                 ChatRole::USER.to_string(),
                 "Why do I want to die".to_string(),
