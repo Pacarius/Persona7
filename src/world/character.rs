@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::VecDeque, fmt::Display};
 
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -18,7 +18,7 @@ use crate::{
     TEXT_MODEL,
 };
 
-use super::world_map::Coordinates;
+use super::world_map::{Coordinates, Room};
 
 // use super::world::WorldListener;
 
@@ -49,8 +49,9 @@ pub struct Character {
     short_term_mem: ShortTerm,
     sprite: Placeholder,
     pub name: String,
-    pub location: Coordinates,
-    // path: Option<Vec<Coordinates>>,
+    position: Coordinates,
+    location: Room,
+    path: Option<VecDeque<Coordinates>>,
     direction: Direction,
     // pub daily_tasks: Vec<String>,
 }
@@ -65,7 +66,8 @@ impl Character {
         short_term_mem: ShortTerm,
         sprite: Placeholder,
         name: String,
-        location: Coordinates,
+        position: Coordinates,
+        location: Room,
         path: Option<Vec<Coordinates>>,
         direction: Direction,
         daily_tasks: Vec<String>,
@@ -73,8 +75,9 @@ impl Character {
         Character {
             name,
             sprite,
+            position,
             location,
-            // path: None,
+            path: None,
             direction,
             age,
             core_traits,
@@ -82,7 +85,7 @@ impl Character {
             lifestyle,
             living_area,
             short_term_mem,
-            // daily_tasks,
+            // daily_tasks,h
         }
     }
     pub fn short_term_mem(&self) -> &ShortTerm {
@@ -91,12 +94,32 @@ impl Character {
     pub fn short_term_mem_mut(&mut self) -> &mut ShortTerm {
         &mut self.short_term_mem
     }
-    pub fn tick(&self, time: &crate::misc::time::Time) {}
+    pub fn position(&self) -> &Coordinates{
+        &self.position
+    }
+    pub fn _move(&mut self) -> Option<(Coordinates, Coordinates)> {
+        if let Some(path) = &mut self.path {
+            if path.len() >= 2 {
+                let (from, to) = (path[0].clone(), path[1].clone());
+                path.pop_front();
+                Some((from, to))
+            } else {
+                path.clear();
+                None
+            }
+        } else {
+            None
+        }
+    }
+    pub fn set_path(&mut self, path: VecDeque<Coordinates>) {
+        self.path = Some(path)
+    }
     //Characters ticking : New Day; Activity Ended; if Activity is moving from point A to point B.
     pub async fn day_start(&mut self, llama: &Ollama, date: &Date) {
         self.wake_time(llama).await;
         self.daily_schedule(llama, date).await;
     }
+    pub async fn tick(&mut self, time: &crate::misc::time::Time) {}
 }
 impl Display for Character {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -1,8 +1,18 @@
 use serde_json::{json, Value};
 
-use crate::{misc::{ollama::{ollama::Ollama, options::{FormatPair, FormatTriple, GenerateOptions}}, time::{Date, Time}}, personality::action::ActionBare, TEXT_MODEL};
+use crate::{
+    misc::{
+        ollama::{
+            ollama::Ollama,
+            options::{FormatPair, FormatTriple, GenerateOptions},
+        },
+        time::{Date, Time},
+    },
+    personality::action::ActionBare,
+    TEXT_MODEL,
+};
 
-impl crate::world::character::Character{
+impl crate::world::character::Character {
     pub async fn daily_schedule(&mut self, llama: &Ollama, date: &Date) {
         let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), self.vague(date));
         options.format_triple(FormatTriple(
@@ -19,6 +29,7 @@ impl crate::world::character::Character{
                 let mut plans = vec![];
 
                 for plan in response_json["actions"].as_array().unwrap_or(&vec![]) {
+                    // println!("{}", plan);
                     if let (Some(action_desc), Some(start_time), Some(end_time)) = (
                         plan["action_description"].as_str(),
                         plan["start_time"].as_str(),
@@ -30,6 +41,7 @@ impl crate::world::character::Character{
                         ) {
                             let action_bare =
                                 ActionBare::new(action_desc.to_string(), start.0, end.0);
+                            println!("{}", action_bare);
                             plans.push(action_bare);
                         }
                     }

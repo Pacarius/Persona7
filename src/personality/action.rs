@@ -87,15 +87,27 @@ impl ActionBare {
         }
     }
 }
-impl Display for ActionBare{
+impl Display for ActionBare {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}, From: {} To: {}", self.description, self.start, self.end)
+        write!(
+            f,
+            "From {} To {}: {}",
+            self.start, self.end, self.description
+        )
     }
 }
 pub struct ActionBareVec(pub Vec<ActionBare>);
 
 impl Display for ActionBareVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}]", self.0.iter().map(|f| f.to_string()).collect::<Vec<String>>().join(", "))
+        write!(
+            f,
+            "[{}]",
+            self.0
+                .iter()
+                .map(|f| f.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
+        )
     }
 }

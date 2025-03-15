@@ -1,4 +1,8 @@
-use std::{error::Error, fmt::Display, ops::{Add, Sub}};
+use std::{
+    error::Error,
+    fmt::Display,
+    ops::{Add, AddAssign, Sub},
+};
 #[derive(Clone, Copy, Debug)]
 pub struct Time {
     //Seconds Elapsed Since 0.0
@@ -38,7 +42,7 @@ impl Time {
         }
         None
     }
-    pub fn diff(lhs: Time, rhs: Time) -> Time{
+    pub fn diff(lhs: Time, rhs: Time) -> Time {
         let mut list = [lhs, rhs];
         list.sort_by(|a, b| a.in_seconds().cmp(&b.in_seconds()));
         list[1] - list[0]
@@ -68,7 +72,6 @@ impl PartialOrd for Time {
     }
 }
 
-
 impl Add for Time {
     type Output = (Time, i64);
 
@@ -86,16 +89,26 @@ impl Add for Time {
         (Time { hour, min, sec }, day)
     }
 }
-impl Sub for Time{
+impl AddAssign for Time {
+    // type Output = Self;
+    fn add_assign(&mut self, rhs: Self) {
+        let (new_time, _) = *self + rhs;
+        self.hour = new_time.hour;
+        self.min = new_time.min;
+        self.sec = new_time.sec;
+    }
+}
+impl Sub for Time {
     type Output = Time;
     fn sub(self, rhs: Self) -> Self::Output {
         let total_seconds_self = self.in_seconds();
         let total_seconds_rhs = rhs.in_seconds();
-            let total_seconds_diff = total_seconds_self - total_seconds_rhs;
-            Time::from_seconds(total_seconds_diff)
+        let total_seconds_diff = total_seconds_self - total_seconds_rhs;
+        Time::from_seconds(total_seconds_diff)
     }
 }
 // #[derive(Debug)]
+#[derive(Clone)]
 pub enum Month {
     January = 1,
     February = 2,
@@ -164,6 +177,7 @@ impl Display for Month {
     }
 }
 // #[derive(Debug)]
+#[derive(Clone)]
 pub struct Date {
     day: i64,
     month: Month,

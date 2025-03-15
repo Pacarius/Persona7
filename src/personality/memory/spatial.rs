@@ -1,7 +1,7 @@
 use std::{collections::HashMap, iter::Map};
 
 struct SpatialMemory {
-    spatial_mem_tree: HashMap<String, Vec<String>>,
+    spatial_mem_tree: HashMap<String, HashMap<String, Vec<String>>>,
 }
 //REGION >> AREA
 impl SpatialMemory {
