@@ -34,17 +34,19 @@ pub struct MapObject {
     horizontal: i64,
     vertical: i64,
     // rotation: Rotation,
-    location: Coordinates,
+    position: Coordinates,
     name: String,
     collision: bool,
     action: Option<String>,
+    region: String,
+    room: String,
 }
 impl MapObject {
     pub fn new(
         horizontal: i64,
         vertical: i64,
         // rotation: Rotation,
-        location: Coordinates,
+        position: Coordinates,
         name: String,
         collision: bool,
     ) -> Self {
@@ -52,10 +54,12 @@ impl MapObject {
             horizontal,
             vertical,
             // rotation,
-            location,
+            position,
             name,
             collision,
             action: None,
+            region: "".to_string(),
+            room: "".to_string()
         }
     }
     pub fn name(&self) -> &String {
@@ -63,6 +67,18 @@ impl MapObject {
     }
     pub fn action(&self) -> &Option<String> {
         &self.action
+    }
+    pub fn late(&mut self, region: String, room: String){
+        // if let Some((region, room)) = map.get_position_info(&self.position){
+            self.region = region;
+            self.room = room;
+        // }
+    }
+    pub fn room(&self) -> String{
+        self.room.clone()
+    }
+    pub fn region(&self) -> String{
+        self.region.clone()
     }
 }
 #[derive(Debug)]
@@ -104,6 +120,9 @@ impl Region {
     }
     pub fn name(&self) -> String {
         self.name.clone()
+    }
+    pub fn rooms(&self) -> Vec<&Room>{
+        self.rooms.iter().map(|r| r).collect()
     }
 }
 #[derive(PartialEq, Eq, Hash, Debug)]
@@ -208,14 +227,20 @@ impl WorldMap {
         for w in &self.walls {
             self.colliders[w.0][w.1] = Some("Wall".to_string());
         }
-        for o in &self.objects {
+        let position_infos: Vec<(usize, usize, Option<(String, String)>)> = self.objects.iter().map(|o| {
+            let Coordinates(x, y) = o.position;
+            let position_info = self.get_position_info(&Coordinates(x, y));
+            (x, y, position_info)
+        }).collect();
+    
+        for (i, o) in self.objects.iter_mut().enumerate() {
             if !o.collision {
                 continue;
             }
-            let Coordinates(x, y) = o.location;
+            let Coordinates(x, y) = o.position;
             let vertical = o.vertical as usize;
             let horizontal = o.horizontal as usize;
-
+    
             for i in 0..vertical {
                 for j in 0..horizontal {
                     let (x_pos, y_pos) = (x - i, y + j);
@@ -231,8 +256,11 @@ impl WorldMap {
                     }
                 }
             }
+            if let Some((region, room)) = &position_infos[i].2 {
+                o.late(region.clone(), room.clone());
+            }
         }
-        for c in &self.characters {
+        self.characters.iter().for_each(|c| {
             let Coordinates(x, y) = c.position();
             if self.colliders[*x][*y].is_none() {
                 self.colliders[*x][*y] = Some(c.name().clone());
@@ -244,17 +272,17 @@ impl WorldMap {
                     self.colliders[*x][*y].as_ref().unwrap()
                 );
             }
-        }
+        });
     }
     pub fn move_characters(&mut self) -> Vec<(Coordinates, Coordinates)> {
         let mut moved_positions = Vec::new();
 
         self.characters.iter_mut().for_each(|c| {
             let pos = c.position().clone();
-            if let Some(pos) = c._move(){
-                if self.colliders[pos.0.0][pos.0.1] == Some(c.name().clone()) {
-                    self.colliders[pos.0.0][pos.0.1] = None;
-                    self.colliders[pos.1.0][pos.1.1] = Some(c.name().clone()); 
+            if let Some(pos) = c._move() {
+                if self.colliders[pos.0 .0][pos.0 .1] == Some(c.name().clone()) {
+                    self.colliders[pos.0 .0][pos.0 .1] = None;
+                    self.colliders[pos.1 .0][pos.1 .1] = Some(c.name().clone());
                 }
                 moved_positions.push(pos);
             }
@@ -398,7 +426,7 @@ impl WorldMap {
         }
         // self.get_character_mut(name).set_path(self.get_path(name, position));
     }
-    pub fn get_position_info(&self, position: Coordinates) -> Option<(String, String)> {
+    pub fn get_position_info(&self, position: &Coordinates) -> Option<(String, String)> {
         for region in &self.regions {
             if position.0 >= region.position.0
                 && position.0 < region.position.0 + region.size.0
@@ -418,18 +446,23 @@ impl WorldMap {
         }
         None
     }
-
+    pub fn objects(&self) -> Vec<&MapObject>{
+        self.objects.iter().map(|f| f).collect()
+    }
+    pub fn regions(&self) -> Vec<&Region>{
+        self.regions.iter().map(|r| r).collect()
+    }
     pub fn get_visible_objects(&self, character: &Character) -> HashMap<String, Vec<Coordinates>> {
         let (source_name, source_pos, v_range): (&String, &Coordinates, &i64) =
             (character.name(), character.position(), character.v_range());
         let mut visible_objects: HashMap<String, Vec<Coordinates>> = HashMap::new();
 
         for object in &self.objects {
-            let object_pos = &object.location;
+            let object_pos = &object.position;
             let distance = ((object_pos.0 as i64 - source_pos.0 as i64).pow(2)
                 + (object_pos.1 as i64 - source_pos.1 as i64).pow(2))
             .isqrt() as i64;
-        // println!("{}", distance);
+            // println!("{}", distance);
             if distance <= *v_range {
                 let mut obstructed = false;
                 let (x0, y0) = (source_pos.0 as i64, source_pos.1 as i64);
@@ -468,7 +501,7 @@ impl WorldMap {
                     visible_objects
                         .entry(object.name().clone())
                         .or_insert_with(Vec::new)
-                        .push(object.location.clone());
+                        .push(object.position.clone());
                 }
             }
         }

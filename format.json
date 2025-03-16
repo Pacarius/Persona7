@@ -1,0 +1,36 @@
+{
+    "context": null,
+    "format": {
+        "properties": {
+            "Wake_Sleep": {
+                "properties": {
+                    "sleep_time": {
+                        "type": "string"
+                    },
+                    "wake_time": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "wake_time",
+                    "sleep_time"
+                ],
+                "type": "object"
+            }
+        },
+        "type": "object",
+        "required": [
+            "Wake_Sleep"
+        ]
+    },
+    "images": null,
+    "keep_alive": null,
+    "model": "llama3.2",
+    "options": null,
+    "prompt": "Ava Thompson is 28. Ava Thompson is Analytical,Methodical,Detail-oriented, Disciplined,Focused,Responsible. She works as a data analyst, spending most of her free time reading scientific papers and attending conferences to learn more about her field. \n\n    Daily Plan: Today, Ava Thompson is planning to do the following five things: []\n    Return Ava Thompson's waking and sleeping time, both in HH:MM:SS form.",
+    "raw": null,
+    "stream": false,
+    "suffix": null,
+    "system": null,
+    "template": null
+}

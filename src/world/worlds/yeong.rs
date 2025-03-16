@@ -146,15 +146,15 @@ pub fn yeong() -> World {
         ));
 
         map.add_character(Character::new(
-            28, 
+            28,
         vec!["Analytical".to_string(), "Methodical".to_string(), "Detail-oriented".to_string()], 
         vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], 
         "She works as a data analyst, spending most of her free time reading scientific papers and attending conferences to learn more about her field.".to_string(), // lifestyle
             "Rm_001".to_string(), 
-            crate::world::character::Placeholder::FEMALE, 
+            crate::world::character::Placeholder::FEMALE,
         "Ava Thompson".to_string(), // name
             Coordinates(10, 3),
-            5, 
+            5,
             ));
         map.add_region(apartment);
         map.add_region(street);

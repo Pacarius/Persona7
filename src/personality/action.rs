@@ -72,7 +72,7 @@ impl Display for ProperAction {
         )
     }
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ActionBare {
     pub description: String,
     pub start: Time,
@@ -96,18 +96,12 @@ impl Display for ActionBare {
         )
     }
 }
-pub struct ActionBareVec(pub Vec<ActionBare>);
-
-impl Display for ActionBareVec {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "[{}]",
-            self.0
-                .iter()
-                .map(|f| f.to_string())
-                .collect::<Vec<String>>()
-                .join(", ")
-        )
-    }
+pub fn fmt_abv(abv: &[ActionBare]) -> String {
+    format!(
+        "[{}]",
+        abv.iter()
+            .map(|f| f.to_string())
+            .collect::<Vec<String>>()
+            .join(", ")
+    )
 }

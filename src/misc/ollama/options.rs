@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use serde_json::{json, Map, Value};
 
 #[derive(Serialize)]
@@ -39,13 +39,13 @@ impl ModelFile {
         }
     }
 }
-#[derive(Serialize)]
+// #[derive(Serialize)]
 pub struct GenerateOptions {
     model: String,
     prompt: String,
     suffix: Option<String>,
     images: Option<Vec<String>>,
-    pub format: Option<Value>,
+    format: Map<String, Value>,
     options: Option<ModelFile>,
     system: Option<String>,
     template: Option<String>,
@@ -63,7 +63,7 @@ impl GenerateOptions {
             prompt,
             suffix: None,
             images: None,
-            format: None,
+            format: Map::new(),
             options: None,
             system: None,
             template: None,
@@ -73,7 +73,11 @@ impl GenerateOptions {
             context: None,
         }
     }
-    pub fn format_pair(&mut self, targets: Vec<FormatPair<&impl Serialize>>) {
+    pub fn add_format_pair(
+        &mut self,
+        container: String,
+        targets: Vec<FormatPair<&impl Serialize>>,
+    ) {
         let mut properties = Map::new();
         let mut required = Vec::new();
 
@@ -87,10 +91,11 @@ impl GenerateOptions {
             "properties": properties,
             "required": required,
         });
-        self.format = Some(json);
-        // println!("{}", json.to_string());
+
+        self.format.insert(container.clone(), json);
     }
-    pub fn format_triple<T: Serialize>(&mut self, source: FormatTriple<T>) {
+
+    pub fn add_format_triple<T: Serialize>(&mut self, container: String, source: FormatTriple<T>) {
         let mut properties = serde_json::Map::new();
         for pair in source.1 {
             properties.insert(pair.0, json!({"type": pair.1}));
@@ -98,19 +103,49 @@ impl GenerateOptions {
 
         let json = json!({
             "type": "object",
-            "properties": {
-                source.0.clone(): {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": properties,
-                        "required": properties.keys().collect::<Vec<&String>>()
-                    }
-                }
-            },
-            "required": [source.0]
+            "properties": properties,
+            "required": properties.keys().collect::<Vec<&String>>()
         });
-        self.format = Some(json);
+
+        let container_json = json!({
+            "type": "array",
+            "items": json
+        });
+
+        self.format.insert(container.clone(), container_json);
+    }
+
+    // pub fn format(&self) -> Value {
+    //     json!({
+    //         "type": "object",
+    //         "properties": self.format,
+    //         "required": self.format.keys().collect::<Vec<&String>>(),
+    //     })
+    // }
+}
+impl Serialize for GenerateOptions {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("GenerateOptions", 12)?;
+        state.serialize_field("model", &self.model)?;
+        state.serialize_field("prompt", &self.prompt)?;
+        state.serialize_field("suffix", &self.suffix)?;
+        state.serialize_field("images", &self.images)?;
+        state.serialize_field("format", &json!({
+            "type": "object",
+            "properties": self.format,
+            "required": self.format.keys().collect::<Vec<&String>>(),
+        }))?;
+        state.serialize_field("options", &self.options)?;
+        state.serialize_field("system", &self.system)?;
+        state.serialize_field("template", &self.template)?;
+        state.serialize_field("stream", &self.stream)?;
+        state.serialize_field("raw", &self.raw)?;
+        state.serialize_field("keep_alive", &self.keep_alive)?;
+        state.serialize_field("context", &self.context)?;
+        state.end()
     }
 }
 #[derive(Serialize)]

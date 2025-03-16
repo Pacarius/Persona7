@@ -108,7 +108,7 @@ impl Sub for Time {
     }
 }
 // #[derive(Debug)]
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Month {
     January = 1,
     February = 2,
@@ -204,6 +204,7 @@ impl Display for Date {
     }
 }
 // #[derive(Debug)]
+// #[derive(Clone)]
 pub struct DateTime(pub Date, pub Time);
 impl DateTime {
     pub fn add(&mut self, time: Time) {
@@ -216,4 +217,25 @@ impl Display for DateTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.0, self.1)
     }
+}
+pub fn weekday(date: &Date) -> String {
+    let days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ];
+    let mut total_days = date.day;
+    let mut current_month = Month::January;
+
+    while current_month != date.month {
+        total_days += current_month.get_days_in_month();
+        current_month = current_month.next_month();
+    }
+
+    let day_of_week = total_days % 7;
+    days[day_of_week as usize].to_string()
 }
