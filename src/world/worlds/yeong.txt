@@ -201,3 +201,86 @@ Here\u2019s a list of the dimensions for the objects in each character's bedroom
 ---
 
 This provides a clear breakdown of the dimensions for each object in the characters' bedrooms. Let me know if you need further adjustments!
+
+let characters = vec![
+    Character::new(
+        28, // age
+        vec!["Analytical".to_string(), "Methodical".to_string(), "Detail-oriented".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "She works as a data analyst, spending most of her free time reading scientific papers and attending conferences to learn more about her field.".to_string(), // lifestyle
+        "Ava Thompson".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        32, // age
+        vec!["Charismatic".to_string(), "Confident".to_string(), "Competitive".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "He is a sales manager at a startup, with a passion for playing basketball in his free time to stay active and relieve stress.".to_string(), // lifestyle
+        "Ethan Patel".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        27, // age
+        vec!["Curious".to_string(), "Inquisitive".to_string(), "Love of learning".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "She is a freelance writer, always on the lookout for new topics to explore and articles to write about.".to_string(), // lifestyle
+        "Luna Lee".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        35, // age
+        vec!["Loyal".to_string(), "Patient".to_string(), "Empathetic".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "He works as a mediator at a community center, helping people resolve conflicts and find common ground.".to_string(), // lifestyle
+        "Caleb Martin".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        29, // age
+        vec!["Adventurous".to_string(), "Spontaneous".to_string(), "Fearless".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "She is an outdoor guide, leading hiking groups and planning trips to explore the wilderness and challenge herself physically.".to_string(), // lifestyle
+        "Sophia Rodriguez".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        31, // age
+        vec!["Witty".to_string(), "Sarcastic".to_string(), "Quick-witted".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "He works as a comedy writer, always on the lookout for new material and inspiration for his jokes.".to_string(), // lifestyle
+        "Julian Styles".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        30, // age
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "She is an accountant at a firm, with a passion for organizing and categorizing information to make sense of it all.".to_string(), // lifestyle
+        "Emily Kim".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        40, // age
+        vec!["Dry sense of humor".to_string(), "Deadpan".to_string(), "Wry".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "He works as a librarian, often making witty remarks about books and authors in his free time.".to_string(), // lifestyle
+        "Henry Wallace".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        26, // age
+        vec!["Creative".to_string(), "Imaginative".to_string(), "Experimental".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "She is a visual artist, always experimenting with new techniques and mediums to express herself creatively.".to_string(), // lifestyle
+        "Ruby Singh".to_string(), // name
+        5 // view_range
+    ),
+    Character::new(
+        34, // age
+        vec!["Reserved".to_string(), "Introspective".to_string(), "Thoughtful".to_string()], // core_traits
+        vec!["Disciplined".to_string(), "Focused".to_string(), "Responsible".to_string()], // stable_traits
+        "He works as an engineer, spending most of his free time thinking about complex problems and finding innovative solutions.".to_string(), // lifestyle
+        "Alexander Brooks".to_string(), // name
+        5 // view_range
+    ),
+];

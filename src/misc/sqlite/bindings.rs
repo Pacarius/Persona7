@@ -1,8 +1,13 @@
 // use crate::sqlite::data::DBData;
 use std::{fmt::Debug, fs};
 
+// use reqwest::redirect::Action;
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
+
+use crate::world::world_map::WorldMap;
+
+use super::data::{Action, Movement};
 
 pub struct DBConnector {
     conn: Connection,
@@ -23,10 +28,13 @@ impl DBConnector {
         };
         Ok(DBConnector { name, conn })
     }
-    pub fn create(&self, data: &impl DBData) {}
-    pub fn write(&self, data: &(impl Serialize + Debug)) {
-        // self.conn.execute()
+    fn load(&mut self) -> (WorldMap, Vec<Action>, Vec<Movement>) {
+        todo!()
     }
+    // pub fn create(&self, data: &impl DBData) {}
+    // pub fn write(&self, data: &(impl Serialize + Debug)) {
+    //     // self.conn.execute()
+    // }
 }
 pub struct DBController {}
 impl DBController {

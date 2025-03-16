@@ -12,7 +12,7 @@ impl Character {
     Return {name}'s waking and sleeping time, both in HH:MM:SS form.",
             common = self,
             // common = "".to_string(),
-            name = self.name,
+            name = self.name(),
             daily = self.short_term_mem().goals // daily = "".to_string()
         );
         source
@@ -26,7 +26,7 @@ impl Character {
             Here is a list of his plans today in broad strokes in the format of a json list of (Action_Description, Start_Time(HH:MM:SS form), End_Time(HH:MM:SS form))
             ",
             common = self,
-            name = self.name,
+            name = self.name(),
             curr_date = date,
             wake = plan_vague.get(0).unwrap().end,
             sleep = plan_vague.get(1).unwrap().start

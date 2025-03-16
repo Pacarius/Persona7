@@ -1,10 +1,23 @@
-Simulation_Name {
-    [TABLES]
-    Character_Locations(Region, Coordinates),
-    Metadata(Simulation_ID, Date, Steps),
-    Character{
-        Short_Term,
-        Spatial,
-        Associative
+//Simulation_Name {
+//    [TABLES]
+//    Character_Locations(Region, Coordinates),
+//    Metadata(Simulation_ID, Date, Steps),
+//    Character{
+//        Short_Term,
+//        Spatial,
+//        Associative
+//    }
+//}
+Fuck that. 
+Data:
+Simulation_Name{
+    Map(Oneshot)[Regions, Rooms, Objects, Characters]
+    Character_Sheets
+    ##Action = Everything other than movement LOL
+    ##Movement = <FromTo> Pairs
+    ##Memory = todo!()
+    Loop{
+        Buffer [Vec<Action>, Vec<Movement>, Vec<Memory>]
+        Push to database
     }
 }

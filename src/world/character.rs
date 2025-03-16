@@ -13,7 +13,7 @@ use crate::{
     },
     personality::{
         action::{ActionBare, ProperAction},
-        memory::short_term::ShortTerm,
+        memory::{short_term::ShortTerm, spatial::SpatialMemory},
     },
     TEXT_MODEL,
 };
@@ -45,15 +45,16 @@ pub struct Character {
     stable_traits: Vec<String>,
     // current_action: String,
     lifestyle: String,
-    living_area: (String, String),
+    living_area: String,
     short_term_mem: ShortTerm,
+    spatial: SpatialMemory,
     sprite: Placeholder,
-    pub name: String,
+    name: String,
     position: Coordinates,
     location: Room,
     path: Option<VecDeque<Coordinates>>,
-    direction: Direction,
-    // pub daily_tasks: Vec<String>,
+    view_range: i64, // direction: Direction,
+                     // pub daily_tasks: Vec<String>,
 }
 
 impl Character {
@@ -62,30 +63,31 @@ impl Character {
         core_traits: Vec<String>,
         stable_traits: Vec<String>,
         lifestyle: String,
-        living_area: (String, String),
-        short_term_mem: ShortTerm,
+        living_area: String,
+        // short_term_mem: ShortTerm,
         sprite: Placeholder,
         name: String,
         position: Coordinates,
-        location: Room,
-        path: Option<Vec<Coordinates>>,
-        direction: Direction,
-        daily_tasks: Vec<String>,
+        // path: Option<Vec<Coordinates>>,
+        // direction: Direction,
+        // daily_tasks: Vec<String>,
+        view_range: i64,
     ) -> Self {
         Character {
             name,
             sprite,
             position,
-            location,
+            location: Room::default(),
             path: None,
-            direction,
+            // direction,
             age,
             core_traits,
             stable_traits,
             lifestyle,
             living_area,
-            short_term_mem,
-            // daily_tasks,h
+            short_term_mem: ShortTerm::default(),
+            spatial: SpatialMemory::default(),
+            view_range, // daily_tasks,h
         }
     }
     pub fn short_term_mem(&self) -> &ShortTerm {
@@ -94,14 +96,26 @@ impl Character {
     pub fn short_term_mem_mut(&mut self) -> &mut ShortTerm {
         &mut self.short_term_mem
     }
-    pub fn position(&self) -> &Coordinates{
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+    pub fn position(&self) -> &Coordinates {
         &self.position
+    }
+    pub fn v_range(&self) -> &i64 {
+        &self.view_range
+    }
+    pub fn path(&self) -> &Option<VecDeque<Coordinates>> {
+        &self.path
     }
     pub fn _move(&mut self) -> Option<(Coordinates, Coordinates)> {
         if let Some(path) = &mut self.path {
             if path.len() >= 2 {
                 let (from, to) = (path[0].clone(), path[1].clone());
                 path.pop_front();
+                //Add to database
+                // todo!();
+                self.position = to.clone();
                 Some((from, to))
             } else {
                 path.clear();

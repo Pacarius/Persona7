@@ -25,14 +25,14 @@ use super::character::Character;
 pub struct Coordinates(pub usize, pub usize);
 impl Display for Coordinates {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.1, self.0)
+        write!(f, "({}, {})", self.0, self.1)
     }
 }
 // pub struct Character(Identity, String);
 #[derive(Debug)]
 pub struct MapObject {
-    len: i64,
-    width: i64,
+    horizontal: i64,
+    vertical: i64,
     // rotation: Rotation,
     location: Coordinates,
     name: String,
@@ -41,16 +41,16 @@ pub struct MapObject {
 }
 impl MapObject {
     pub fn new(
-        len: i64,
-        width: i64,
+        horizontal: i64,
+        vertical: i64,
         // rotation: Rotation,
         location: Coordinates,
         name: String,
         collision: bool,
     ) -> Self {
         Self {
-            len,
-            width,
+            horizontal,
+            vertical,
             // rotation,
             location,
             name,
@@ -202,6 +202,7 @@ impl WorldMap {
         }
     }
     //EXTREMELY INEFFICIENT BUT I'M OUT OF TIME, I'M JUST GONNA CALL THIS ONCE EVERY SERVER UPDATE FRAME WOOOOOO
+    //NOOOOOOO I'M GONNA ONLY DO THIS ONCE AND ADD ANOTHER THING WHICH ONLY DOES CHARACTERS
     pub fn calculate_colliders(&mut self) {
         self.colliders = vec![vec![None; self.size.0]; self.size.1];
         for w in &self.walls {
@@ -211,12 +212,12 @@ impl WorldMap {
             if !o.collision {
                 continue;
             }
-            let Coordinates(y, x) = o.location;
-            let len = o.len as usize;
-            let width = o.width as usize;
+            let Coordinates(x, y) = o.location;
+            let vertical = o.vertical as usize;
+            let horizontal = o.horizontal as usize;
 
-            for i in 0..len {
-                for j in 0..width {
+            for i in 0..vertical {
+                for j in 0..horizontal {
                     let (x_pos, y_pos) = (x - i, y + j);
                     if self.colliders[x_pos][y_pos].is_none() {
                         self.colliders[x_pos][y_pos] = Some(o.name.clone());
@@ -232,9 +233,9 @@ impl WorldMap {
             }
         }
         for c in &self.characters {
-            let Coordinates(y, x) = c.position();
+            let Coordinates(x, y) = c.position();
             if self.colliders[*x][*y].is_none() {
-                self.colliders[*x][*y] = Some(c.name.clone());
+                self.colliders[*x][*y] = Some(c.name().clone());
             } else {
                 println!(
                     "Collider already exists at ({}, {}): {}",
@@ -245,12 +246,27 @@ impl WorldMap {
             }
         }
     }
+    pub fn move_characters(&mut self) -> Vec<(Coordinates, Coordinates)> {
+        let mut moved_positions = Vec::new();
+
+        self.characters.iter_mut().for_each(|c| {
+            let pos = c.position().clone();
+            if let Some(pos) = c._move(){
+                if self.colliders[pos.0.0][pos.0.1] == Some(c.name().clone()) {
+                    self.colliders[pos.0.0][pos.0.1] = None;
+                    self.colliders[pos.1.0][pos.1.1] = Some(c.name().clone()); 
+                }
+                moved_positions.push(pos);
+            }
+        });
+        moved_positions
+    }
     pub fn add_object(&mut self, object: MapObject) {
         self.objects.push(object);
     }
     pub fn add_character(&mut self, character: Character) {
-        if self.characters.iter().any(|f| f.name == character.name) {
-            println!("{} already exists.", character.name);
+        if self.characters.iter().any(|f| f.name() == character.name()) {
+            println!("{} already exists.", character.name());
         }
         self.characters.push(character);
     }
@@ -274,53 +290,29 @@ impl WorldMap {
     }
 
     fn as_chars(&self) -> Vec<Vec<char>> {
-        self.colliders
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .map(|cell| {
-                        if let Some(ref obj) = cell {
-                            obj.chars().next().unwrap()
-                        } else {
-                            ' '
-                        }
-                    })
-                    .collect::<Vec<char>>()
-            })
-            .collect::<Vec<Vec<char>>>()
-    }
-}
-impl Display for WorldMap {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let regions = self
-            .regions_as_chars()
-            .iter()
-            .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
-            .collect::<Vec<String>>()
-            .join("\n");
+        let mut collider_map = vec![vec![' '; self.size.0]; self.size.1];
 
-        let colliders = self
-            .as_chars()
-            .iter()
-            .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
-            .collect::<Vec<String>>()
-            .join("\n");
+        for (y, row) in self.colliders.iter().enumerate() {
+            for (x, cell) in row.iter().enumerate() {
+                if let Some(ref obj) = cell {
+                    collider_map[x][y] = obj.chars().next().unwrap();
+                }
+            }
+        }
 
-        write!(f, "Regions:\n{}\n\nColliders:\n{}", regions, colliders)
+        collider_map
     }
-}
-impl WorldMap {
     pub fn get_character(&self, name: String) -> &Character {
         self.characters
             .iter()
-            .filter(|n| n.name.eq(&name))
+            .filter(|n| n.name().eq(&name))
             .nth(0)
             .unwrap()
     }
     pub fn get_character_mut(&mut self, name: String) -> &mut Character {
         self.characters
             .iter_mut()
-            .filter(|n| n.name.eq(&name))
+            .filter(|n| n.name().eq(&name))
             .nth(0)
             .unwrap()
     }
@@ -337,8 +329,8 @@ impl WorldMap {
         let start = &self.get_character(name).position();
         let goal = &target;
 
-        let (start_x, start_y) = (start.1, start.0);
-        let (goal_x, goal_y) = (goal.1, goal.0);
+        let (start_x, start_y) = (start.0, start.1);
+        let (goal_x, goal_y) = (goal.0, goal.1);
 
         let mut queue = VecDeque::new();
         let mut visited = HashSet::new();
@@ -379,6 +371,26 @@ impl WorldMap {
 
         None
     }
+    pub fn get_path_visual(&self, name: String) -> String {
+        let character = self.get_character(name.clone());
+        let path = match character.path() {
+            Some(p) => p,
+            None => return "No path available.".to_string(),
+        };
+
+        let mut map = self.as_chars();
+
+        for Coordinates(x, y) in path {
+            if x < &self.size.0 && y < &self.size.1 {
+                map[*y][*x] = '*';
+            }
+        }
+
+        map.iter()
+            .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
     pub fn set_path(&mut self, name: String, position: Coordinates) {
         match self.get_path(name.clone(), position) {
             Some(o) => self.get_character_mut(name).set_path(o),
@@ -386,8 +398,82 @@ impl WorldMap {
         }
         // self.get_character_mut(name).set_path(self.get_path(name, position));
     }
-    pub fn get_valid(&self, region: Region){
-        // region.rooms.iter().map(f);
+    pub fn get_position_info(&self, position: Coordinates) -> Option<(String, String)> {
+        for region in &self.regions {
+            if position.0 >= region.position.0
+                && position.0 < region.position.0 + region.size.0
+                && position.1 >= region.position.1
+                && position.1 < region.position.1 + region.size.1
+            {
+                for room in &region.rooms {
+                    if position.0 >= room.position.0
+                        && position.0 < room.position.0 + room.size.0
+                        && position.1 >= room.position.1
+                        && position.1 < room.position.1 + room.size.1
+                    {
+                        return Some((region.name(), room.name()));
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    pub fn get_visible_objects(&self, character: &Character) -> HashMap<String, Vec<Coordinates>> {
+        let (source_name, source_pos, v_range): (&String, &Coordinates, &i64) =
+            (character.name(), character.position(), character.v_range());
+        let mut visible_objects: HashMap<String, Vec<Coordinates>> = HashMap::new();
+
+        for object in &self.objects {
+            let object_pos = &object.location;
+            let distance = ((object_pos.0 as i64 - source_pos.0 as i64).pow(2)
+                + (object_pos.1 as i64 - source_pos.1 as i64).pow(2))
+            .isqrt() as i64;
+        // println!("{}", distance);
+            if distance <= *v_range {
+                let mut obstructed = false;
+                let (x0, y0) = (source_pos.0 as i64, source_pos.1 as i64);
+                let (x1, y1) = (object_pos.0 as i64, object_pos.1 as i64);
+
+                // Bresenham's line algorithm to check for walls
+                let dx = (x1 - x0).abs();
+                let dy = -(y1 - y0).abs();
+                let mut err = dx + dy;
+                let mut x = x0;
+                let mut y = y0;
+
+                let sx = if x0 < x1 { 1 } else { -1 };
+                let sy = if y0 < y1 { 1 } else { -1 };
+
+                while x != x1 || y != y1 {
+                    if let Some(collider) = &self.colliders[x as usize][y as usize] {
+                        if collider == "Wall" {
+                            obstructed = true;
+                            break;
+                        }
+                    }
+
+                    let e2 = 2 * err;
+                    if e2 >= dy {
+                        err += dy;
+                        x += sx;
+                    }
+                    if e2 <= dx {
+                        err += dx;
+                        y += sy;
+                    }
+                }
+
+                if !obstructed {
+                    visible_objects
+                        .entry(object.name().clone())
+                        .or_insert_with(Vec::new)
+                        .push(object.location.clone());
+                }
+            }
+        }
+
+        visible_objects
     }
     pub async fn day_start(&mut self, llama: &Ollama, date: Date) {
         join_all(
@@ -402,12 +488,31 @@ impl WorldMap {
         // self.datetime.1 = new_time;
         join_all(
             self
-            // .get_map_mut()
+                // .get_map_mut()
                 .get_characters_mut()
                 .iter_mut()
                 .map(|f| f.tick(&time)),
         )
         .await;
         self.calculate_colliders();
+    }
+}
+impl Display for WorldMap {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let regions = self
+            .regions_as_chars()
+            .iter()
+            .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        let colliders = self
+            .as_chars()
+            .iter()
+            .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        write!(f, "Regions:\n{}\n\nColliders:\n{}", regions, colliders)
     }
 }

@@ -14,7 +14,7 @@ use serde_json::json;
 use world::{
     // test::test_char,
     world_map::{Coordinates, WorldMap},
-    worlds::{test::test_world, yeong::yeong},
+    worlds::yeong::yeong,
 };
 // use crate::world::helpers::MapHelper;
 use xcf::Xcf;
@@ -52,7 +52,18 @@ async fn main() {
     // for c in world.get_map().get_characters() {
     //     println!("{}", c.short_term_mem().plan_vague);
     // }
-    println!("{}", world.get_map());
+    // println!("{}", world.get_map());
+    // println!("{:?}", world.get_map().get_visible_objects(world.get_map().get_character("Ava Thompson".to_string())));
+    world.get_map_mut().set_path("Ava Thompson".to_string(), Coordinates(8, 33));
+    // println!("{}", world.get_map().get_path_visual("Ava Thompson".to_string()));
+    loop {
+        let set = world.get_map_mut().move_characters();
+        if set.is_empty() {
+            break;
+        }
+        println!("{:?}", set);
+        println!("{:?}", world.get_map().get_visible_objects(world.get_map().get_character("Ava Thompson".to_string())));
+    }
 
     // {
     //     let path = world

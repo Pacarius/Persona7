@@ -45,6 +45,6 @@ impl World {
     pub async fn tick(&mut self) {
         let (new_time, _) = self.datetime.1 + Time::from_seconds(TIME_STEP);
         self.datetime.1 = new_time;
-       self.get_map_mut().update(new_time).await;
+        self.get_map_mut().update(new_time).await;
     }
 }
