@@ -59,7 +59,7 @@ impl MapObject {
             collision,
             action: None,
             region: "".to_string(),
-            room: "".to_string()
+            room: "".to_string(),
         }
     }
     pub fn name(&self) -> &String {
@@ -68,16 +68,16 @@ impl MapObject {
     pub fn action(&self) -> &Option<String> {
         &self.action
     }
-    pub fn late(&mut self, region: String, room: String){
+    pub fn late(&mut self, region: String, room: String) {
         // if let Some((region, room)) = map.get_position_info(&self.position){
-            self.region = region;
-            self.room = room;
+        self.region = region;
+        self.room = room;
         // }
     }
-    pub fn room(&self) -> String{
+    pub fn room(&self) -> String {
         self.room.clone()
     }
-    pub fn region(&self) -> String{
+    pub fn region(&self) -> String {
         self.region.clone()
     }
 }
@@ -121,7 +121,7 @@ impl Region {
     pub fn name(&self) -> String {
         self.name.clone()
     }
-    pub fn rooms(&self) -> Vec<&Room>{
+    pub fn rooms(&self) -> Vec<&Room> {
         self.rooms.iter().map(|r| r).collect()
     }
 }
@@ -227,12 +227,16 @@ impl WorldMap {
         for w in &self.walls {
             self.colliders[w.0][w.1] = Some("Wall".to_string());
         }
-        let position_infos: Vec<(usize, usize, Option<(String, String)>)> = self.objects.iter().map(|o| {
-            let Coordinates(x, y) = o.position;
-            let position_info = self.get_position_info(&Coordinates(x, y));
-            (x, y, position_info)
-        }).collect();
-    
+        let position_infos: Vec<(usize, usize, Option<(String, String)>)> = self
+            .objects
+            .iter()
+            .map(|o| {
+                let Coordinates(x, y) = o.position;
+                let position_info = self.get_position_info(&Coordinates(x, y));
+                (x, y, position_info)
+            })
+            .collect();
+
         for (i, o) in self.objects.iter_mut().enumerate() {
             if !o.collision {
                 continue;
@@ -240,7 +244,7 @@ impl WorldMap {
             let Coordinates(x, y) = o.position;
             let vertical = o.vertical as usize;
             let horizontal = o.horizontal as usize;
-    
+
             for i in 0..vertical {
                 for j in 0..horizontal {
                     let (x_pos, y_pos) = (x - i, y + j);
@@ -446,10 +450,10 @@ impl WorldMap {
         }
         None
     }
-    pub fn objects(&self) -> Vec<&MapObject>{
+    pub fn objects(&self) -> Vec<&MapObject> {
         self.objects.iter().map(|f| f).collect()
     }
-    pub fn regions(&self) -> Vec<&Region>{
+    pub fn regions(&self) -> Vec<&Region> {
         self.regions.iter().map(|r| r).collect()
     }
     pub fn get_visible_objects(&self, character: &Character) -> HashMap<String, Vec<Coordinates>> {

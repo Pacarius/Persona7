@@ -34,7 +34,11 @@ impl ShortTerm {
         for (i, task) in self.plan_vague.iter().enumerate() {
             if task.start <= time && task.end > time {
                 start_index = Some(if i > 0 { i - 1 } else { i });
-                end_index = Some(if i < self.plan_vague.len() - 1 { i + 2 } else { i + 1 });
+                end_index = Some(if i < self.plan_vague.len() - 1 {
+                    i + 2
+                } else {
+                    i + 1
+                });
                 break;
             }
         }

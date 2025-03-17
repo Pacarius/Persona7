@@ -18,7 +18,7 @@ use crate::{
     TEXT_MODEL,
 };
 
-use super::world_map::{Coordinates, Room};
+use super::world_map::{Coordinates, Room, WorldMap};
 
 // use super::world::WorldListener;
 
@@ -89,6 +89,9 @@ impl Character {
             spatial: SpatialMemory::default(),
             view_range, // daily_tasks,h
         }
+    }
+    pub fn ascend(&mut self, map: &WorldMap){
+        self.spatial = SpatialMemory::god(map);
     }
     pub fn short_term_mem(&self) -> &ShortTerm {
         &self.short_term_mem

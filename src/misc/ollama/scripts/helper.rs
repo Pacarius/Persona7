@@ -43,7 +43,8 @@ impl Character {
             "{common}
             Today is {weekday} {date}.
             {name} is planning on {surrounding}
-            In 900-second increments, list the subtasks that {name} does when {name} is {action} starting at {start_time}. (Total duration in seconds: {duration}).",
+            With durations in increments of 5 minnutes, list the subtasks that {name} does when {name} is {action} starting at {start_time}. (Total duration in minutes: {duration}).
+            Here is a sample: {sample}",
             common = self,
             name = self.name(),
             weekday = weekday(&datetime.0),
@@ -51,8 +52,99 @@ impl Character {
             surrounding = fmt_abv(surrounding),
             action = curr_acction.description,
             start_time = curr_acction.start,
-            duration = (curr_acction.end - curr_acction.start).in_seconds()
+            duration = (curr_acction.end - curr_acction.start).in_seconds()/ 60,
+            sample = "
+            {
+    \"Detailed_Tasks\": [
+        {
+            \"subtask_duration\": 15,
+            \"remaining_duration\": 165,
+            \"subtask_details\": \"Review kindergarten curriculum standards\"
+        },
+        {
+            \"subtask_duration\": 30,
+            \"remaining_duration\": 135,
+            \"subtask_details\": \"Brainstorm ideas for the lesson\"
+        },
+        {
+            \"subtask_duration\": 30,
+            \"remaining_duration\": 105,
+            \"subtask_details\": \"Create the lesson plan\"
+        },
+        {
+            \"subtask_duration\": 30,
+            \"remaining_duration\": 75,
+            \"subtask_details\": \"Create materials for the lesson\"
+        },
+        {
+            \"subtask_duration\": 15,
+            \"remaining_duration\": 60,
+            \"subtask_details\": \"Take a break\"
+        },
+        {
+            \"subtask_duration\": 30,
+            \"remaining_duration\": 30,
+            \"subtask_details\": \"Review the lesson plan\"
+        },
+        {
+            \"subtask_duration\": 15,
+            \"remaining_duration\": 15,
+            \"subtask_details\": \"Make final changes to the lesson plan\"
+        }
+    ]
+}
+            "
         );
+        // println!("{}", source);
         source
     }
 }
+// {
+//     "Detailed_Tasks": [
+//         {
+//             "subtask_duration": 15,
+//             "remaining_duration": 165,
+//             "subtask_details": "Review kindergarten curriculum standards"
+//         },
+//         {
+//             "subtask_duration": 30,
+//             "remaining_duration": 135,
+//             "subtask_details": "Brainstorm ideas for the lesson"
+//         },
+//         {
+//             "subtask_duration": 30,
+//             "remaining_duration": 105,
+//             "subtask_details": "Create the lesson plan"
+//         },
+//         {
+//             "subtask_duration": 30,
+//             "remaining_duration": 75,
+//             "subtask_details": "Create materials for the lesson"
+//         },
+//         {
+//             "subtask_duration": 15,
+//             "remaining_duration": 60,
+//             "subtask_details": "Take a break"
+//         },
+//         {
+//             "subtask_duration": 30,
+//             "remaining_duration": 30,
+//             "subtask_details": "Review the lesson plan"
+//         },
+//         {
+//             "subtask_duration": 15,
+//             "remaining_duration": 15,
+//             "subtask_details": "Make final changes to the lesson plan"
+//         },
+//         {
+//             "subtask_duration": 10,
+//             "remaining_duration": 5,
+//             "subtask_details": "Print the lesson plan"
+//         },
+//         {
+//             "subtask_duration": 5,
+//             "remaining_duration": 0,
+//             "subtask_details": "Put the lesson plan in her bag"
+//         }
+//     ]
+// }

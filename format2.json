@@ -1,0 +1,59 @@
+{
+    "Detailed_Tasks": [
+        {
+            "remaining_duration": 240,
+            "subtask_details": "Review scientific papers on machine learning for personal project",
+            // "subtask_duration": 240
+        },
+        {
+            "remaining_duration": 225,
+            "subtask_details": "Read and take notes from a paper on deep learning algorithms",
+            "subtask_duration": 20
+        },
+        {
+            "remaining_duration": 205,
+            "subtask_details": "Summarize the main points of the paper in bullet form",
+            "subtask_duration": 30
+        },
+        {
+            "remaining_duration": 175,
+            "subtask_details": "Create a mind map to visualize the relationships between different concepts",
+            "subtask_duration": 20
+        },
+        {
+            "remaining_duration": 155,
+            "subtask_details": "Search for additional resources to support the understanding of deep learning algorithms",
+            "subtask_duration": 30
+        },
+        {
+            "remaining_duration": 125,
+            "subtask_details": "Organize and categorize the notes and resources into a database for future reference",
+            "subtask_duration": 25
+        },
+        {
+            "remaining_duration": 100,
+            "subtask_details": "Analyze the data from a machine learning experiment to identify areas for improvement",
+            "subtask_duration": 30
+        },
+        {
+            "remaining_duration": 70,
+            "subtask_details": "Create a code snippet to implement a specific algorithm using Python",
+            "subtask_duration": 20
+        },
+        {
+            "remaining_duration": 50,
+            "subtask_details": "Refactor the code to improve efficiency and readability",
+            "subtask_duration": 20
+        },
+        {
+            "remaining_duration": 30,
+            "subtask_details": "Review the code for any errors or bugs",
+            "subtask_duration": 15
+        },
+        {
+            "remaining_duration": 0,
+            "subtask_details": "Make final changes to the code and commit it to version control",
+            "subtask_duration": 15
+        }
+    ]
+}

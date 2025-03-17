@@ -10,7 +10,8 @@ impl Default for SpatialMemory {
         Self {
             spatial_mem_tree: HashMap::new(),
         }
-    }}
+    }
+}
 impl SpatialMemory {
     pub fn god(world: &WorldMap) -> Self {
         let mut output = Self {
@@ -20,7 +21,9 @@ impl SpatialMemory {
         for region in &world.regions() {
             let region_name = region.name();
             if !output.spatial_mem_tree.contains_key(&region_name) {
-                output.spatial_mem_tree.insert(region_name.clone(), HashMap::new());
+                output
+                    .spatial_mem_tree
+                    .insert(region_name.clone(), HashMap::new());
             }
 
             let region_map = output.spatial_mem_tree.get_mut(&region_name).unwrap();
@@ -35,10 +38,9 @@ impl SpatialMemory {
 
                 for object in world.objects() {
                     let (obj_region, obj_room) = (object.region(), object.room());
-                        if obj_region == region_name && obj_room == room_name {
-                            room_objects.push(object.name().clone());
-                        }
-                    
+                    if obj_region == region_name && obj_room == room_name {
+                        room_objects.push(object.name().clone());
+                    }
                 }
             }
         }

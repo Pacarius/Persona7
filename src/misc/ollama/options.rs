@@ -133,11 +133,14 @@ impl Serialize for GenerateOptions {
         state.serialize_field("prompt", &self.prompt)?;
         state.serialize_field("suffix", &self.suffix)?;
         state.serialize_field("images", &self.images)?;
-        state.serialize_field("format", &json!({
-            "type": "object",
-            "properties": self.format,
-            "required": self.format.keys().collect::<Vec<&String>>(),
-        }))?;
+        state.serialize_field(
+            "format",
+            &json!({
+                "type": "object",
+                "properties": self.format,
+                "required": self.format.keys().collect::<Vec<&String>>(),
+            }),
+        )?;
         state.serialize_field("options", &self.options)?;
         state.serialize_field("system", &self.system)?;
         state.serialize_field("template", &self.template)?;

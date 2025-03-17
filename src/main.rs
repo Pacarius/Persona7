@@ -37,7 +37,6 @@ async fn main() {
     // map::run();
     // let wm = MapHelper::new(Path::new("test/Sample.json"));
     // println!("{:?}", wm);
-    let ollama = Ollama::new("192.168.50.84:11434".to_string(), false);
     // let test_generate = ollama.test_generate().await["response"].as_str().unwrap().replace("\\n", "\n");
     // println!("{}", test_generate);
     // let test_chat = ollama.test_chat().await["message"]["content"].as_str().unwrap().replace("\\n", "\n");
@@ -48,19 +47,24 @@ async fn main() {
     // adapter.main().await;
 
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
-
+    
+    let ollama = Ollama::new("localhost:11434".to_string(), false);
     let mut world = yeong();
     world.day_start(&ollama).await;
-let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));
-world.get_map_mut().get_character_mut("Ava Thompson".to_string()).decompose_task(&ollama, &datetime).await;
+    let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));
+    world
+        .get_map_mut()
+        .get_character_mut("Ava Thompson".to_string())
+        .decompose_task(&ollama, &datetime)
+        .await;
 
-    // let mut options = GenerateOptions::new(
-    //     TEXT_MODEL.to_string(),
-    //     world
-    //         .get_map()
-    //         .get_character("Ava Thompson".to_string())
-    //         .rest_wake(),
-    // );
+    let mut options = GenerateOptions::new(
+        TEXT_MODEL.to_string(),
+        world
+            .get_map()
+            .get_character("Ava Thompson".to_string())
+            .rest_wake(),
+    );
     // options.add_format_triple("container2".to_string(), FormatTriple("data1".to_string(), vec![FormatPair("item1".to_string(), "string"), FormatPair("item2".to_string(), "string")]));
     // options.add_format_pair("container1".to_string(), vec![FormatPair("data1".to_string(), &json!("string")), FormatPair("data2".to_string(), &json!("string"))]);
     // options.add_format_pair(
@@ -72,17 +76,27 @@ world.get_map_mut().get_character_mut("Ava Thompson".to_string()).decompose_task
     // );
     // let options_value = serde_json::to_value(&options).unwrap();
     // println!("{}", options_value.to_string());
-    // println!("{}", world.get_map());
     // println!("{:?}", world.get_map().get_visible_objects(world.get_map().get_character("Ava Thompson".to_string())));
-    // world.get_map_mut().set_path("Ava Thompson".to_string(), Coordinates(8, 33));
-    // println!("{}", world.get_map().get_path_visual("Ava Thompson".to_string()));
+    // println!("{}", world.get_map());
+    // world
+    //     .get_map_mut()
+    //     .set_path("Ava Thompson".to_string(), Coordinates(8, 33));
+    // println!(
+    //     "{}",
+    //     world.get_map().get_path_visual("Ava Thompson".to_string())
+    // );
     // loop {
     //     let set = world.get_map_mut().move_characters();
     //     if set.is_empty() {
     //         break;
     //     }
     //     println!("{:?}", set);
-    //     println!("{:?}", world.get_map().get_visible_objects(world.get_map().get_character("Ava Thompson".to_string())));
+    //     println!(
+    //         "{:?}",
+    //         world
+    //             .get_map()
+    //             .get_visible_objects(world.get_map().get_character("Ava Thompson".to_string()))
+    //     );
     // }
 
     // {

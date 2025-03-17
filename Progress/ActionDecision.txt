@@ -1,0 +1,6 @@
+(Wake_Time determined from prompting)
+Vague_List (Initial daily plan with no details)
+    v (Used for)
+Detailed_List (Input: Current Task)(Detailed breakdown of actions that character will attempt to take throughout the vague task given.)
+    ^ (Defaults to)
+Reactionary (Determining reactions to surrounding events **needs at least short term memory.)
