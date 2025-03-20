@@ -9,7 +9,7 @@ use crate::{
             ollama::Ollama,
             options::{FormatPair, FormatTriple, GenerateOptions},
         },
-        time::{Date, Time, DAY_LENGTH},
+        time::{Date, DateTime, Time, DAY_LENGTH},
     },
     personality::{
         action::{ActionBare, ProperAction},
@@ -51,10 +51,11 @@ pub struct Character {
     sprite: Placeholder,
     name: String,
     position: Coordinates,
-    location: Room,
+    // location: Option<Room>,
     path: Option<VecDeque<Coordinates>>,
-    view_range: i64, // direction: Direction,
-                     // pub daily_tasks: Vec<String>,
+    view_range: i64, 
+    movement_cooldown_input: i64, //Extra number for inputting update to movement ratio.
+    movement_cooldown: i64
 }
 
 impl Character {
@@ -72,12 +73,13 @@ impl Character {
         // direction: Direction,
         // daily_tasks: Vec<String>,
         view_range: i64,
+        movement_cooldown_input: i64
     ) -> Self {
         Character {
             name,
             sprite,
             position,
-            location: Room::default(),
+            // location: None,
             path: None,
             // direction,
             age,
@@ -87,10 +89,12 @@ impl Character {
             living_area,
             short_term_mem: ShortTerm::default(),
             spatial: SpatialMemory::default(),
-            view_range, // daily_tasks,h
+            view_range,
+            movement_cooldown_input,
+            movement_cooldown: movement_cooldown_input
         }
     }
-    pub fn ascend(&mut self, map: &WorldMap){
+    pub fn ascend(&mut self, map: &WorldMap) {
         self.spatial = SpatialMemory::god(map);
     }
     pub fn short_term_mem(&self) -> &ShortTerm {
@@ -98,6 +102,12 @@ impl Character {
     }
     pub fn short_term_mem_mut(&mut self) -> &mut ShortTerm {
         &mut self.short_term_mem
+    }
+    pub fn spatial_mem(&self) -> &SpatialMemory {
+        &self.spatial
+    }
+    pub fn spatial_mem_mut(&mut self) -> &mut SpatialMemory {
+        &mut self.spatial
     }
     pub fn name(&self) -> &String {
         &self.name
@@ -136,7 +146,62 @@ impl Character {
         self.wake_time(llama).await;
         self.daily_schedule(llama, date).await;
     }
-    pub async fn tick(&mut self, time: &crate::misc::time::Time) {}
+    pub async fn decide(&mut self, llama: &Ollama, datetime: &DateTime) {}
+
+    pub fn get_location(&self, map: &WorldMap) -> (String, String) {
+        map.get_position_info(&self.position)
+            .unwrap_or(("Unknown".to_string(), "Unknown".to_string()))
+    }
+    pub async fn tick(&mut self, time: &crate::misc::time::Time) {
+        //Check if current action is done
+        //match action(type) {
+        // MOVE => Move
+        // TALK => Talk
+        // Misc => wait
+        //}
+        //
+        // let action_active = self.short_term_mem().curr_action.is_some();
+        if let Some(action) = &self.short_term_mem().curr_action{
+            if action.completed(time){
+
+            }
+            else {
+                match action.description(){
+                    val if val == "MOVE".to_string() => {
+                        if self.movement_cooldown <= 0{
+                            //Move
+                            self._move();
+                        }
+                        else {
+                            //Wait
+                            self.movement_cooldown -= 1;
+                        }
+                    },
+                    val if val == "TALK".to_string() => {
+                        todo!()
+                    },
+                    _ => {
+
+                    }
+                }                
+            }
+        }
+        else{
+            //This should never happen but like ok
+
+        }
+        // match self.short_term_mem.curr_action.completed(time){
+        //     true => {
+
+        //     }
+        //     false => {
+        //         match self.short_term_mem().curr_action
+        //     }
+        // }
+    }
+    pub fn movement_cooldown_max(&self) -> i64{
+        self.movement_cooldown_input
+    }
 }
 impl Display for Character {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -1,9 +1,11 @@
-use std::fmt::Display;
+use std::{error::Error, fmt::Display};
+
+use futures::future::LocalBoxFuture;
 
 use crate::{
     misc::time::{weekday, Date, DateTime, Time},
     personality::action::fmt_abv,
-    world::character::Character,
+    world::{character::Character, world_map::WorldMap},
 };
 impl Character {
     pub fn rest_wake(&self) -> String {
@@ -35,7 +37,7 @@ impl Character {
         );
         source
     }
-    pub fn decompose(&self, datetime: &DateTime) -> String {
+    pub fn decompose(&self, datetime: &DateTime) -> Result<String, Box<dyn Error>> {
         let surrounding = self.short_term_mem().surrounding_tasks(datetime.1);
         // println!("{:?}", surrounding);
         let curr_acction = surrounding.get(1).unwrap();
@@ -43,7 +45,7 @@ impl Character {
             "{common}
             Today is {weekday} {date}.
             {name} is planning on {surrounding}
-            With durations in increments of 5 minnutes, list the subtasks that {name} does when {name} is {action} starting at {start_time}. (Total duration in minutes: {duration}).
+            With durations in increments of 5 minutes, list the subtasks that {name} does when {name} is {action} starting at {start_time}. (Total duration in minutes: {duration}).
             Here is a sample: {sample}",
             common = self,
             name = self.name(),
@@ -96,55 +98,32 @@ impl Character {
             "
         );
         // println!("{}", source);
-        source
+        Ok(source)
+    }
+    //BASED ON VAGUE SCHEDULE
+    pub fn ro(&self, datetime: &DateTime, map: &WorldMap
+        // , map: &WorldMap
+    ) -> Result<String, Box<dyn Error>> {
+        let surrounding = self.short_term_mem().surrounding_tasks(datetime.1);
+        // println!("{:?}", surrounding);
+        let curr_acction = surrounding.get(1).unwrap();
+        let location = self.get_location(map);
+        let source = format!(
+            "{common}
+            Today is {weekday} {date}.
+            {name} is planning on {curr_action}
+            Here are a list of regions, rooms, and objects that are present on the map: {spatial}. You are currently in ({region}, {room}).
+            Please output the names of the region and room you want to execute the given action in.",
+            common = self,
+            name = self.name(),
+            weekday = weekday(&datetime.0),
+            date = datetime.0,
+            curr_action = curr_acction.description,
+            region = location.0,
+            room = location.1, 
+            // action = curr_acction.description,
+            spatial = self.spatial_mem(),
+        );
+        Ok(source)
     }
 }
-// {
-//     "Detailed_Tasks": [
-//         {
-//             "subtask_duration": 15,
-//             "remaining_duration": 165,
-//             "subtask_details": "Review kindergarten curriculum standards"
-//         },
-//         {
-//             "subtask_duration": 30,
-//             "remaining_duration": 135,
-//             "subtask_details": "Brainstorm ideas for the lesson"
-//         },
-//         {
-//             "subtask_duration": 30,
-//             "remaining_duration": 105,
-//             "subtask_details": "Create the lesson plan"
-//         },
-//         {
-//             "subtask_duration": 30,
-//             "remaining_duration": 75,
-//             "subtask_details": "Create materials for the lesson"
-//         },
-//         {
-//             "subtask_duration": 15,
-//             "remaining_duration": 60,
-//             "subtask_details": "Take a break"
-//         },
-//         {
-//             "subtask_duration": 30,
-//             "remaining_duration": 30,
-//             "subtask_details": "Review the lesson plan"
-//         },
-//         {
-//             "subtask_duration": 15,
-//             "remaining_duration": 15,
-//             "subtask_details": "Make final changes to the lesson plan"
-//         },
-//         {
-//             "subtask_duration": 10,
-//             "remaining_duration": 5,
-//             "subtask_details": "Print the lesson plan"
-//         },
-//         {
-//             "subtask_duration": 5,
-//             "remaining_duration": 0,
-//             "subtask_details": "Put the lesson plan in her bag"
-//         }
-//     ]
-// }

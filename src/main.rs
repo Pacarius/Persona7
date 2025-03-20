@@ -47,24 +47,22 @@ async fn main() {
     // adapter.main().await;
 
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
-    
-    let ollama = Ollama::new("localhost:11434".to_string(), false);
-    let mut world = yeong();
-    world.day_start(&ollama).await;
-    let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));
-    world
-        .get_map_mut()
-        .get_character_mut("Ava Thompson".to_string())
-        .decompose_task(&ollama, &datetime)
-        .await;
+let ollama = Ollama::new("192.168.50.84:11434".to_string(), false);
+let mut world = yeong();
+world.day_start(&ollama).await;
+let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));
+let map = world.get_map_mut();
+let character = map.get_character_mut("Ava Thompson".to_string());
+character.decide_room(&ollama, &datetime, map).await.unwrap();
+character.decompose_task(&ollama, &datetime).await.unwrap();
 
-    let mut options = GenerateOptions::new(
-        TEXT_MODEL.to_string(),
-        world
-            .get_map()
-            .get_character("Ava Thompson".to_string())
-            .rest_wake(),
-    );
+    // let mut options = GenerateOptions::new(
+    //     TEXT_MODEL.to_string(),
+    //     world
+    //         .get_map()
+    //         .get_character("Ava Thompson".to_string())
+    //         .rest_wake(),
+    // );
     // options.add_format_triple("container2".to_string(), FormatTriple("data1".to_string(), vec![FormatPair("item1".to_string(), "string"), FormatPair("item2".to_string(), "string")]));
     // options.add_format_pair("container1".to_string(), vec![FormatPair("data1".to_string(), &json!("string")), FormatPair("data2".to_string(), &json!("string"))]);
     // options.add_format_pair(

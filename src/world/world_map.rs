@@ -1,5 +1,6 @@
 use core::time;
 use std::collections::{HashSet, VecDeque};
+use std::error::Error;
 use std::future;
 use std::marker::PhantomData;
 
@@ -403,32 +404,66 @@ impl WorldMap {
 
         None
     }
-    pub fn get_path_visual(&self, name: String) -> String {
-        let character = self.get_character(name.clone());
-        let path = match character.path() {
-            Some(p) => p,
-            None => return "No path available.".to_string(),
-        };
+    // pub fn get_path_visual(&self, name: String) -> String {
+    //     let character = self.get_character(name.clone());
+    //     let path = match character.path() {
+    //         Some(p) => p,
+    //         None => return "No path available.".to_string(),
+    //     };
 
-        let mut map = self.as_chars();
+    //     let mut map = self.as_chars();
 
-        for Coordinates(x, y) in path {
-            if x < &self.size.0 && y < &self.size.1 {
-                map[*y][*x] = '*';
-            }
-        }
+    //     for Coordinates(x, y) in path {
+    //         if x < &self.size.0 && y < &self.size.1 {
+    //             map[*y][*x] = '*';
+    //         }
+    //     }
 
-        map.iter()
-            .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
-            .collect::<Vec<String>>()
-            .join("\n")
-    }
+    //     map.iter()
+    //         .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
+    //         .collect::<Vec<String>>()
+    //         .join("\n")
+    // }
     pub fn set_path(&mut self, name: String, position: Coordinates) {
         match self.get_path(name.clone(), position) {
             Some(o) => self.get_character_mut(name).set_path(o),
             None => println!("No paths available."),
         }
         // self.get_character_mut(name).set_path(self.get_path(name, position));
+    }
+    pub fn get_pos_room(&self, location: (String, String)) -> Option<Coordinates> {
+        let (region_name, room_name) = location;
+
+        let region = self.regions.iter().find(|r| r.name == region_name)?;
+
+        let room = region.rooms.iter().find(|r| r.name == room_name)?;
+
+        for x in room.position.0..(room.position.0 + room.size.0) {
+            for y in room.position.1..(room.position.1 + room.size.1) {
+                let coord = Coordinates(x, y);
+                if self.colliders[x][y].is_none() {
+                    return Some(coord);
+                }
+            }
+        }
+
+        None
+    }
+    pub fn set_path_character(
+        &self,
+        character: &mut Character,
+        location: (String, String),
+    ) -> Result<VecDeque<Coordinates>, Box<dyn Error>> {
+        if let Some(pos) = self.get_pos_room(location) {
+            if let Some(path) = self.get_path(character.name().clone(), pos) {
+                character.set_path(path.clone());
+                Ok(path)
+            } else {
+                Err("Path not available".into())
+            }
+        } else {
+            Err("Room/Region pair doesn't exist.".into())
+        }
     }
     pub fn get_position_info(&self, position: &Coordinates) -> Option<(String, String)> {
         for region in &self.regions {
@@ -531,7 +566,7 @@ impl WorldMap {
                 .map(|f| f.tick(&time)),
         )
         .await;
-        self.calculate_colliders();
+        // self.calculate_colliders();
     }
 }
 impl Display for WorldMap {

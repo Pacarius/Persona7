@@ -4,29 +4,30 @@ use crate::{
     misc::time::Time,
     world::world_map::{MapObject, Region, Room},
 };
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct Chat {
     target: String,
     log: Vec<String>,
     end_time: i64,
 }
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct Action {
-    location: (Region, Room),
+    location: (String, String),
     start_time: Time,
     intended_duration: i64,
     description: String,
-    description_emoji: String,
+    // description_emoji: String,
     object: Option<MapObject>,
     //Chat
     chat: Option<Chat>,
-    chat_target_buffer: Vec<String>,
+    // chat_target_buffer: Vec<String>,
 }
 impl Action {
-    pub fn completed(&self, time: Time) -> bool {
-        let (end_time, day) = self.start_time + Time::from_hms((0, 0, self.intended_duration));
-        day > 0 || time >= end_time
+    pub fn completed(&self, time: &Time) -> bool {
+        // if self.intended_duration < 0 {return true}
+        let (end_time, day) = self.start_time + Time::from_seconds(self.intended_duration);
+        day > 0 || time >= &end_time
     }
     pub fn to_string(&self) -> String {
         format!(
@@ -40,24 +41,50 @@ impl Action {
             }
         )
     }
-}
-impl Default for Action {
-    fn default() -> Self {
-        Action {
-            location: (Region::default(), Room::default()),
-            start_time: Time::from_hms((0, 0, 0)),
-            intended_duration: -1,
-            description: String::new(),
-            description_emoji: String::new(),
-            object: None,
-            chat: None,
-            chat_target_buffer: Vec::new(),
+    pub fn description(&self) -> String{
+        self.description.clone()
+    }
+    pub fn new(
+        location: (String, String),
+        start_time: Time,
+        intended_duration: i64,
+        description: String,
+        // description_emoji: String,
+        object: Option<MapObject>,
+        chat: Option<Chat>,
+        // chat_target_buffer: Vec<String>,
+    ) -> Self {
+        Self {
+            location,
+            start_time,
+            intended_duration,
+            description,
+            // description_emoji,
+            object,
+            chat,
+            // chat_target_buffer,
         }
     }
 }
+// impl Default for Action {
+//     fn default() -> Self {
+//         Action {
+//             location: (Region::default(), Room::default()),
+//             start_time: Time::from_hms((0, 0, 0)),
+//             intended_duration: -1,
+//             description: String::new(),
+//             description_emoji: String::new(),
+//             object: None,
+//             chat: None,
+//             chat_target_buffer: Vec::new(),
+//         }
+//     }
+// }
 pub enum ProperAction {
     SLEEP,
     WAKE,
+    MOVE,
+    TALK
 }
 impl Display for ProperAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -67,6 +94,8 @@ impl Display for ProperAction {
             match self {
                 Self::SLEEP => "SLEEP",
                 Self::WAKE => "WAKE",
+                Self::MOVE => "MOVE",
+                Self::TALK => "TALK",
                 _ => "",
             }
         )

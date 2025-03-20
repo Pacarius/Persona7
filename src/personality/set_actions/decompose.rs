@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use serde_json::json;
 
 use crate::{
@@ -12,23 +14,36 @@ use crate::{
 };
 
 impl crate::world::character::Character {
-    pub async fn decompose_task(&mut self, llama: &Ollama, datetime: &DateTime) {
+    pub async fn decompose_task(
+        &mut self,
+        llama: &Ollama,
+        datetime: &DateTime,
+    ) -> Result<(), Box<dyn Error>> {
         //Called when new action starts.
         // println!("{}", self.decompose(datetime));
-        let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), self.decompose(datetime));
-        options.add_format_triple(
-            "Detailed_Tasks".to_string(),
-            FormatTriple(
-                "Task".to_string(),
-                vec![
-                    FormatPair("subtask_details".to_string(), &json!("string")),
-                    FormatPair("subtask_duration".to_string(), &json!("number")),
-                    FormatPair("remaining_duration".to_string(), &json!("number")),
-                ],
-            ),
-        );
-        if let Some(response_str) = llama.generate(options).await["response"].as_str() {
-            println!("{}", response_str);
+        if let Ok(prompt) = self.decompose(datetime) {
+            let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), prompt);
+            options.add_format_triple(
+                "Detailed_Tasks".to_string(),
+                FormatTriple(
+                    "Task".to_string(),
+                    vec![
+                        FormatPair("subtask_details".to_string(), &json!("string")),
+                        FormatPair("subtask_duration".to_string(), &json!("number")),
+                        FormatPair("remaining_duration".to_string(), &json!("number")),
+                    ],
+                ),
+            );
+            if let Some(response_str) = llama.generate(options).await["response"].as_str() {
+                // println!("Source: {} \n{}", self.decompose(datetime), response_str);
+                // if let Ok(re)
+                // Ok(())
+                todo!()
+            } else {
+                Err("Ollama Response Error.".into())
+            }
+        } else {
+            Err("Decompose (Prompt) Error.".into())
         }
     }
 }

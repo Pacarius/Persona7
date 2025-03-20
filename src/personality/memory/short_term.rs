@@ -21,10 +21,12 @@ pub struct ShortTerm {
     //Daily
     pub goals: Vec<String>,
     pub plan_vague: Vec<ActionBare>,
-    pub plan_detailed: Vec<ActionBare>,
+    // pub plan_detailed: Vec<ActionBare>,
+    pub action_buffer: Vec<ActionBare>,
+    pub curr_action: Option<Action>,
     //Constant. Path only contains something when character is actively moving.
-    pub action: Action,
     pub path: Option<Path>,
+    chat_target_buffer: Vec<String>,
 }
 impl ShortTerm {
     pub fn surrounding_tasks(&self, time: Time) -> &[ActionBare] {
@@ -55,9 +57,10 @@ impl Default for ShortTerm {
         Self {
             goals: vec![],
             plan_vague: vec![],
-            plan_detailed: vec![],
-            action: Action::default(),
+            action_buffer: vec![],
+            curr_action: None,
             path: None,
+            chat_target_buffer: vec![],
         }
     }
 }

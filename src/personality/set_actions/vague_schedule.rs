@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use serde_json::{json, Value};
 
 use crate::{
@@ -13,7 +15,11 @@ use crate::{
 };
 
 impl crate::world::character::Character {
-    pub async fn daily_schedule(&mut self, llama: &Ollama, date: &Date) {
+    pub async fn daily_schedule(
+        &mut self,
+        llama: &Ollama,
+        date: &Date,
+    ) -> Result<(), Box<dyn Error>> {
         let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), self.vague(date));
         options.add_format_triple(
             "Schedule".to_string(),
@@ -59,9 +65,19 @@ impl crate::world::character::Character {
                         short_term_mem_mut.plan_vague.push(wake_action);
                         short_term_mem_mut.plan_vague.extend(plans);
                         short_term_mem_mut.plan_vague.push(sleep_action);
+                        return Ok(());
+                    } else {
+                        Err("Schedule Parsing Error.".into())
                     }
+                } else {
+                    Err("Schedule Parsing Error.".into())
                 }
+            } else {
+                Err("Response Format Error.".into())
             }
+        } else {
+            Err("Response Format Error.".into())
         }
+        // Err("Failed Vague Schedule".into())
     }
 }

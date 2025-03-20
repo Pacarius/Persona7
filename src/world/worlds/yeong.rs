@@ -144,7 +144,6 @@ pub fn yeong() -> World {
             "Bookshelf_001".to_string(),
             true,
         ));
-
         map.add_character(Character::new(
             28,
         vec!["Analytical".to_string(), "Methodical".to_string(), "Detail-oriented".to_string()], 
@@ -155,6 +154,7 @@ pub fn yeong() -> World {
         "Ava Thompson".to_string(), // name
             Coordinates(10, 3),
             5,
+            0
             ));
         map.add_region(apartment);
         map.add_region(street);
