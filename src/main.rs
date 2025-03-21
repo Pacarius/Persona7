@@ -15,8 +15,7 @@ use serde::Serialize;
 use serde_json::{json, Value};
 use world::{
     // test::test_char,
-    world_map::{Coordinates, WorldMap},
-    worlds::yeong::yeong,
+    navigation::Navigator, world_map::{Coordinates, WorldMap}, worlds::yeong::yeong
 };
 // use crate::world::helpers::MapHelper;
 use xcf::Xcf;
@@ -47,14 +46,20 @@ async fn main() {
     // adapter.main().await;
 
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
-let ollama = Ollama::new("192.168.50.84:11434".to_string(), false);
-let mut world = yeong();
-world.day_start(&ollama).await;
-let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));
-let map = world.get_map_mut();
-let character = map.get_character_mut("Ava Thompson".to_string());
-character.decide_room(&ollama, &datetime, map).await.unwrap();
-character.decompose_task(&ollama, &datetime).await.unwrap();
+    let ollama = Ollama::new("192.168.50.84:11434".to_string(), false);
+    let mut world = yeong();
+    world.day_start(&ollama).await;
+    let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));
+    let map = world.get_map_mut();
+    let navigator = Navigator::new(Some(map.region_slice()), Some(map.room_slice()), Some(map.collider_slice()), map.size());
+    let character = map.get_character_mut("Ava Thompson".to_string());
+    character
+        .decide_room(&ollama, &datetime, &navigator)
+        .await
+        .unwrap();
+    println!("{:?}", character.path());
+    println!("{}", character.short_term_mem().curr_action.as_ref().unwrap());
+    // character.decompose_task(&ollama, &datetime).await.unwrap();
 
     // let mut options = GenerateOptions::new(
     //     TEXT_MODEL.to_string(),

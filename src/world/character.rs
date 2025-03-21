@@ -53,9 +53,9 @@ pub struct Character {
     position: Coordinates,
     // location: Option<Room>,
     path: Option<VecDeque<Coordinates>>,
-    view_range: i64, 
+    view_range: i64,
     movement_cooldown_input: i64, //Extra number for inputting update to movement ratio.
-    movement_cooldown: i64
+    movement_cooldown: i64,
 }
 
 impl Character {
@@ -73,7 +73,7 @@ impl Character {
         // direction: Direction,
         // daily_tasks: Vec<String>,
         view_range: i64,
-        movement_cooldown_input: i64
+        movement_cooldown_input: i64,
     ) -> Self {
         Character {
             name,
@@ -91,7 +91,7 @@ impl Character {
             spatial: SpatialMemory::default(),
             view_range,
             movement_cooldown_input,
-            movement_cooldown: movement_cooldown_input
+            movement_cooldown: movement_cooldown_input,
         }
     }
     pub fn ascend(&mut self, map: &WorldMap) {
@@ -148,10 +148,10 @@ impl Character {
     }
     pub async fn decide(&mut self, llama: &Ollama, datetime: &DateTime) {}
 
-    pub fn get_location(&self, map: &WorldMap) -> (String, String) {
-        map.get_position_info(&self.position)
-            .unwrap_or(("Unknown".to_string(), "Unknown".to_string()))
-    }
+    // pub fn get_location(&self, map: &WorldMap) -> (String, String) {
+    //     map.get_position_info(&self.position)
+    //         .unwrap_or(("Unknown".to_string(), "Unknown".to_string()))
+    // }
     pub async fn tick(&mut self, time: &crate::misc::time::Time) {
         //Check if current action is done
         //match action(type) {
@@ -161,34 +161,27 @@ impl Character {
         //}
         //
         // let action_active = self.short_term_mem().curr_action.is_some();
-        if let Some(action) = &self.short_term_mem().curr_action{
-            if action.completed(time){
-
-            }
-            else {
-                match action.description(){
+        if let Some(action) = &self.short_term_mem().curr_action {
+            if action.completed(time) {
+            } else {
+                match action.description() {
                     val if val == "MOVE".to_string() => {
-                        if self.movement_cooldown <= 0{
+                        if self.movement_cooldown <= 0 {
                             //Move
                             self._move();
-                        }
-                        else {
+                        } else {
                             //Wait
                             self.movement_cooldown -= 1;
                         }
-                    },
+                    }
                     val if val == "TALK".to_string() => {
                         todo!()
-                    },
-                    _ => {
-
                     }
-                }                
+                    _ => {}
+                }
             }
-        }
-        else{
+        } else {
             //This should never happen but like ok
-
         }
         // match self.short_term_mem.curr_action.completed(time){
         //     true => {
@@ -199,7 +192,7 @@ impl Character {
         //     }
         // }
     }
-    pub fn movement_cooldown_max(&self) -> i64{
+    pub fn movement_cooldown_max(&self) -> i64 {
         self.movement_cooldown_input
     }
 }

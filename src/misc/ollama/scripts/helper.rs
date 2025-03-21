@@ -101,13 +101,16 @@ impl Character {
         Ok(source)
     }
     //BASED ON VAGUE SCHEDULE
-    pub fn ro(&self, datetime: &DateTime, map: &WorldMap
-        // , map: &WorldMap
+    pub fn ro(
+        &self,
+        datetime: &DateTime,
+        // map: &WorldMap, // , map: &WorldMap
+        location: (String, String),
     ) -> Result<String, Box<dyn Error>> {
         let surrounding = self.short_term_mem().surrounding_tasks(datetime.1);
         // println!("{:?}", surrounding);
         let curr_acction = surrounding.get(1).unwrap();
-        let location = self.get_location(map);
+        // let location = self.get_location(map);
         let source = format!(
             "{common}
             Today is {weekday} {date}.
@@ -120,7 +123,7 @@ impl Character {
             date = datetime.0,
             curr_action = curr_acction.description,
             region = location.0,
-            room = location.1, 
+            room = location.1,
             // action = curr_acction.description,
             spatial = self.spatial_mem(),
         );

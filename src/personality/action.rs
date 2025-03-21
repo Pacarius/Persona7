@@ -10,8 +10,6 @@ pub struct Chat {
     log: Vec<String>,
     end_time: i64,
 }
-
-// #[derive(Debug)]
 pub struct Action {
     location: (String, String),
     start_time: Time,
@@ -29,9 +27,11 @@ impl Action {
         let (end_time, day) = self.start_time + Time::from_seconds(self.intended_duration);
         day > 0 || time >= &end_time
     }
-    pub fn to_string(&self) -> String {
+    fn d(&self) -> String {
         format!(
-            "Currently {} at {}, {}.{}",
+            "Start Time: {}.\n Intended Duration: {}.\n Currently {} at {}, {}.{}",
+            self.start_time,
+            self.intended_duration,
             self.description,
             self.location.0,
             self.location.1,
@@ -41,7 +41,7 @@ impl Action {
             }
         )
     }
-    pub fn description(&self) -> String{
+    pub fn description(&self) -> String {
         self.description.clone()
     }
     pub fn new(
@@ -80,11 +80,16 @@ impl Action {
 //         }
 //     }
 // }
+impl Display for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.d())
+    }
+}
 pub enum ProperAction {
     SLEEP,
     WAKE,
     MOVE,
-    TALK
+    TALK,
 }
 impl Display for ProperAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

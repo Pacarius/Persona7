@@ -35,9 +35,12 @@ impl crate::world::character::Character {
                 ),
             );
             if let Some(response_str) = llama.generate(options).await["response"].as_str() {
+                //Remember this shit is all in minutes
                 // println!("Source: {} \n{}", self.decompose(datetime), response_str);
                 // if let Ok(re)
                 // Ok(())
+                // self.short_term_mem_mut().action_buffer
+                
                 todo!()
             } else {
                 Err("Ollama Response Error.".into())

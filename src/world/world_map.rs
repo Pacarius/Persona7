@@ -82,7 +82,7 @@ impl MapObject {
         self.region.clone()
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Region {
     name: String,
     position: Coordinates,
@@ -125,8 +125,14 @@ impl Region {
     pub fn rooms(&self) -> Vec<&Room> {
         self.rooms.iter().map(|r| r).collect()
     }
+    pub fn position(&self) -> &Coordinates {
+        &self.position
+    }
+    pub fn size(&self) -> &Coordinates {
+        &self.size
+    }
 }
-#[derive(PartialEq, Eq, Hash, Debug)]
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct Room {
     //Position: (XTop, YTop); Size: (XSize, YSize)
     name: String,
@@ -169,6 +175,12 @@ impl Room {
     }
     pub fn name(&self) -> String {
         self.name.clone()
+    }
+    pub fn position(&self) -> &Coordinates {
+        &self.position
+    }
+    pub fn size(&self) -> &Coordinates {
+        &self.size
     }
 }
 pub struct WorldMap {
@@ -221,8 +233,30 @@ impl WorldMap {
             self.walls.retain(|w| !holes.contains(&w));
         }
     }
-    //EXTREMELY INEFFICIENT BUT I'M OUT OF TIME, I'M JUST GONNA CALL THIS ONCE EVERY SERVER UPDATE FRAME WOOOOOO
-    //NOOOOOOO I'M GONNA ONLY DO THIS ONCE AND ADD ANOTHER THING WHICH ONLY DOES CHARACTERS
+    fn get_position_info(&self, position: &Coordinates) -> Option<(String, String)> {
+        // if let Some(regions) = &self.regions {
+        return self.regions.iter().find_map(|region| {
+            if position.0 >= region.position().0
+                && position.0 < region.position().0 + region.size().0
+                && position.1 >= region.position().1
+                && position.1 < region.position().1 + region.size().1
+            {
+                region.rooms().iter().find_map(|room| {
+                    if position.0 >= room.position().0
+                        && position.0 < room.position().0 + room.size().0
+                        && position.1 >= room.position().1
+                        && position.1 < room.position().1 + room.size().1
+                    {
+                        Some((region.name(), room.name()))
+                    } else {
+                        None
+                    }
+                })
+            } else {
+                None
+            }
+        });
+    }
     pub fn calculate_colliders(&mut self) {
         self.colliders = vec![vec![None; self.size.0]; self.size.1];
         for w in &self.walls {
@@ -358,52 +392,52 @@ impl WorldMap {
     // pub fn get_character(&self, name: String) -> &Character{
     //     self.characters.iter().filter(|f| f.name == name).nth(0).unwrap()
     // }
-    pub fn get_path(&self, name: String, target: Coordinates) -> Option<VecDeque<Coordinates>> {
-        let start = &self.get_character(name).position();
-        let goal = &target;
+    // pub fn get_path(&self, name: String, target: Coordinates) -> Option<VecDeque<Coordinates>> {
+    //     let start = &self.get_character(name).position();
+    //     let goal = &target;
 
-        let (start_x, start_y) = (start.0, start.1);
-        let (goal_x, goal_y) = (goal.0, goal.1);
+    //     let (start_x, start_y) = (start.0, start.1);
+    //     let (goal_x, goal_y) = (goal.0, goal.1);
 
-        let mut queue = VecDeque::new();
-        let mut visited = HashSet::new();
-        let mut came_from = HashMap::new();
+    //     let mut queue = VecDeque::new();
+    //     let mut visited = HashSet::new();
+    //     let mut came_from = HashMap::new();
 
-        queue.push_back((start_x, start_y));
-        visited.insert((start_x, start_y));
+    //     queue.push_back((start_x, start_y));
+    //     visited.insert((start_x, start_y));
 
-        while let Some((x, y)) = queue.pop_front() {
-            if (x, y) == (goal_x, goal_y) {
-                let mut path = VecDeque::new();
-                let mut current = (goal_x, goal_y);
+    //     while let Some((x, y)) = queue.pop_front() {
+    //         if (x, y) == (goal_x, goal_y) {
+    //             let mut path = VecDeque::new();
+    //             let mut current = (goal_x, goal_y);
 
-                while current != (start_x, start_y) {
-                    path.push_back(Coordinates(current.0, current.1));
-                    current = came_from[&current];
-                }
+    //             while current != (start_x, start_y) {
+    //                 path.push_back(Coordinates(current.0, current.1));
+    //                 current = came_from[&current];
+    //             }
 
-                path.push_back(Coordinates(start_x, start_y));
-                return Some(path.iter().rev().cloned().collect());
-            }
+    //             path.push_back(Coordinates(start_x, start_y));
+    //             return Some(path.iter().rev().cloned().collect());
+    //         }
 
-            for (dx, dy) in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
-                let new_x = (x as isize + dx) as usize;
-                let new_y = (y as isize + dy) as usize;
+    //         for (dx, dy) in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
+    //             let new_x = (x as isize + dx) as usize;
+    //             let new_y = (y as isize + dy) as usize;
 
-                if new_x < self.size.0
-                    && new_y < self.size.1
-                    && self.colliders[new_x][new_y].is_none()
-                    && !visited.contains(&(new_x, new_y))
-                {
-                    queue.push_back((new_x, new_y));
-                    visited.insert((new_x, new_y));
-                    came_from.insert((new_x, new_y), (x, y));
-                }
-            }
-        }
+    //             if new_x < self.size.0
+    //                 && new_y < self.size.1
+    //                 && self.colliders[new_x][new_y].is_none()
+    //                 && !visited.contains(&(new_x, new_y))
+    //             {
+    //                 queue.push_back((new_x, new_y));
+    //                 visited.insert((new_x, new_y));
+    //                 came_from.insert((new_x, new_y), (x, y));
+    //             }
+    //         }
+    //     }
 
-        None
-    }
+    //     None
+    // }
     // pub fn get_path_visual(&self, name: String) -> String {
     //     let character = self.get_character(name.clone());
     //     let path = match character.path() {
@@ -424,67 +458,48 @@ impl WorldMap {
     //         .collect::<Vec<String>>()
     //         .join("\n")
     // }
-    pub fn set_path(&mut self, name: String, position: Coordinates) {
-        match self.get_path(name.clone(), position) {
-            Some(o) => self.get_character_mut(name).set_path(o),
-            None => println!("No paths available."),
-        }
-        // self.get_character_mut(name).set_path(self.get_path(name, position));
-    }
-    pub fn get_pos_room(&self, location: (String, String)) -> Option<Coordinates> {
-        let (region_name, room_name) = location;
+    // pub fn set_path(&mut self, name: String, position: Coordinates) {
+    //     match self.get_path(name.clone(), position) {
+    //         Some(o) => self.get_character_mut(name).set_path(o),
+    //         None => println!("No paths available."),
+    //     }
+    //     // self.get_character_mut(name).set_path(self.get_path(name, position));
+    // }
+    // pub fn get_pos_room(&self, location: (String, String)) -> Option<Coordinates> {
+    //     let (region_name, room_name) = location;
 
-        let region = self.regions.iter().find(|r| r.name == region_name)?;
+    //     let region = self.regions.iter().find(|r| r.name == region_name)?;
 
-        let room = region.rooms.iter().find(|r| r.name == room_name)?;
+    //     let room = region.rooms.iter().find(|r| r.name == room_name)?;
 
-        for x in room.position.0..(room.position.0 + room.size.0) {
-            for y in room.position.1..(room.position.1 + room.size.1) {
-                let coord = Coordinates(x, y);
-                if self.colliders[x][y].is_none() {
-                    return Some(coord);
-                }
-            }
-        }
+    //     for x in room.position.0..(room.position.0 + room.size.0) {
+    //         for y in room.position.1..(room.position.1 + room.size.1) {
+    //             let coord = Coordinates(x, y);
+    //             if self.colliders[x][y].is_none() {
+    //                 return Some(coord);
+    //             }
+    //         }
+    //     }
 
-        None
-    }
-    pub fn set_path_character(
-        &self,
-        character: &mut Character,
-        location: (String, String),
-    ) -> Result<VecDeque<Coordinates>, Box<dyn Error>> {
-        if let Some(pos) = self.get_pos_room(location) {
-            if let Some(path) = self.get_path(character.name().clone(), pos) {
-                character.set_path(path.clone());
-                Ok(path)
-            } else {
-                Err("Path not available".into())
-            }
-        } else {
-            Err("Room/Region pair doesn't exist.".into())
-        }
-    }
-    pub fn get_position_info(&self, position: &Coordinates) -> Option<(String, String)> {
-        for region in &self.regions {
-            if position.0 >= region.position.0
-                && position.0 < region.position.0 + region.size.0
-                && position.1 >= region.position.1
-                && position.1 < region.position.1 + region.size.1
-            {
-                for room in &region.rooms {
-                    if position.0 >= room.position.0
-                        && position.0 < room.position.0 + room.size.0
-                        && position.1 >= room.position.1
-                        && position.1 < room.position.1 + room.size.1
-                    {
-                        return Some((region.name(), room.name()));
-                    }
-                }
-            }
-        }
-        None
-    }
+    //     None
+    // }
+    // pub fn set_path_character(
+    //     &self,
+    //     character: &mut Character,
+    //     location: (String, String),
+    // ) -> Result<VecDeque<Coordinates>, Box<dyn Error>> {
+    //     if let Some(pos) = self.get_pos_room(location) {
+    //         if let Some(path) = self.get_path(character.name().clone(), pos) {
+    //             character.set_path(path.clone());
+    //             Ok(path)
+    //         } else {
+    //             Err("Path not available".into())
+    //         }
+    //     } else {
+    //         Err("Room/Region pair doesn't exist.".into())
+    //     }
+    // }
+
     pub fn objects(&self) -> Vec<&MapObject> {
         self.objects.iter().map(|f| f).collect()
     }
@@ -568,6 +583,33 @@ impl WorldMap {
         .await;
         // self.calculate_colliders();
     }
+    // pub async fn test(&mut self, llama: &Ollama, datetime: &DateTime){
+    //     self.characters.iter_mut().for_each(|f|{
+    //         f.decide_room(llama, datetime, &self);
+    //     });
+    // }
+    pub fn region_slice(&self) -> Vec<Region> {
+        self.regions.clone()
+    }
+    pub fn room_slice(&self) -> Vec<Room> {
+        let mut container = vec![];
+        self.regions.iter().for_each(|f| {
+            f.rooms
+                .iter()
+                .filter(|r| r.region_name.is_some())
+                .for_each(|r| container.push(r.clone()))
+        });
+        container
+    }
+    pub fn collider_slice(&self) -> Vec<Vec<Option<String>>> {
+        self.colliders.clone()
+    }
+    pub fn size(&self) -> Coordinates {
+        self.size.clone()
+    }
+    // pub fn map_info_slice(&self) -> (Vec<Region>, Vec<Room>, Vec<Vec<Option<String>>>){
+    //     (self.region_slice(),)
+    // }
 }
 impl Display for WorldMap {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -588,3 +630,4 @@ impl Display for WorldMap {
         write!(f, "Regions:\n{}\n\nColliders:\n{}", regions, colliders)
     }
 }
+// pub struct MapInfoSlice(Vec<Region>, Vec<Room>, Vec<Vec<Option<String>>>);

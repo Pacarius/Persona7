@@ -10,7 +10,10 @@ use crate::{
             options::{FormatPair, GenerateOptions},
         },
         time::DateTime,
-    }, personality::action::{Action, ProperAction}, world::world_map::WorldMap, TEXT_MODEL, TIME_STEP
+    },
+    personality::action::{Action, ProperAction},
+    world::{navigation::Navigator, world_map::WorldMap},
+    TEXT_MODEL, TIME_STEP,
 };
 
 impl crate::world::character::Character {
@@ -18,9 +21,13 @@ impl crate::world::character::Character {
         &mut self,
         llama: &Ollama,
         datetime: &DateTime,
-        map: &WorldMap,
+        // map: &WorldMap,
+        navigator: &Navigator,
     ) -> Result<(), Box<dyn Error>> {
-        if let Ok(ro) = self.ro(datetime, map) {
+        if let Ok(ro) = self.ro(
+            datetime,
+            navigator.get_position_info(self.position()).unwrap(),
+        ) {
             let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), ro);
             options.add_format_pair(
                 "location".to_string(),
@@ -31,12 +38,18 @@ impl crate::world::character::Character {
             );
 
             if let Some(response_str) = llama.generate(options).await["response"].as_str() {
+                // println!("{}", response_str);
                 if let Ok(response_json) = serde_json::from_str::<Value>(response_str) {
                     if let (Some(region), Some(room)) = (
-                        response_json["region"].as_str(),
-                        response_json["room"].as_str(),
+                        response_json["location"]["region"].as_str(),
+                        response_json["location"]["room"].as_str(),
                     ) {
-                        let path = map.set_path_character(self, (region.to_string(), room.to_string()))?;
+                        // let path =
+                        //     map.set_path_character(self, (region.to_string(), room.to_string()))?;
+                        let target = navigator
+                            .get_pos_room((region.to_string(), room.to_string()))
+                            .unwrap();
+                        let path = navigator.get_path(self.position().clone(), target).unwrap();
                         self.short_term_mem_mut().curr_action = Some(Action::new(
                             ("MOVING".to_string(), "MOVING".to_string()),
                             datetime.1,
@@ -45,6 +58,7 @@ impl crate::world::character::Character {
                             None,
                             None,
                         ));
+                        self.set_path(path);
                         Ok(())
                     } else {
                         Err(("Repsonse Format Error".into()))
