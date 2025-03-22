@@ -2,6 +2,7 @@ use core::time;
 use std::collections::{HashSet, VecDeque};
 use std::error::Error;
 use std::future;
+use std::iter::Map;
 use std::marker::PhantomData;
 
 use std::{
@@ -20,6 +21,7 @@ use crate::misc::ollama::ollama::Ollama;
 use crate::misc::time::{Date, DateTime, Time};
 
 use super::character::Character;
+use super::navigation::Navigator;
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 //AT SOME POINT THE X,Y COORDINATES OF EVERYTHING FLIPPED KILL ME
@@ -30,7 +32,7 @@ impl Display for Coordinates {
     }
 }
 // pub struct Character(Identity, String);
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MapObject {
     horizontal: i64,
     vertical: i64,
@@ -41,6 +43,7 @@ pub struct MapObject {
     action: Option<String>,
     region: String,
     room: String,
+    owner: Option<String>,
 }
 impl MapObject {
     pub fn new(
@@ -61,6 +64,7 @@ impl MapObject {
             action: None,
             region: "".to_string(),
             room: "".to_string(),
+            owner: None,
         }
     }
     pub fn name(&self) -> &String {
@@ -80,6 +84,15 @@ impl MapObject {
     }
     pub fn region(&self) -> String {
         self.region.clone()
+    }
+    pub fn position(&self) -> &Coordinates {
+        &self.position
+    }
+    pub fn owner(&self) -> &Option<String> {
+        &self.owner
+    }
+    pub fn set_owner(&mut self, name: Option<String>) {
+        self.owner = name;
     }
 }
 #[derive(Debug, Clone)]
@@ -506,61 +519,77 @@ impl WorldMap {
     pub fn regions(&self) -> Vec<&Region> {
         self.regions.iter().map(|r| r).collect()
     }
-    pub fn get_visible_objects(&self, character: &Character) -> HashMap<String, Vec<Coordinates>> {
-        let (source_name, source_pos, v_range): (&String, &Coordinates, &i64) =
-            (character.name(), character.position(), character.v_range());
-        let mut visible_objects: HashMap<String, Vec<Coordinates>> = HashMap::new();
+    // pub fn get_visible_objects(&self, character: &Character) -> HashMap<String, Vec<Coordinates>> {
+    //     let (source_name, source_pos, v_range): (&String, &Coordinates, &i64) =
+    //         (character.name(), character.position(), character.v_range());
+    //     let mut visible_objects: HashMap<String, Vec<Coordinates>> = HashMap::new();
 
-        for object in &self.objects {
-            let object_pos = &object.position;
-            let distance = ((object_pos.0 as i64 - source_pos.0 as i64).pow(2)
-                + (object_pos.1 as i64 - source_pos.1 as i64).pow(2))
-            .isqrt() as i64;
-            // println!("{}", distance);
-            if distance <= *v_range {
-                let mut obstructed = false;
-                let (x0, y0) = (source_pos.0 as i64, source_pos.1 as i64);
-                let (x1, y1) = (object_pos.0 as i64, object_pos.1 as i64);
+    //     for object in &self.objects {
+    //         let object_pos = &object.position;
+    //         let distance = ((object_pos.0 as i64 - source_pos.0 as i64).pow(2)
+    //             + (object_pos.1 as i64 - source_pos.1 as i64).pow(2))
+    //         .isqrt() as i64;
+    //         // println!("{}", distance);
+    //         if distance <= *v_range {
+    //             let mut obstructed = false;
+    //             let (x0, y0) = (source_pos.0 as i64, source_pos.1 as i64);
+    //             let (x1, y1) = (object_pos.0 as i64, object_pos.1 as i64);
 
-                // Bresenham's line algorithm to check for walls
-                let dx = (x1 - x0).abs();
-                let dy = -(y1 - y0).abs();
-                let mut err = dx + dy;
-                let mut x = x0;
-                let mut y = y0;
+    //             // Bresenham's line algorithm to check for walls
+    //             let dx = (x1 - x0).abs();
+    //             let dy = -(y1 - y0).abs();
+    //             let mut err = dx + dy;
+    //             let mut x = x0;
+    //             let mut y = y0;
 
-                let sx = if x0 < x1 { 1 } else { -1 };
-                let sy = if y0 < y1 { 1 } else { -1 };
+    //             let sx = if x0 < x1 { 1 } else { -1 };
+    //             let sy = if y0 < y1 { 1 } else { -1 };
 
-                while x != x1 || y != y1 {
-                    if let Some(collider) = &self.colliders[x as usize][y as usize] {
-                        if collider == "Wall" {
-                            obstructed = true;
-                            break;
-                        }
-                    }
+    //             while x != x1 || y != y1 {
+    //                 if let Some(collider) = &self.colliders[x as usize][y as usize] {
+    //                     if collider == "Wall" {
+    //                         obstructed = true;
+    //                         break;
+    //                     }
+    //                 }
 
-                    let e2 = 2 * err;
-                    if e2 >= dy {
-                        err += dy;
-                        x += sx;
-                    }
-                    if e2 <= dx {
-                        err += dx;
-                        y += sy;
-                    }
-                }
+    //                 let e2 = 2 * err;
+    //                 if e2 >= dy {
+    //                     err += dy;
+    //                     x += sx;
+    //                 }
+    //                 if e2 <= dx {
+    //                     err += dx;
+    //                     y += sy;
+    //                 }
+    //             }
 
-                if !obstructed {
-                    visible_objects
-                        .entry(object.name().clone())
-                        .or_insert_with(Vec::new)
-                        .push(object.position.clone());
-                }
-            }
+    //             if !obstructed {
+    //                 visible_objects
+    //                     .entry(object.name().clone())
+    //                     .or_insert_with(Vec::new)
+    //                     .push(object.position.clone());
+    //             }
+    //         }
+    //     }
+
+    //     visible_objects
+    // }
+    pub fn set_object(
+        &mut self,
+        object_name: String,
+        owner_name: Option<String>,
+    ) -> Result<(), Box<dyn Error>> {
+        if let Some(o) = self
+            .objects
+            .iter_mut()
+            .filter(|o| *o.name() == object_name)
+            .nth(1)
+        {
+            o.set_owner(owner_name);
+            return Ok(());
         }
-
-        visible_objects
+        Err(("Object Doesn't Exist.".into()))
     }
     pub async fn day_start(&mut self, llama: &Ollama, date: Date) {
         join_all(
@@ -570,15 +599,16 @@ impl WorldMap {
         )
         .await;
     }
-    pub async fn update(&mut self, time: Time) {
+    pub async fn update(&mut self, datetime: &DateTime, llama: &Ollama) {
         // let (new_time, _) = self.datetime.1 + Time::from_seconds(TIME_STEP);
         // self.datetime.1 = new_time;
+        let navigator = Navigator::new(self);
         join_all(
             self
                 // .get_map_mut()
                 .get_characters_mut()
                 .iter_mut()
-                .map(|f| f.tick(&time)),
+                .map(|f| f.tick(datetime, &navigator, llama))
         )
         .await;
         // self.calculate_colliders();
@@ -603,6 +633,9 @@ impl WorldMap {
     }
     pub fn collider_slice(&self) -> Vec<Vec<Option<String>>> {
         self.colliders.clone()
+    }
+    pub fn object_slice(&self) -> Vec<MapObject> {
+        self.objects.clone()
     }
     pub fn size(&self) -> Coordinates {
         self.size.clone()

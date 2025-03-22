@@ -38,13 +38,32 @@ impl World {
     // }
 }
 impl World {
-    pub async fn day_start(&mut self, llama: &Ollama) {
+    pub async fn day_start(&mut self, llama: &Ollama) -> Time{
         let date = self.datetime.0.clone();
         self.get_map_mut().day_start(llama, date).await;
+        let mut day_start_time: Vec<&Time> = self.get_map().get_characters().iter().map(|c| &c.short_term_mem().plan_vague.iter().nth(1).unwrap().start).collect();
+        day_start_time.sort();
+        **day_start_time.iter().nth(0).unwrap()
     }
-    pub async fn tick(&mut self) {
-        let (new_time, _) = self.datetime.1 + Time::from_seconds(TIME_STEP);
-        self.datetime.1 = new_time;
-        self.get_map_mut().update(new_time).await;
+    pub async fn tick(&mut self, llama: &Ollama) {
+        let new_datetime = self.datetime.clone() + Time::from_seconds(TIME_STEP);
+        self.get_map_mut().update(&new_datetime, llama).await;
+        self.datetime = new_datetime;
+    }
+    pub async fn set_day_end(&self) -> Time{
+        let mut day_end_time: Vec<&Time> = self.get_map().get_characters().iter().map(|c| &c.short_term_mem().plan_vague.iter().last().unwrap().start).collect();
+        day_end_time.sort();
+        **day_end_time.iter().last().unwrap()
+    }
+    pub async fn day(&mut self, llama: &Ollama){
+        let start_time = self.day_start(llama).await;
+        let end_time = self.set_day_end().await;
+        self.datetime.1 = start_time - Time::from_seconds(1);
+        while self.datetime.1 < end_time{
+            self.tick(llama).await;
+        }
+        for c in self.get_map_mut().get_characters_mut(){
+            c.clear();
+        }
     }
 }

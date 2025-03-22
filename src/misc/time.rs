@@ -3,7 +3,7 @@ use std::{
     fmt::Display,
     ops::{Add, AddAssign, Sub},
 };
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq)]
 pub struct Time {
     //Seconds Elapsed Since 0.0
     hour: i64,
@@ -69,6 +69,11 @@ impl PartialOrd for Time {
             ord => return ord,
         }
         self.sec.partial_cmp(&other.sec)
+    }
+}
+impl Ord for Time{
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.in_seconds().cmp(&self.in_seconds())
     }
 }
 
@@ -204,7 +209,7 @@ impl Display for Date {
     }
 }
 // #[derive(Debug)]
-// #[derive(Clone)]
+#[derive(Clone)]
 pub struct DateTime(pub Date, pub Time);
 impl DateTime {
     pub fn add(&mut self, time: Time) {
@@ -216,6 +221,18 @@ impl DateTime {
 impl Display for DateTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.0, self.1)
+    }
+}
+impl Add<Time> for DateTime{
+    type Output = DateTime;
+    fn add(self, rhs: Time) -> Self::Output {
+        // todo!()
+        let (time, days) = self.1 + rhs;
+        let mut new = DateTime(self.0, self.1);
+        new.0.add_days(days);
+        new.1 = time;
+        new
+
     }
 }
 pub fn weekday(date: &Date) -> String {

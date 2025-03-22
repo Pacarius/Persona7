@@ -5,7 +5,10 @@ use futures::future::LocalBoxFuture;
 use crate::{
     misc::time::{weekday, Date, DateTime, Time},
     personality::action::fmt_abv,
-    world::{character::Character, world_map::WorldMap},
+    world::{
+        character::Character,
+        world_map::{MapObject, WorldMap},
+    },
 };
 impl Character {
     pub fn rest_wake(&self) -> String {
@@ -37,10 +40,11 @@ impl Character {
         );
         source
     }
-    pub fn decompose(&self, datetime: &DateTime) -> Result<String, Box<dyn Error>> {
+    pub fn decompose(&self, datetime: &DateTime) -> Result<(String, i64, Time), Box<dyn Error>> {
         let surrounding = self.short_term_mem().surrounding_tasks(datetime.1);
         // println!("{:?}", surrounding);
         let curr_acction = surrounding.get(1).unwrap();
+        let duration = (curr_acction.end - curr_acction.start).in_seconds() / 60;
         let source = format!(
             "{common}
             Today is {weekday} {date}.
@@ -54,7 +58,7 @@ impl Character {
             surrounding = fmt_abv(surrounding),
             action = curr_acction.description,
             start_time = curr_acction.start,
-            duration = (curr_acction.end - curr_acction.start).in_seconds()/ 60,
+            duration = duration,
             sample = "
             {
     \"Detailed_Tasks\": [
@@ -98,7 +102,31 @@ impl Character {
             "
         );
         // println!("{}", source);
-        Ok(source)
+        Ok((source, duration, curr_acction.start))
+    }
+    pub fn pick_object(&self, datetime: &DateTime, objects: &Vec<&String>) -> String {
+        let current = self
+            .short_term_mem()
+            .surrounding_tasks(datetime.1)
+            .get(1)
+            .unwrap();
+        let source = format!(
+            "{common}
+            {curr_object}
+            You are planning on {curr_action}
+            Here is a list of objects that you can see {object_list:?}.
+            Return an appropriate object for the event, or if no valid objects are present, return 'NONE'.",
+            common = self,
+            curr_object = match &self.short_term_mem().curr_object{
+                Some(o) => {format!(
+                    "You are currently using {},",
+                    o.name())},
+                None => {format!("")}
+            },
+            curr_action = current,
+            object_list = objects
+        );
+        source
     }
     //BASED ON VAGUE SCHEDULE
     pub fn ro(

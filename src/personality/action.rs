@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use futures::future::Map;
+
 use crate::{
     misc::time::Time,
     world::world_map::{MapObject, Region, Room},
@@ -16,10 +18,10 @@ pub struct Action {
     intended_duration: i64,
     description: String,
     // description_emoji: String,
-    object: Option<MapObject>,
+    object: Option<String>,
     //Chat
     chat: Option<Chat>,
-    // chat_target_buffer: Vec<String>,
+    // cleanup: Option<Box<dyn Fn() -> ()>>, // chat_target_buffer: Vec<String>,
 }
 impl Action {
     pub fn completed(&self, time: &Time) -> bool {
@@ -36,11 +38,14 @@ impl Action {
             self.location.0,
             self.location.1,
             match &self.object {
-                Some(o) => format!(" {} {}.", o.action().clone().unwrap(), o.name()),
+                Some(o) => o.clone(),
                 None => String::new(),
             }
         )
     }
+    // pub fn cleanup(&mut self){
+    //     self.cleanup
+    // }
     pub fn description(&self) -> String {
         self.description.clone()
     }
@@ -50,9 +55,9 @@ impl Action {
         intended_duration: i64,
         description: String,
         // description_emoji: String,
-        object: Option<MapObject>,
+        object: Option<String>,
         chat: Option<Chat>,
-        // chat_target_buffer: Vec<String>,
+        // cleanup: Option<Box<dyn Fn() -> ()>>, // chat_target_buffer: Vec<String>,
     ) -> Self {
         Self {
             location,
@@ -62,8 +67,11 @@ impl Action {
             // description_emoji,
             object,
             chat,
-            // chat_target_buffer,
+            // cleanup, // chat_target_buffer,
         }
+    }
+    pub fn object(&self) -> Option<String> {
+        self.object.clone()
     }
 }
 // impl Default for Action {

@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::{
     misc::{
@@ -8,8 +8,9 @@ use crate::{
             ollama::Ollama,
             options::{FormatPair, FormatTriple, GenerateOptions},
         },
-        time::DateTime,
+        time::{DateTime, Time},
     },
+    personality::action::ActionBare,
     TEXT_MODEL,
 };
 
@@ -21,7 +22,7 @@ impl crate::world::character::Character {
     ) -> Result<(), Box<dyn Error>> {
         //Called when new action starts.
         // println!("{}", self.decompose(datetime));
-        if let Ok(prompt) = self.decompose(datetime) {
+        if let Ok((prompt, total_duration, start_time)) = self.decompose(datetime) {
             let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), prompt);
             options.add_format_triple(
                 "Detailed_Tasks".to_string(),
@@ -35,13 +36,43 @@ impl crate::world::character::Character {
                 ),
             );
             if let Some(response_str) = llama.generate(options).await["response"].as_str() {
-                //Remember this shit is all in minutes
-                // println!("Source: {} \n{}", self.decompose(datetime), response_str);
-                // if let Ok(re)
-                // Ok(())
-                // self.short_term_mem_mut().action_buffer
-                
-                todo!()
+                if let Ok(response_json) = serde_json::from_str::<Value>(response_str) {
+                    if let Some(tasks) = response_json["Detailed_Tasks"].as_array() {
+                        // println!("Input duration: {}", prompt.1);
+                        //IN MINUTES
+                        let mut accumulated = 0;
+                        tasks.into_iter().for_each(|task| {
+                            if let (Some(details), Some(duration)) = (
+                                task["subtask_details"].as_str(),
+                                task["subtask_duration"].as_i64(),
+                            ) {
+                                accumulated += duration;
+                                let duration = Time::from_seconds(duration * 60);
+                                let start_time = start_time + duration;
+                                self.action_buffer_mut().push_back(ActionBare::new(
+                                    details.to_string(),
+                                    start_time.0,
+                                    (start_time.0 + duration).0,
+                                ));
+
+                                // self.action_buffer_mut().push(ActionBare{
+
+                                // });
+                                // println!("{} for {} minutes")
+                            }
+                            // println!("{}", task);
+                        });
+                    }
+                    //Remember this shit is all in minutes
+                    // println!("Source: {} \n{}", self.decompose(datetime), response_str);
+                    // if let Ok(re)
+                    // Ok(())
+                    // self.short_term_mem_mut().action_buffer
+
+                    todo!()
+                } else {
+                    Err("Ollama Response Error.".into())
+                }
             } else {
                 Err("Ollama Response Error.".into())
             }

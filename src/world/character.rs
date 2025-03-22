@@ -12,13 +12,16 @@ use crate::{
         time::{Date, DateTime, Time, DAY_LENGTH},
     },
     personality::{
-        action::{ActionBare, ProperAction},
+        action::{Action, ActionBare, ProperAction},
         memory::{short_term::ShortTerm, spatial::SpatialMemory},
     },
     TEXT_MODEL,
 };
 
-use super::world_map::{Coordinates, Room, WorldMap};
+use super::{
+    navigation::{self, Navigator},
+    world_map::{Coordinates, Room, WorldMap},
+};
 
 // use super::world::WorldListener;
 
@@ -56,6 +59,7 @@ pub struct Character {
     view_range: i64,
     movement_cooldown_input: i64, //Extra number for inputting update to movement ratio.
     movement_cooldown: i64,
+    moved_this_turn: bool
 }
 
 impl Character {
@@ -92,6 +96,7 @@ impl Character {
             view_range,
             movement_cooldown_input,
             movement_cooldown: movement_cooldown_input,
+            moved_this_turn: false
         }
     }
     pub fn ascend(&mut self, map: &WorldMap) {
@@ -121,6 +126,9 @@ impl Character {
     pub fn path(&self) -> &Option<VecDeque<Coordinates>> {
         &self.path
     }
+    pub fn action_buffer_mut(&mut self) -> &mut VecDeque<ActionBare> {
+        &mut self.short_term_mem_mut().action_buffer
+    }
     pub fn _move(&mut self) -> Option<(Coordinates, Coordinates)> {
         if let Some(path) = &mut self.path {
             if path.len() >= 2 {
@@ -146,13 +154,13 @@ impl Character {
         self.wake_time(llama).await;
         self.daily_schedule(llama, date).await;
     }
-    pub async fn decide(&mut self, llama: &Ollama, datetime: &DateTime) {}
+    // pub async fn decide(&mut self, llama: &Ollama, datetime: &DateTime) {}
 
     // pub fn get_location(&self, map: &WorldMap) -> (String, String) {
     //     map.get_position_info(&self.position)
     //         .unwrap_or(("Unknown".to_string(), "Unknown".to_string()))
     // }
-    pub async fn tick(&mut self, time: &crate::misc::time::Time) {
+    pub async fn tick(&mut self, datetime: &DateTime, navigator: &Navigator, llama: &Ollama) -> Option<(String, String)>{
         //Check if current action is done
         //match action(type) {
         // MOVE => Move
@@ -161,13 +169,36 @@ impl Character {
         //}
         //
         // let action_active = self.short_term_mem().curr_action.is_some();
+        // let (date, time) = (datetime.0.clone(), datetime.1);
         if let Some(action) = &self.short_term_mem().curr_action {
-            if action.completed(time) {
+            if action.completed(&datetime.1) {
+                let action_buffer = self.action_buffer_mut();
+                if let Some(new_action) = action_buffer.pop_front() {
+                    let current_object = match &self.short_term_mem().curr_object {
+                        Some(o) => Some(o.name()),
+                        None => None,
+                    };
+                    self.short_term_mem_mut().curr_action = Some(Action::new(
+                        navigator.get_position_info(&self.position).unwrap(),
+                        new_action.start,
+                        (new_action.end - new_action.start).in_seconds(),
+                        new_action.description,
+                        current_object.cloned(),
+                        None,
+                    ))
+                } else {
+                    self.decompose_task(llama, datetime).await.unwrap();
+                    let objects = navigator.get_visible_objects(&self);
+                    let visible_objects: Vec<&String> = objects.iter().map(|pair| &*pair.0).collect();
+                    let target = self.pick_object(datetime, &visible_objects);
+                    return Some((self.name.clone(), target))
+                }
             } else {
                 match action.description() {
                     val if val == "MOVE".to_string() => {
                         if self.movement_cooldown <= 0 {
                             //Move
+                            self.movement_cooldown = self.movement_cooldown_max();
                             self._move();
                         } else {
                             //Wait
@@ -191,9 +222,15 @@ impl Character {
         //         match self.short_term_mem().curr_action
         //     }
         // }
+        None
     }
     pub fn movement_cooldown_max(&self) -> i64 {
         self.movement_cooldown_input
+    }
+    pub fn clear(&mut self){
+        self.short_term_mem_mut().action_buffer.clear();
+        self.short_term_mem_mut().plan_vague.clear();
+        self.short_term_mem_mut().path = None;
     }
 }
 impl Display for Character {
