@@ -33,7 +33,7 @@ impl ShortTerm {
     pub fn surrounding_tasks(&self, time: Time) -> &[ActionBare] {
         let mut start_index = None;
         let mut end_index = None;
-
+        // println!("Getting Tasks Surrounding: {}", time);
         for (i, task) in self.plan_vague.iter().enumerate() {
             if task.start <= time && task.end > time {
                 start_index = Some(if i > 0 { i - 1 } else { i });
@@ -45,9 +45,12 @@ impl ShortTerm {
                 break;
             }
         }
-
         if let (Some(start), Some(end)) = (start_index, end_index) {
-            &self.plan_vague[start..end.min(self.plan_vague.len())]
+            let output = &self.plan_vague[start..end.min(self.plan_vague.len())];
+            // for a in output{
+            //     println!("Got: {}", a);
+            // }
+            output
         } else {
             &[]
         }

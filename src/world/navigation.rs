@@ -41,7 +41,7 @@ impl Navigator {
     // }
     pub fn get_path(&self, from: Coordinates, to: Coordinates) -> Option<VecDeque<Coordinates>> {
         // if self.colliders.len() < 1 {Err((""));}
-        println!("Trying to find path from {} to {}", from, to);
+        // println!("Trying to find path from {} to {}", from, to);
         let colliders = self.colliders();
         let (start_x, start_y) = (from.0, from.1);
         let (goal_x, goal_y) = (to.0, to.1);
@@ -128,10 +128,13 @@ impl Navigator {
         });
         None
     }
-    pub fn get_visible_objects(&self, character: &Character) -> HashMap<String, Vec<Coordinates>> {
+    pub fn get_visible_objects(
+        &self,
+        character: &Character,
+    ) -> HashMap<String, (bool, Vec<Coordinates>)> {
         let (source_name, source_pos, v_range): (&String, &Coordinates, &i64) =
             (character.name(), character.position(), character.v_range());
-        let mut visible_objects: HashMap<String, Vec<Coordinates>> = HashMap::new();
+        let mut visible_objects: HashMap<String, (bool, Vec<Coordinates>)> = HashMap::new();
 
         for object in &self.objects {
             let object_pos = object.position();
@@ -176,7 +179,8 @@ impl Navigator {
                 if !obstructed && *object.owner() == None {
                     visible_objects
                         .entry(object.name().clone())
-                        .or_insert_with(Vec::new)
+                        .or_insert_with(|| (object.collision(), Vec::new()))
+                        .1
                         .push(object.position().clone());
                 }
             }

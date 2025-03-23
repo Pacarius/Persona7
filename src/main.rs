@@ -66,6 +66,9 @@ async fn main() {
     //     character.short_term_mem().curr_action.as_ref().unwrap()
     // );
     // character.decompose_task(&ollama, &datetime).await.unwrap();
+    // for a in &character.short_term_mem().action_buffer {
+    //     println!("{:?}", a);
+    // }
 
     // let mut options = GenerateOptions::new(
     //     TEXT_MODEL.to_string(),

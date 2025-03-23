@@ -38,29 +38,28 @@ impl crate::world::character::Character {
             if let Some(response_str) = llama.generate(options).await["response"].as_str() {
                 if let Ok(response_json) = serde_json::from_str::<Value>(response_str) {
                     if let Some(tasks) = response_json["Detailed_Tasks"].as_array() {
-                        // println!("Input duration: {}", prompt.1);
-                        //IN MINUTES
                         let mut accumulated = 0;
                         tasks.into_iter().for_each(|task| {
                             if let (Some(details), Some(duration)) = (
                                 task["subtask_details"].as_str(),
                                 task["subtask_duration"].as_i64(),
                             ) {
-                                accumulated += duration;
-                                let duration = Time::from_seconds(duration * 60);
-                                let start_time = start_time + duration;
-                                self.action_buffer_mut().push_back(ActionBare::new(
-                                    details.to_string(),
-                                    start_time.0,
-                                    (start_time.0 + duration).0,
-                                ));
-
-                                // self.action_buffer_mut().push(ActionBare{
-
-                                // });
-                                // println!("{} for {} minutes")
+                                // Check if adding this subtask exceeds the total duration
+                                if accumulated + duration <= total_duration {
+                                    accumulated += duration;
+                                    let duration = Time::from_seconds(duration * 60);
+                                    let start_time =
+                                        start_time + Time::from_seconds(accumulated * 60);
+                                    self.action_buffer_mut().push_back(ActionBare::new(
+                                        details.to_string(),
+                                        start_time.0,
+                                        (start_time.0 + duration).0,
+                                    ));
+                                } else {
+                                    // Stop adding subtasks if the total duration is exceeded
+                                    return;
+                                }
                             }
-                            // println!("{}", task);
                         });
                     }
                     //Remember this shit is all in minutes

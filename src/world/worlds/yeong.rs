@@ -80,7 +80,8 @@ pub fn yeong() -> World {
         ));
 
         gym.add_room(Room::new(
-            "Gym".to_string(),
+            //Please go boxing ring.
+            "Boxing Ring".to_string(),
             Coordinates(10, 31),
             Coordinates(16, 10),
             vec![Coordinates(10, 38), Coordinates(10, 39)],
@@ -88,7 +89,7 @@ pub fn yeong() -> World {
         ));
 
         office.add_room(Room::new(
-            "Office".to_string(),
+            "Main Room".to_string(),
             Coordinates(10, 40),
             Coordinates(16, 11),
             vec![Coordinates(10, 48), Coordinates(10, 49)],
@@ -96,8 +97,8 @@ pub fn yeong() -> World {
         ));
 
         map.add_object(MapObject::new(
-            2,
             1,
+            2,
             Coordinates(13, 1),
             "Bed_001".to_string(),
             true,

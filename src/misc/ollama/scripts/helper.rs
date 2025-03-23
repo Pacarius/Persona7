@@ -43,90 +43,95 @@ impl Character {
     pub fn decompose(&self, datetime: &DateTime) -> Result<(String, i64, Time), Box<dyn Error>> {
         let surrounding = self.short_term_mem().surrounding_tasks(datetime.1);
         // println!("{:?}", surrounding);
-        let curr_acction = surrounding.get(1).unwrap();
-        let duration = (curr_acction.end - curr_acction.start).in_seconds() / 60;
-        let source = format!(
-            "{common}
-            Today is {weekday} {date}.
-            {name} is planning on {surrounding}
-            With durations in increments of 5 minutes, list the subtasks that {name} does when {name} is {action} starting at {start_time}. (Total duration in minutes: {duration}).
-            Here is a sample: {sample}",
-            common = self,
-            name = self.name(),
-            weekday = weekday(&datetime.0),
-            date = datetime.0,
-            surrounding = fmt_abv(surrounding),
-            action = curr_acction.description,
-            start_time = curr_acction.start,
-            duration = duration,
-            sample = "
+        if let Some(curr_acction) = surrounding.get(1){
+            let duration = (curr_acction.end - curr_acction.start).in_seconds() / 60;
+            let source = format!(
+                "{common}
+                Today is {weekday} {date}.
+                {name} is planning on {surrounding}
+                With durations in increments of 5 minutes, list the subtasks that {name} does when {name} is {action} starting at {start_time}. (Total duration in minutes: {duration}).
+                Here is a sample: {sample}",
+                common = self,
+                name = self.name(),
+                weekday = weekday(&datetime.0),
+                date = datetime.0,
+                surrounding = fmt_abv(surrounding),
+                action = curr_acction.description,
+                start_time = curr_acction.start,
+                duration = duration,
+                sample = "
+                {
+        \"Detailed_Tasks\": [
             {
-    \"Detailed_Tasks\": [
-        {
-            \"subtask_duration\": 15,
-            \"remaining_duration\": 165,
-            \"subtask_details\": \"Review kindergarten curriculum standards\"
-        },
-        {
-            \"subtask_duration\": 30,
-            \"remaining_duration\": 135,
-            \"subtask_details\": \"Brainstorm ideas for the lesson\"
-        },
-        {
-            \"subtask_duration\": 30,
-            \"remaining_duration\": 105,
-            \"subtask_details\": \"Create the lesson plan\"
-        },
-        {
-            \"subtask_duration\": 30,
-            \"remaining_duration\": 75,
-            \"subtask_details\": \"Create materials for the lesson\"
-        },
-        {
-            \"subtask_duration\": 15,
-            \"remaining_duration\": 60,
-            \"subtask_details\": \"Take a break\"
-        },
-        {
-            \"subtask_duration\": 30,
-            \"remaining_duration\": 30,
-            \"subtask_details\": \"Review the lesson plan\"
-        },
-        {
-            \"subtask_duration\": 15,
-            \"remaining_duration\": 15,
-            \"subtask_details\": \"Make final changes to the lesson plan\"
-        }
-    ]
-}
-            "
-        );
-        // println!("{}", source);
-        Ok((source, duration, curr_acction.start))
-    }
-    pub fn pick_object(&self, datetime: &DateTime, objects: &Vec<&String>) -> String {
-        let current = self
-            .short_term_mem()
-            .surrounding_tasks(datetime.1)
-            .get(1)
-            .unwrap();
-        let source = format!(
-            "{common}
-            {curr_object}
-            You are planning on {curr_action}
-            Here is a list of objects that you can see {object_list:?}.
-            Return an appropriate object for the event, or if no valid objects are present, return 'NONE'.",
-            common = self,
-            curr_object = match &self.short_term_mem().curr_object{
-                Some(o) => {format!(
-                    "You are currently using {},",
-                    o.name())},
-                None => {format!("")}
+                \"subtask_duration\": 15,
+                \"remaining_duration\": 165,
+                \"subtask_details\": \"Review kindergarten curriculum standards\"
             },
-            curr_action = current,
-            object_list = objects
-        );
-        source
+            {
+                \"subtask_duration\": 30,
+                \"remaining_duration\": 135,
+                \"subtask_details\": \"Brainstorm ideas for the lesson\"
+            },
+            {
+                \"subtask_duration\": 30,
+                \"remaining_duration\": 105,
+                \"subtask_details\": \"Create the lesson plan\"
+            },
+            {
+                \"subtask_duration\": 30,
+                \"remaining_duration\": 75,
+                \"subtask_details\": \"Create materials for the lesson\"
+            },
+            {
+                \"subtask_duration\": 15,
+                \"remaining_duration\": 60,
+                \"subtask_details\": \"Take a break\"
+            },
+            {
+                \"subtask_duration\": 30,
+                \"remaining_duration\": 30,
+                \"subtask_details\": \"Review the lesson plan\"
+            },
+            {
+                \"subtask_duration\": 15,
+                \"remaining_duration\": 15,
+                \"subtask_details\": \"Make final changes to the lesson plan\"
+            }
+        ]
+    }
+                "
+            );
+            // println!("{}", source);
+            Ok((source, duration, curr_acction.start))
+        } else {
+            Err("Helper Error.".into())
+        }
+    }
+    pub fn pick_object(
+        &self,
+        datetime: &DateTime,
+        objects: &Vec<&String>,
+    ) -> Result<String, Box<dyn Error>> {
+        if let Some(current) = self.short_term_mem().surrounding_tasks(datetime.1).get(1) {
+            let source = format!(
+                    "{common}
+                    {curr_object}
+                    You are planning on {curr_action}
+                    Here is a list of objects that you can see {object_list:?}.
+                    Return a singular appropriate object for the event, or if no valid objects are present, return 'NONE'.",
+                    common = self,
+                    curr_object = match &self.short_term_mem().curr_object{
+                        Some(o) => {format!(
+                            "You are currently using {},",
+                            o.name())},
+                        None => {format!("")}
+                    },
+                    curr_action = current,
+                    object_list = objects
+                );
+            return Ok(source);
+        }
+        Err("Helper Error".into())
     }
     //BASED ON VAGUE SCHEDULE
     pub fn ro(
@@ -136,25 +141,28 @@ impl Character {
         location: (String, String),
     ) -> Result<String, Box<dyn Error>> {
         let surrounding = self.short_term_mem().surrounding_tasks(datetime.1);
-        // println!("{:?}", surrounding);
-        let curr_acction = surrounding.get(1).unwrap();
-        // let location = self.get_location(map);
-        let source = format!(
-            "{common}
-            Today is {weekday} {date}.
-            {name} is planning on {curr_action}
-            Here are a list of regions, rooms, and objects that are present on the map: {spatial}. You are currently in ({region}, {room}).
-            Please output the names of the region and room you want to execute the given action in.",
-            common = self,
-            name = self.name(),
-            weekday = weekday(&datetime.0),
-            date = datetime.0,
-            curr_action = curr_acction.description,
-            region = location.0,
-            room = location.1,
-            // action = curr_acction.description,
-            spatial = self.spatial_mem(),
-        );
-        Ok(source)
+        println!("{:?}", surrounding);
+        if let Some(curr_acction) = surrounding.get(1) {
+            // let location = self.get_location(map);
+            let source = format!(
+                "{common}
+                Today is {weekday} {date}.
+                {name} is planning on {curr_action}
+                Here are a list of regions, rooms, and objects that are present on the map: {spatial}. You are currently in ({region}, {room}).
+                Please output the names of the region and room you want to execute the given action in.",
+                common = self,
+                name = self.name(),
+                weekday = weekday(&datetime.0),
+                date = datetime.0,
+                curr_action = curr_acction.description,
+                region = location.0,
+                room = location.1,
+                // action = curr_acction.description,
+                spatial = self.spatial_mem(),
+            );
+            Ok(source)
+        } else {
+            Err("Helper Error".into())
+        }
     }
 }

@@ -73,7 +73,13 @@ impl PartialOrd for Time {
 }
 impl Ord for Time {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.in_seconds().cmp(&self.in_seconds())
+        match self.hour.cmp(&other.hour) {
+            std::cmp::Ordering::Equal => match self.min.cmp(&other.min) {
+                std::cmp::Ordering::Equal => self.sec.cmp(&other.sec),
+                other => other,
+            },
+            other => other,
+        }
     }
 }
 

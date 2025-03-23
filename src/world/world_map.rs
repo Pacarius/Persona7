@@ -34,8 +34,8 @@ impl Display for Coordinates {
 // pub struct Character(Identity, String);
 #[derive(Debug, Clone)]
 pub struct MapObject {
-    horizontal: i64,
     vertical: i64,
+    horizontal: i64,
     // rotation: Rotation,
     position: Coordinates,
     name: String,
@@ -47,16 +47,16 @@ pub struct MapObject {
 }
 impl MapObject {
     pub fn new(
-        horizontal: i64,
         vertical: i64,
+        horizontal: i64,
         // rotation: Rotation,
         position: Coordinates,
         name: String,
         collision: bool,
     ) -> Self {
         Self {
-            horizontal,
             vertical,
+            horizontal,
             // rotation,
             position,
             name,
@@ -78,6 +78,9 @@ impl MapObject {
         self.region = region;
         self.room = room;
         // }
+    }
+    pub fn collision(&self) -> bool {
+        self.collision
     }
     pub fn room(&self) -> String {
         self.room.clone()
@@ -290,8 +293,8 @@ impl WorldMap {
                 continue;
             }
             let Coordinates(x, y) = o.position;
-            let vertical = o.vertical as usize;
-            let horizontal = o.horizontal as usize;
+            let vertical = o.horizontal as usize;
+            let horizontal = o.vertical as usize;
 
             for i in 0..vertical {
                 for j in 0..horizontal {
@@ -624,7 +627,7 @@ impl WorldMap {
             }
         });
 
-        // self.calculate_colliders();
+        self.calculate_colliders();
     }
     // pub async fn test(&mut self, llama: &Ollama, datetime: &DateTime){
     //     self.characters.iter_mut().for_each(|f|{

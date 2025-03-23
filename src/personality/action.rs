@@ -27,8 +27,11 @@ pub struct Action {
 impl Action {
     pub fn completed(&self, time: &Time) -> bool {
         // if self.intended_duration < 0 {return true}
+        // println!("{} is past {}: {}", time, (self.start_time + Time::from_seconds(self.intended_duration)).0, )
         let (end_time, day) = self.start_time + Time::from_seconds(self.intended_duration);
-        day > 0 || time >= &end_time
+        let output = day > 0 || time >= &end_time;
+        // println!("{} is past {}: {}", time, end_time, output);
+        output
     }
     fn d(&self) -> String {
         format!(

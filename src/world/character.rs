@@ -166,56 +166,42 @@ impl Character {
         navigator: &Navigator,
         llama: &Ollama,
     ) -> Option<(String, String)> {
-        println!("Tick started for character: {}", self.name);
-        println!("Current state: {:?}", self.state_controller);
+        // println!("Tick started for character: {}", self.name);
+        // println!("Current state: {:?}", self.state_controller);
 
         let mut output = None;
 
         self.state_controller = match &self.state_controller {
-            Decision::ROOM => {
-                // if let Some(curr_action) = &mut self.short_term_mem().curr_action{
-                //     if curr_action.description() == "MOVE".to_string(){
-                //         if self._move().is_none(){
-                //             self.short_term_mem_mut().curr_action = None;
-                //             Decision::OBJECT
-                //         }
-                //     } else {
-                //     }
-                //     Decision::ROOM
-                // }
-                // Decision::OBJECT
-                match &self.short_term_mem().curr_action {
-                    None => {
-                        println!("State: ROOM - Deciding room...");
-                        if let Err(e) = self.decide_room(llama, datetime, navigator).await {
-                            println!("Error while deciding room: {:?}", e);
-                        }
-                        println!("Room decision completed.");
-                        Decision::ROOM
+            Decision::ROOM => match &self.short_term_mem().curr_action {
+                None => {
+                    println!("State: ROOM - Deciding room...");
+                    if let Err(e) = self.decide_room(llama, datetime, navigator).await {
+                        Decision::OBJECT;
+                        // println!("Error while deciding room: {:?}", e);
                     }
-                    Some(a) => {
-                        if a.description() == "MOVE".to_string() && self._move().is_some() {
-                            Decision::ROOM
-                        } else {
-                            self.short_term_mem_mut().curr_action = None;
-                            Decision::OBJECT
-                        }
+                    // println!("Room decision completed.");
+                    Decision::ROOM
+                }
+                Some(a) => {
+                    if a.description() == "MOVE".to_string() && self._move().is_some() {
+                        Decision::ROOM
+                    } else {
+                        self.short_term_mem_mut().curr_action = None;
+                        Decision::OBJECT
                     }
                 }
-            }
+            },
             Decision::OBJECT => match &self.short_term_mem().curr_action {
                 None => {
                     println!("State: OBJECT - Deciding object...");
                     match self.decide_object(llama, datetime, navigator).await {
                         Ok(target) => {
-                            println!("Object decision successful. Target: {}", target);
-                            output = Some((self.name.clone(), target));
+                            println!("Target decided: {:?}", target);
+                            // Decision::DECOMPOSE
                         }
-                        Err(e) => {
-                            println!("Error while deciding object: {:?}", e);
-                        }
+                        Err(e) => {}
                     }
-                    Decision::OBJECT
+                    Decision::DECOMPOSE
                 }
                 Some(a) => {
                     if a.description() == "MOVE".to_string() && self._move().is_some() {
@@ -228,74 +214,87 @@ impl Character {
             },
             Decision::DECOMPOSE => {
                 println!("State: DECOMPOSE - Decomposing task...");
+                // println!("Decomposing based on {}", datetime.1);
                 if let Err(e) = self.decompose_task(llama, datetime).await {
-                    println!("Error while decomposing task: {:?}", e);
+                    // println!("Error while decomposing task: {:?}", e);
                 }
-                println!("Task decomposition completed.");
+                if let Some(decomposed_task) = self.short_term_mem().action_buffer.front() {
+                    let current_object = match &self.short_term_mem().curr_object {
+                        Some(o) => Some(o.name()),
+                        None => None,
+                    };
+                    self.short_term_mem_mut().curr_action = Some(Action::new(
+                        navigator.get_position_info(&self.position).unwrap(),
+                        decomposed_task.start,
+                        (decomposed_task.end - decomposed_task.start).in_seconds(),
+                        decomposed_task.description.clone(),
+                        current_object.cloned(),
+                        None,
+                    ));
+                    self.short_term_mem_mut().action_buffer.pop_front();
+                }
+                // println!("Task decomposition completed.");
                 Decision::ACT
             }
             Decision::ACT => {
-                println!("State: ACT - Performing action...");
                 if let Some(task) = self
                     .short_term_mem()
                     .surrounding_tasks(datetime.1)
                     .iter()
                     .nth(1)
                 {
-                    if task.end < datetime.1 {
-                        println!("Current task has ended. Checking current action...");
-                        if let Some(action) = &self.short_term_mem().curr_action {
-                            if action.completed(&datetime.1) {
-                                println!("Action completed. Fetching next action from buffer...");
-                                let action_buffer = self.action_buffer_mut();
-                                if let Some(new_action) = action_buffer.pop_front() {
-                                    println!("New action found: {:?}", new_action);
-                                    let current_object = match &self.short_term_mem().curr_object {
-                                        Some(o) => Some(o.name()),
-                                        None => None,
-                                    };
-                                    self.short_term_mem_mut().curr_action = Some(Action::new(
-                                        navigator.get_position_info(&self.position).unwrap(),
-                                        new_action.start,
-                                        (new_action.end - new_action.start).in_seconds(),
-                                        new_action.description,
-                                        current_object.cloned(),
-                                        None,
-                                    ));
-                                    println!("New action set.");
-                                } else {
-                                    println!("No new action found in buffer.");
-                                }
+                    if let Some(action) = &self.short_term_mem().curr_action {
+                        if action.completed(&datetime.1) {
+                            let action_buffer = self.action_buffer_mut();
+                            if let Some(new_action) = action_buffer.pop_front() {
+                                let current_object = match &self.short_term_mem().curr_object {
+                                    Some(o) => Some(o.name()),
+                                    None => None,
+                                };
+                                self.short_term_mem_mut().curr_action = Some(Action::new(
+                                    navigator.get_position_info(&self.position).unwrap(),
+                                    new_action.start,
+                                    (new_action.end - new_action.start).in_seconds(),
+                                    new_action.description,
+                                    current_object.cloned(),
+                                    None,
+                                ));
+                                Decision::ACT
                             } else {
-                                println!(
-                                    "Action still in progress. Description: {}",
-                                    action.description()
-                                );
-                                if action.description() == "TALK".to_string() {
-                                    println!("Executing TALK action...");
-                                    todo!()
-                                } else {
-                                    println!(
-                                        "Unknown action description: {}",
-                                        action.description()
-                                    );
-                                }
+                                // No new action found, transition to ROOM state
+                                self.short_term_mem_mut().curr_action = None;
+                                Decision::ROOM
                             }
+                        } else if action.description() == "TALK".to_string() {
+                            todo!()
+                        } else {
+                            Decision::ACT
                         }
-                        Decision::ROOM
                     } else {
-                        println!("Task is still ongoing. Staying in ACT state.");
+                        // curr_action is None, fallback to the current vague action
+                        let current_object = match &self.short_term_mem().curr_object {
+                            Some(o) => Some(o.name()),
+                            None => None,
+                        };
+                        self.short_term_mem_mut().curr_action = Some(Action::new(
+                            navigator.get_position_info(&self.position).unwrap(),
+                            task.start,
+                            (task.end - task.start).in_seconds(),
+                            task.description.clone(),
+                            current_object.cloned(),
+                            None,
+                        ));
                         Decision::ACT
                     }
                 } else {
-                    println!("No surrounding tasks found. Returning to ROOM state.");
+                    // No surrounding tasks found, transition to ROOM state
                     Decision::ROOM
                 }
             }
         };
 
-        println!("Tick completed for character: {}", self.name);
-        println!("Next state: {:?}", self.state_controller);
+        // println!("Tick completed for character: {}", self.name);
+        // println!("Next state: {:?}", self.state_controller);
         output
     }
     pub fn movement_cooldown_max(&self) -> i64 {

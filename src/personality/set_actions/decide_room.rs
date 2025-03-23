@@ -38,7 +38,7 @@ impl crate::world::character::Character {
             );
 
             if let Some(response_str) = llama.generate(options).await["response"].as_str() {
-                // println!("{}", response_str);
+                println!("{}", response_str);
                 if let Ok(response_json) = serde_json::from_str::<Value>(response_str) {
                     if let (Some(region), Some(room)) = (
                         response_json["location"]["region"].as_str(),
@@ -46,19 +46,20 @@ impl crate::world::character::Character {
                     ) {
                         // let path =
                         //     map.set_path_character(self, (region.to_string(), room.to_string()))?;
-                        let target = navigator
-                            .get_pos_room((region.to_string(), room.to_string()))
-                            .unwrap();
-                        let path = navigator.get_path(self.position().clone(), target).unwrap();
-                        self.short_term_mem_mut().curr_action = Some(Action::new(
-                            ("MOVING".to_string(), "MOVING".to_string()),
-                            datetime.1,
-                            path.len() as i64 * (self.movement_cooldown_max() + 1) * TIME_STEP,
-                            ProperAction::MOVE.to_string(),
-                            None,
-                            None,
-                        ));
-                        self.set_path(path);
+                        if let Some(target) =
+                            navigator.get_pos_room((region.to_string(), room.to_string()))
+                        {
+                            let path = navigator.get_path(self.position().clone(), target).unwrap();
+                            self.short_term_mem_mut().curr_action = Some(Action::new(
+                                ("MOVING".to_string(), "MOVING".to_string()),
+                                datetime.1,
+                                path.len() as i64 * (self.movement_cooldown_max() + 1) * TIME_STEP,
+                                ProperAction::MOVE.to_string(),
+                                None,
+                                None,
+                            ));
+                            self.set_path(path);
+                        };
                         Ok(())
                     } else {
                         Err(("Repsonse Format Error".into()))

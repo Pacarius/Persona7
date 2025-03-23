@@ -66,35 +66,39 @@ impl World {
         **day_end_time.iter().last().unwrap()
     }
     pub async fn day(&mut self, llama: &Ollama) {
+        println!("{}", self.get_map());
         let start_time = self.day_start(llama).await;
         let end_time = self.set_day_end().await;
         println!(
             "Day start/end time determined: {}; {}.",
             start_time, end_time
         );
-        self.get_map().get_characters().iter().for_each(|c|{
+        self.get_map().get_characters().iter().for_each(|c| {
             println!("{:?}", c.short_term_mem().plan_vague);
         });
         self.datetime.1 = start_time - Time::from_seconds(1);
         //Log invterval in steps
-        let log_interval = 20;
+        let log_interval = 200;
         let mut log_cooldown = 0;
         while self.datetime.1 < end_time {
             self.tick(llama).await;
             // self.get_map_mut().calculate_colliders();
             // if log {
-                // println!("{}", self.get_map());
-                if log_cooldown >= log_interval{
-                    self.get_map().get_characters().iter().for_each(|c| {
-                        println!("{:?}", c.short_term_mem().curr_action);
-                        println!("{:?}", c.short_term_mem().action_buffer);
-                        // println!("{:?}", c.short_term_mem().plan_vague);
-                    });
-                    println!("{}", self.datetime);
-                    log_cooldown = 0;
-                } else {
-                    log_cooldown += 1;
-                }
+            // println!("{}", log_cooldown);
+            if log_cooldown >= log_interval {
+                self.get_map().get_characters().iter().for_each(|c| {
+                    println!("{:?}", c.short_term_mem().curr_action);
+                    println!("{:?}", c.position());
+                    // println!("{:?}", )
+                    // println!("{:?}", c.short_term_mem().action_buffer);
+                    // println!("{:?}", c.short_term_mem().plan_vague);
+                });
+                println!("{}", self.get_map());
+                println!("{}", self.datetime);
+                log_cooldown = 0;
+            } else {
+                log_cooldown += 1;
+            }
             // }
         }
         for c in self.get_map_mut().get_characters_mut() {
