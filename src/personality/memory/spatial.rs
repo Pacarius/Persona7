@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt::Display, iter::Map};
 
 use crate::world::world_map::{Region, Room, WorldMap};
 
+#[derive(Debug)]
 pub struct SpatialMemory {
     spatial_mem_tree: HashMap<String, HashMap<String, Vec<String>>>,
 }

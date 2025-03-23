@@ -6,12 +6,13 @@ use crate::{
     misc::time::Time,
     world::world_map::{MapObject, Region, Room},
 };
-// #[derive(Debug)]
+#[derive(Debug)]
 pub struct Chat {
     target: String,
     log: Vec<String>,
     end_time: i64,
 }
+#[derive(Debug)]
 pub struct Action {
     location: (String, String),
     start_time: Time,

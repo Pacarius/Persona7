@@ -16,12 +16,13 @@ impl Navigator {
     pub fn new(map: &WorldMap) -> Self {
         let regions = map.region_slice();
         let rooms = map.room_slice();
+        let colliders = map.collider_slice();
         let objects = map.object_slice();
         let size = map.size();
         Navigator {
             regions,
             rooms,
-            colliders: vec![],
+            colliders,
             objects,
             size,
         }
@@ -35,11 +36,12 @@ impl Navigator {
         }
         &self.colliders
     }
-    pub fn update_colliders(&mut self, map: &WorldMap) {
-        self.colliders = map.collider_slice();
-    }
+    // pub fn update_colliders(&mut self, map: &WorldMap) {
+    //     self.colliders = map.collider_slice();
+    // }
     pub fn get_path(&self, from: Coordinates, to: Coordinates) -> Option<VecDeque<Coordinates>> {
         // if self.colliders.len() < 1 {Err((""));}
+        println!("Trying to find path from {} to {}", from, to);
         let colliders = self.colliders();
         let (start_x, start_y) = (from.0, from.1);
         let (goal_x, goal_y) = (to.0, to.1);

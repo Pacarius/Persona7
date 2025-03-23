@@ -35,7 +35,7 @@ impl crate::world::character::Character {
         if let Some(response_str) = llama.generate(options).await["response"].as_str() {
             // println!("{}", response_str);
             if let Ok(response_json) = serde_json::from_str::<Value>(response_str) {
-                if let Some(object) = response_json["object"].as_str() {
+                if let Some(object) = response_json["Container"]["object"].as_str() {
                     match object.to_string() {
                         val if val == "NONE".to_string() => {
                             return Ok("NONE".to_string());
@@ -44,17 +44,22 @@ impl crate::world::character::Character {
                             let mut output = Ok(object.to_string());
                             if let Some(target) = &objects.get(&object) {
                                 'outer: for pos in *target {
-                                    for dx in -1isize..=1 {
-                                        for dy in -1isize..=1 {
+                                    for dx in -1..=1 {
+                                        for dy in -1..=1 {
+                                            // Skip the object's own position (dx = 0, dy = 0)
+                                            if dx == 0 && dy == 0 {
+                                                continue;
+                                            }
+
                                             if let (Ok(valid_x), Ok(valid_y)) = (
-                                                TryInto::<usize>::try_into((pos.0 as isize + dx)),
-                                                TryInto::<usize>::try_into((pos.1 as isize + dy)),
+                                                TryInto::<usize>::try_into(pos.0 as isize + dx),
+                                                TryInto::<usize>::try_into(pos.1 as isize + dy),
                                             ) {
                                                 if let Some(valid_path) = navigator.get_path(
                                                     self.position().clone(),
                                                     Coordinates(valid_x, valid_y),
                                                 ) {
-                                                    // path = valid_path;
+                                                    // Found a valid path
                                                     self.short_term_mem_mut().curr_action =
                                                         Some(Action::new(
                                                             (
@@ -69,19 +74,16 @@ impl crate::world::character::Character {
                                                             ProperAction::MOVE.to_string(),
                                                             None,
                                                             None,
-                                                            // Fn,
                                                         ));
                                                     self.set_path(valid_path);
                                                     return output;
-                                                    // break 'outer;
                                                 }
-                                                return Err("No Valid Positions.".into());
                                             }
                                         }
                                     }
                                 }
                             }
-                            return Err("Object Not Found.".into());
+                            return Err("No Valid Positions.".into());
                         }
                     }
                 }

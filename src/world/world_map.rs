@@ -203,8 +203,8 @@ pub struct WorldMap {
     characters: Vec<Character>,
     walls: Vec<Coordinates>,
     pub colliders: Vec<Vec<Option<String>>>,
-    //This is fucking stupid but I'm out of ideas on how to do this elegantly.
-    // pub room_region_map: HashMap<Room, String>
+    objects_buffer: Vec<String>, //This is fucking stupid but I'm out of ideas on how to do this elegantly.
+                                 // pub room_region_map: HashMap<Room, String>
 }
 impl WorldMap {
     pub fn new(size: Coordinates) -> Self {
@@ -216,7 +216,7 @@ impl WorldMap {
             characters: Vec::new(),
             walls: Vec::new(),
             colliders: vec![vec![None; x]; y],
-            // room_region_map: HashMap::new()
+            objects_buffer: vec![], // room_region_map: HashMap::new()
         }
     }
     pub fn add_region(&mut self, region: Region) {
@@ -326,21 +326,21 @@ impl WorldMap {
             }
         });
     }
-    pub fn move_characters(&mut self) -> Vec<(Coordinates, Coordinates)> {
-        let mut moved_positions = Vec::new();
+    // pub fn move_characters(&mut self) -> Vec<(Coordinates, Coordinates)> {
+    //     let mut moved_positions = Vec::new();
 
-        self.characters.iter_mut().for_each(|c| {
-            let pos = c.position().clone();
-            if let Some(pos) = c._move() {
-                if self.colliders[pos.0 .0][pos.0 .1] == Some(c.name().clone()) {
-                    self.colliders[pos.0 .0][pos.0 .1] = None;
-                    self.colliders[pos.1 .0][pos.1 .1] = Some(c.name().clone());
-                }
-                moved_positions.push(pos);
-            }
-        });
-        moved_positions
-    }
+    //     self.characters.iter_mut().for_each(|c| {
+    //         let pos = c.position().clone();
+    //         if let Some(pos) = c._move() {
+    //             if self.colliders[pos.0 .0][pos.0 .1] == Some(c.name().clone()) {
+    //                 self.colliders[pos.0 .0][pos.0 .1] = None;
+    //                 self.colliders[pos.1 .0][pos.1 .1] = Some(c.name().clone());
+    //             }
+    //             moved_positions.push(pos);
+    //         }
+    //     });
+    //     moved_positions
+    // }
     pub fn add_object(&mut self, object: MapObject) {
         self.objects.push(object);
     }
@@ -584,7 +584,7 @@ impl WorldMap {
             .objects
             .iter_mut()
             .filter(|o| *o.name() == object_name)
-            .nth(1)
+            .nth(0)
         {
             o.set_owner(owner_name);
             return Ok(());
@@ -603,14 +603,27 @@ impl WorldMap {
         // let (new_time, _) = self.datetime.1 + Time::from_seconds(TIME_STEP);
         // self.datetime.1 = new_time;
         let navigator = Navigator::new(self);
-        join_all(
+        let objects_buffer = self.objects_buffer.clone();
+        let object_updates = join_all(
             self
                 // .get_map_mut()
                 .get_characters_mut()
                 .iter_mut()
-                .map(|f| f.tick(datetime, &navigator, llama))
+                .map(|f| f.tick(datetime, &navigator, llama)),
         )
         .await;
+        objects_buffer.iter().for_each(|s| {
+            self.set_object(s.to_string(), None);
+        });
+        self.objects_buffer.clear();
+        object_updates.iter().for_each(|p| {
+            if let Some(p) = p {
+                if let Ok(()) = self.set_object(p.1.clone(), Some(p.0.clone())) {
+                    self.objects_buffer.push(p.1.clone());
+                }
+            }
+        });
+
         // self.calculate_colliders();
     }
     // pub async fn test(&mut self, llama: &Ollama, datetime: &DateTime){
@@ -646,13 +659,13 @@ impl WorldMap {
 }
 impl Display for WorldMap {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let regions = self
-            .regions_as_chars()
-            .iter()
-            .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
-            .collect::<Vec<String>>()
-            .join("\n");
-
+        // let regions = self
+        //     .regions_as_chars()
+        //     .iter()
+        //     .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
+        //     .collect::<Vec<String>>()
+        //     .join("\n");
+        //
         let colliders = self
             .as_chars()
             .iter()
@@ -660,7 +673,7 @@ impl Display for WorldMap {
             .collect::<Vec<String>>()
             .join("\n");
 
-        write!(f, "Regions:\n{}\n\nColliders:\n{}", regions, colliders)
+        write!(f, "Colliders:\n{}", colliders)
     }
 }
 // pub struct MapInfoSlice(Vec<Region>, Vec<Room>, Vec<Vec<Option<String>>>);

@@ -71,7 +71,7 @@ impl PartialOrd for Time {
         self.sec.partial_cmp(&other.sec)
     }
 }
-impl Ord for Time{
+impl Ord for Time {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         other.in_seconds().cmp(&self.in_seconds())
     }
@@ -223,7 +223,7 @@ impl Display for DateTime {
         write!(f, "{} {}", self.0, self.1)
     }
 }
-impl Add<Time> for DateTime{
+impl Add<Time> for DateTime {
     type Output = DateTime;
     fn add(self, rhs: Time) -> Self::Output {
         // todo!()
@@ -232,7 +232,6 @@ impl Add<Time> for DateTime{
         new.0.add_days(days);
         new.1 = time;
         new
-
     }
 }
 pub fn weekday(date: &Date) -> String {

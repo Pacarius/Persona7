@@ -68,8 +68,8 @@ impl crate::world::character::Character {
                     // if let Ok(re)
                     // Ok(())
                     // self.short_term_mem_mut().action_buffer
-
-                    todo!()
+                    Ok(())
+                    // todo!()
                 } else {
                     Err("Ollama Response Error.".into())
                 }

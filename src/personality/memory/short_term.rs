@@ -16,7 +16,7 @@ impl Path {
         self.path.remove(0);
     }
 }
-// #[derive(Debug)]
+#[derive(Debug)]
 pub struct ShortTerm {
     //Daily
     pub goals: Vec<String>,
