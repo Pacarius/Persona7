@@ -2,7 +2,7 @@ Server Engine: ✅ (Mostly feature complete but the code is a massive pile of st
 API{
     Format✅,
     Parsing✅,
-    Consistency**,
+    Consistency**, >> Seeding (!!)
 }
 World{
     Time✅,
@@ -14,13 +14,13 @@ Personality Simulation{
     Action Decision:(📰) {
         Sleep_Times✅,
         Vague✅,
-        Decomposed (Detailed)🎯(1),
+        Decomposed (Detailed)✅,
         Reactionary(6),
     }
     Action Types:(📰) {
         Movement✅,
         Conversation(4),
-        Others🎯(2),
+        Others✅,
     }
     Memory Types:(📰) {
         Short(7),
