@@ -99,10 +99,13 @@ impl World {
             } else {
                 log_cooldown += 1;
             }
-            // }
         }
-        for c in self.get_map_mut().get_characters_mut() {
-            c.clear();
+        {
+            // Manually ending day LOL
+            for c in self.get_map_mut().get_characters_mut() {}
+            // for c in self.get_map_mut().get_characters_mut() {
+            //     c.clear();
+            // }
         }
     }
 }

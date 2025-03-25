@@ -99,9 +99,13 @@ impl crate::world::character::Character {
         if let Some(valid_path) =
             navigator.get_path(character.position().clone(), Coordinates(valid_x, valid_y))
         {
+            let loc = match navigator.get_position_info(character.position()) {
+                Some(l) => l,
+                None => ("Error".to_string(), "Error".to_string()),
+            };
             // Found a valid path
             character.short_term_mem_mut().curr_action = Some(Action::new(
-                ("MOVING".to_string(), "MOVING".to_string()),
+                loc,
                 datetime.1,
                 valid_path.len() as i64 * (character.movement_cooldown_max() + 1) * TIME_STEP,
                 ProperAction::MOVE.to_string(),

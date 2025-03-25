@@ -100,49 +100,49 @@ pub fn yeong() -> World {
             1,
             2,
             Coordinates(13, 1),
-            "Bed_001".to_string(),
+            "Bed".to_string(),
             true,
         ));
         map.add_object(MapObject::new(
             1,
             2,
             Coordinates(7, 1),
-            "Yoga_Mat_001".to_string(),
+            "Yoga_Mat".to_string(),
             false,
         ));
         map.add_object(MapObject::new(
             1,
             1,
             Coordinates(10, 1),
-            "Plant_001".to_string(),
+            "Plant".to_string(),
             true,
         ));
         map.add_object(MapObject::new(
             1,
             1,
             Coordinates(7, 3),
-            "Candles_001".to_string(),
+            "Candles".to_string(),
             true,
         ));
         map.add_object(MapObject::new(
             1,
             1,
             Coordinates(10, 6),
-            "Photo_001".to_string(),
+            "Photo".to_string(),
             false,
         ));
         map.add_object(MapObject::new(
             1,
             1,
             Coordinates(14, 3),
-            "Desk_001".to_string(),
+            "Desk".to_string(),
             true,
         ));
         map.add_object(MapObject::new(
             1,
             3,
             Coordinates(12, 6),
-            "Bookshelf_001".to_string(),
+            "Bookshelf".to_string(),
             true,
         ));
         map.add_character(Character::new(

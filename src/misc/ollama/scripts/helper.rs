@@ -43,7 +43,7 @@ impl Character {
     pub fn decompose(&self, datetime: &DateTime) -> Result<(String, i64, Time), Box<dyn Error>> {
         let surrounding = self.short_term_mem().surrounding_tasks(datetime.1);
         // println!("{:?}", surrounding);
-        if let Some(curr_acction) = surrounding.get(1){
+        if let Some(curr_acction) = surrounding.get(1) {
             let duration = (curr_acction.end - curr_acction.start).in_seconds() / 60;
             let source = format!(
                 "{common}

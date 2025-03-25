@@ -15,7 +15,7 @@ use crate::{
         action::{Action, ActionBare, ProperAction},
         memory::{short_term::ShortTerm, spatial::SpatialMemory},
     },
-    TEXT_MODEL,
+    TEXT_MODEL, TIME_STEP,
 };
 
 use super::{
@@ -55,6 +55,7 @@ pub struct Character {
     name: String,
     position: Coordinates,
     location: Option<(String, String)>,
+    home_location: Option<(String, String)>,
     path: Option<VecDeque<Coordinates>>,
     view_range: i64,
     movement_cooldown_input: i64, //Extra number for inputting update to movement ratio.
@@ -84,6 +85,7 @@ impl Character {
             sprite,
             position,
             location: None,
+            home_location: None,
             path: None,
             // direction,
             age,
@@ -96,7 +98,7 @@ impl Character {
             view_range,
             movement_cooldown_input,
             movement_cooldown: movement_cooldown_input,
-            state_controller: Decision::ROOM, // moved_this_turn: false,
+            state_controller: Decision::WAKE, // moved_this_turn: false,
         }
     }
     pub fn ascend(&mut self, map: &WorldMap) {
@@ -150,9 +152,10 @@ impl Character {
         self.path = Some(path)
     }
     //Characters ticking : New Day; Activity Ended; if Activity is moving from point A to point B.
-    pub async fn day_start(&mut self, llama: &Ollama, date: &Date) {
+    pub async fn day_start(&mut self, llama: &Ollama, date: &Date, navigator: &Navigator) {
         self.wake_time(llama).await;
         self.daily_schedule(llama, date).await;
+        self.home_location = navigator.get_position_info(self.position());
     }
     // pub async fn decide(&mut self, llama: &Ollama, datetime: &DateTime) {}
 
@@ -172,6 +175,36 @@ impl Character {
         let mut output = None;
 
         self.state_controller = match &self.state_controller {
+            Decision::WAKE => match &self.short_term_mem().curr_action {
+                None => {
+                    println!("State: WAKE - Setting current action to waking up...");
+                    // self.short_term_mem_mut().curr_action = Action::new(navigator.get_position_info(), start_time, intended_duration, description, object, chat)
+                    // if let Some(position) = navigator.get_position_info(&self.position){
+
+                    // }
+                    let loc = match navigator.get_position_info(&self.position) {
+                        Some(l) => l,
+                        None => ("ERROR".to_string(), "ERROR".to_string()),
+                    };
+                    self.short_term_mem_mut().curr_action = Some(Action::new(
+                        loc,
+                        datetime.1,
+                        5 * 60,
+                        ProperAction::WAKE.to_string(),
+                        None,
+                        None,
+                    ));
+                    Decision::WAKE
+                }
+                Some(a) => {
+                    if a.completed(&datetime.1) {
+                        self.short_term_mem_mut().curr_action = None;
+                        Decision::ROOM
+                    } else {
+                        Decision::WAKE
+                    }
+                }
+            },
             Decision::ROOM => match &self.short_term_mem().curr_action {
                 None => {
                     println!("State: ROOM - Deciding room...");
@@ -291,6 +324,104 @@ impl Character {
                     Decision::ROOM
                 }
             }
+            Decision::GO_HOME => match &self.short_term_mem().curr_action {
+                None => {
+                    if let Some(target) = &self.home_location {
+                        if let Some(position) = navigator.get_pos_room(target.clone()) {
+                            if let Some(path) =
+                                navigator.get_path(self.position().clone(), position)
+                            {
+                                self.short_term_mem_mut().curr_action = Some(Action::new(
+                                    (
+                                        navigator.get_position_info(self.position()).unwrap().1,
+                                        target.1.clone(),
+                                    ),
+                                    datetime.1,
+                                    path.len() as i64
+                                        * (self.movement_cooldown_max() + 1)
+                                        * TIME_STEP,
+                                    ProperAction::MOVE.to_string(),
+                                    None,
+                                    None,
+                                ));
+                                self.set_path(path);
+                                Decision::GO_HOME
+                            } else {
+                                Decision::SLEEP
+                                // SLEEP ON THE FLOOR
+                            }
+                            // Decision::SLEEP
+                        } else {
+                            Decision::SLEEP
+                        }
+                    } else {
+                        Decision::SLEEP
+                    }
+                    // Decision::SLEEP
+                }
+                Some(a) => {
+                    if let Some(_) = self._move() {
+                        Decision::GO_HOME
+                    } else {
+                        self.short_term_mem_mut().curr_action = None;
+                        Decision::GO_TO_BED
+                    }
+                }
+            },
+            Decision::GO_TO_BED => match &self.short_term_mem().curr_action {
+                None => {
+                    if let Some(bed_location) = navigator.get_visible_objects(&self).get("Bed") {
+                        if let Some(path) = navigator.get_path(
+                            self.position().clone(),
+                            bed_location.1.first().unwrap().clone(),
+                        ) {
+                            self.short_term_mem_mut().curr_action = Some(Action::new(
+                                navigator.get_position_info(self.position()).unwrap(),
+                                datetime.1,
+                                path.len() as i64 * (self.movement_cooldown_max() + 1) * TIME_STEP,
+                                ProperAction::MOVE.to_string(),
+                                None,
+                                None,
+                            ));
+                            self.set_path(path);
+                            Decision::GO_TO_BED
+                        } else {
+                            Decision::SLEEP
+                        }
+                    } else {
+                        Decision::SLEEP
+                    }
+                }
+                Some(a) => {
+                    if let Some(_) = self._move() {
+                        Decision::GO_TO_BED
+                    } else {
+                        self.short_term_mem_mut().curr_action = None;
+                        Decision::SLEEP
+                    }
+                }
+            },
+            Decision::SLEEP => match &self.short_term_mem().curr_action {
+                None => {
+                    self.short_term_mem_mut().curr_action = Some(Action::new(
+                        navigator.get_position_info(self.position()).unwrap(),
+                        datetime.1,
+                        (Time::from_seconds(DAY_LENGTH) - datetime.1).in_seconds(),
+                        ProperAction::SLEEP.to_string(),
+                        None,
+                        None,
+                    ));
+                    Decision::SLEEP
+                }
+                Some(a) => {
+                    if a.completed(&datetime.1) {
+                        self.short_term_mem_mut().curr_action = None;
+                        Decision::WAKE
+                    } else {
+                        Decision::SLEEP
+                    }
+                }
+            },
         };
 
         // println!("Tick completed for character: {}", self.name);
@@ -325,8 +456,12 @@ impl Display for Character {
 
 #[derive(Debug)]
 enum Decision {
+    WAKE,
     ROOM,
     OBJECT,
     DECOMPOSE,
     ACT,
+    GO_HOME,
+    GO_TO_BED,
+    SLEEP,
 }

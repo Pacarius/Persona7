@@ -30,7 +30,7 @@ impl ModelFile {
             repeat_last_n: None,
             repeat_penalty: None,
             temperature: None,
-            seed: None,
+            seed: Some(1),
             stop: None,
             num_predict: None,
             top_k: None,

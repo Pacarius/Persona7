@@ -595,10 +595,11 @@ impl WorldMap {
         Err(("Object Doesn't Exist.".into()))
     }
     pub async fn day_start(&mut self, llama: &Ollama, date: Date) {
+        let navigator = &Navigator::new(&self);
         join_all(
             self.get_characters_mut()
                 .iter_mut()
-                .map(|f| f.day_start(llama, &date)),
+                .map(|f| f.day_start(llama, &date, navigator)),
         )
         .await;
     }

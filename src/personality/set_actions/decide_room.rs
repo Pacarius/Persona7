@@ -51,7 +51,10 @@ impl crate::world::character::Character {
                         {
                             let path = navigator.get_path(self.position().clone(), target).unwrap();
                             self.short_term_mem_mut().curr_action = Some(Action::new(
-                                ("MOVING".to_string(), "MOVING".to_string()),
+                                (
+                                    navigator.get_position_info(self.position()).unwrap().1,
+                                    room.to_string(),
+                                ),
                                 datetime.1,
                                 path.len() as i64 * (self.movement_cooldown_max() + 1) * TIME_STEP,
                                 ProperAction::MOVE.to_string(),
