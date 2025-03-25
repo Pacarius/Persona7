@@ -2,14 +2,15 @@ Server Engine: ✅ (Mostly feature complete but the code is a massive pile of st
 API{
     Format✅,
     Parsing✅,
-    Consistency**, >> Seeding (!!)
+    **Consistency**, >> Seeding (!!)**
 }
 World{
     Time✅,
     Map✅,
     Objects✅,
     Pathing✅,
-    Day Loop✅ ** (Missing returning home by the end of day)
+    Day Loop✅,
+    **Populate Map,**
 }
 Personality Simulation{
     Action Decision:(📰) {
