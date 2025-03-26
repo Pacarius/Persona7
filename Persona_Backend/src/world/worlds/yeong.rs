@@ -145,6 +145,8 @@ pub fn yeong() -> World {
             "Bookshelf".to_string(),
             true,
         ));
+        //AI GENERATED CONTENT
+        //
         map.add_character(Character::new(
             28,
         vec!["Analytical".to_string(), "Methodical".to_string(), "Detail-oriented".to_string()], 
