@@ -230,6 +230,11 @@ impl Character {
                     match self.decide_object(llama, datetime, navigator).await {
                         Ok(target) => {
                             println!("Target decided: {:?}", target);
+                            if target == "NONE".to_string() {
+                                self.short_term_mem_mut().curr_object = None;
+                            } else {
+                                self.short_term_mem_mut().curr_object = Some(target);
+                            }
                             // Decision::DECOMPOSE
                         }
                         Err(e) => {}
@@ -253,7 +258,7 @@ impl Character {
                 }
                 if let Some(decomposed_task) = self.short_term_mem().action_buffer.front() {
                     let current_object = match &self.short_term_mem().curr_object {
-                        Some(o) => Some(o.name()),
+                        Some(o) => Some(o),
                         None => None,
                     };
                     self.short_term_mem_mut().curr_action = Some(Action::new(
@@ -281,7 +286,7 @@ impl Character {
                             let action_buffer = self.action_buffer_mut();
                             if let Some(new_action) = action_buffer.pop_front() {
                                 let current_object = match &self.short_term_mem().curr_object {
-                                    Some(o) => Some(o.name()),
+                                    Some(o) => Some(o),
                                     None => None,
                                 };
                                 self.short_term_mem_mut().curr_action = Some(Action::new(
@@ -306,7 +311,7 @@ impl Character {
                     } else {
                         // curr_action is None, fallback to the current vague action
                         let current_object = match &self.short_term_mem().curr_object {
-                            Some(o) => Some(o.name()),
+                            Some(o) => Some(o),
                             None => None,
                         };
                         self.short_term_mem_mut().curr_action = Some(Action::new(

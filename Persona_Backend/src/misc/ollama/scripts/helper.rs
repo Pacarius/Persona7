@@ -123,7 +123,7 @@ impl Character {
                     curr_object = match &self.short_term_mem().curr_object{
                         Some(o) => {format!(
                             "You are currently using {},",
-                            o.name())},
+                            o)},
                         None => {format!("")}
                     },
                     curr_action = current,

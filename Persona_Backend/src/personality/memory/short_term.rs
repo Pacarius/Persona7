@@ -24,7 +24,7 @@ pub struct ShortTerm {
     // pub plan_detailed: Vec<ActionBare>,
     pub action_buffer: VecDeque<ActionBare>,
     pub curr_action: Option<Action>,
-    pub curr_object: Option<MapObject>,
+    pub curr_object: Option<String>,
     //Constant. Path only contains something when character is actively moving.
     pub path: Option<Path>,
     chat_target_buffer: Vec<String>,
