@@ -36,6 +36,12 @@ impl Navigator {
         }
         &self.colliders
     }
+    pub fn objects(&self) -> Vec<&MapObject> {
+        self.objects.iter().map(|f| f).collect()
+    }
+    pub fn regions(&self) -> Vec<&Region> {
+        self.regions.iter().map(|r| r).collect()
+    }
     // pub fn update_colliders(&mut self, map: &WorldMap) {
     //     self.colliders = map.collider_slice();
     // }

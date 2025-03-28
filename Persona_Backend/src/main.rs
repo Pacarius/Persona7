@@ -53,6 +53,7 @@ async fn main() {
     // let ollama = Ollama::new("localhost:11434".to_string(), false);
     let mut world = yeong();
     // println!("{}", world.get_map());
+    world.get_map_mut().ascend_all();
     world.day(&ollama).await;
 
     // world.day_start(&ollama).await;

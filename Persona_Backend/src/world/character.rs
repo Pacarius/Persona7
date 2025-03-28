@@ -101,8 +101,8 @@ impl Character {
             state_controller: Decision::WAKE, // moved_this_turn: false,
         }
     }
-    pub fn ascend(&mut self, map: &WorldMap) {
-        self.spatial = SpatialMemory::god(map);
+    pub fn ascend(&mut self, navigator: &Navigator) {
+        self.spatial = SpatialMemory::god(navigator);
     }
     pub fn short_term_mem(&self) -> &ShortTerm {
         &self.short_term_mem
@@ -168,11 +168,11 @@ impl Character {
         datetime: &DateTime,
         navigator: &Navigator,
         llama: &Ollama,
-    ) -> Option<(String, String)> {
+    ) -> bool {
         // println!("Tick started for character: {}", self.name);
         // println!("Current state: {:?}", self.state_controller);
 
-        let mut output = None;
+        // let mut output = None;
 
         self.state_controller = match &self.state_controller {
             Decision::WAKE => match &self.short_term_mem().curr_action {
@@ -275,60 +275,66 @@ impl Character {
                 Decision::ACT
             }
             Decision::ACT => {
-                if let Some(task) = self
-                    .short_term_mem()
-                    .surrounding_tasks(datetime.1)
-                    .iter()
-                    .nth(1)
-                {
-                    if let Some(action) = &self.short_term_mem().curr_action {
-                        if action.completed(&datetime.1) {
-                            let action_buffer = self.action_buffer_mut();
-                            if let Some(new_action) = action_buffer.pop_front() {
-                                let current_object = match &self.short_term_mem().curr_object {
-                                    Some(o) => Some(o),
-                                    None => None,
-                                };
-                                self.short_term_mem_mut().curr_action = Some(Action::new(
-                                    navigator.get_position_info(&self.position).unwrap(),
-                                    new_action.start,
-                                    (new_action.end - new_action.start).in_seconds(),
-                                    new_action.description,
-                                    current_object.cloned(),
-                                    None,
-                                ));
-                                Decision::ACT
+                if datetime.1 < self.short_term_mem().plan_vague.last().unwrap().start - Time::from_seconds(10 * 60){
+                    if let Some(task) = self
+                        .short_term_mem()
+                        .surrounding_tasks(datetime.1)
+                        .iter()
+                        .nth(1)
+                    {
+                        if let Some(action) = &self.short_term_mem().curr_action {
+                            if action.completed(&datetime.1) {
+                                let action_buffer = self.action_buffer_mut();
+                                if let Some(new_action) = action_buffer.pop_front() {
+                                    let current_object = match &self.short_term_mem().curr_object {
+                                        Some(o) => Some(o),
+                                        None => None,
+                                    };
+                                    self.short_term_mem_mut().curr_action = Some(Action::new(
+                                        navigator.get_position_info(&self.position).unwrap(),
+                                        new_action.start,
+                                        (new_action.end - new_action.start).in_seconds(),
+                                        new_action.description,
+                                        current_object.cloned(),
+                                        None,
+                                    ));
+                                    Decision::ACT
+                                } else {
+                                    // No new action found, transition to ROOM state
+                                    self.short_term_mem_mut().curr_action = None;
+                                    Decision::ROOM
+                                }
+                            } else if action.description() == "TALK".to_string() {
+                                todo!()
                             } else {
-                                // No new action found, transition to ROOM state
-                                self.short_term_mem_mut().curr_action = None;
-                                Decision::ROOM
+                                Decision::ACT
                             }
-                        } else if action.description() == "TALK".to_string() {
-                            todo!()
                         } else {
+                            // curr_action is None, fallback to the current vague action
+                            // let current_object = match &self.short_term_mem().curr_object {
+                            //     Some(o) => Some(o),
+                            //     None => None,
+                            // };
+                            let current_object: Option<&String> = None;
+                            self.short_term_mem_mut().curr_action = Some(Action::new(
+                                navigator.get_position_info(&self.position).unwrap(),
+                                task.start,
+                                (task.end - task.start).in_seconds(),
+                                task.description.clone(),
+                                current_object.cloned(),
+                                None,
+                            ));
                             Decision::ACT
                         }
                     } else {
-                        // curr_action is None, fallback to the current vague action
-                        let current_object = match &self.short_term_mem().curr_object {
-                            Some(o) => Some(o),
-                            None => None,
-                        };
-                        self.short_term_mem_mut().curr_action = Some(Action::new(
-                            navigator.get_position_info(&self.position).unwrap(),
-                            task.start,
-                            (task.end - task.start).in_seconds(),
-                            task.description.clone(),
-                            current_object.cloned(),
-                            None,
-                        ));
-                        Decision::ACT
+                        // No surrounding tasks found, transition to ROOM state
+                        Decision::ROOM
                     }
-                } else {
-                    // No surrounding tasks found, transition to ROOM state
-                    Decision::ROOM
                 }
-            }
+                else {
+                    Decision::GO_HOME
+                }
+                }
             Decision::GO_HOME => match &self.short_term_mem().curr_action {
                 None => {
                     if let Some(target) = &self.home_location {
@@ -408,10 +414,12 @@ impl Character {
             },
             Decision::SLEEP => match &self.short_term_mem().curr_action {
                 None => {
+                    let duration  = Time::from_seconds(DAY_LENGTH - 1) - datetime.1;
+                    // println!("Set action to sleeping. {}", duration);
                     self.short_term_mem_mut().curr_action = Some(Action::new(
                         navigator.get_position_info(self.position()).unwrap(),
                         datetime.1,
-                        (Time::from_seconds(DAY_LENGTH) - datetime.1).in_seconds(),
+                        duration.in_seconds(),
                         ProperAction::SLEEP.to_string(),
                         None,
                         None,
@@ -419,7 +427,7 @@ impl Character {
                     Decision::SLEEP
                 }
                 Some(a) => {
-                    if a.completed(&datetime.1) {
+                    if a.completed(&datetime.1) && a.description() == ProperAction::SLEEP.to_string() {
                         self.short_term_mem_mut().curr_action = None;
                         Decision::WAKE
                     } else {
@@ -428,10 +436,13 @@ impl Character {
                 }
             },
         };
-
         // println!("Tick completed for character: {}", self.name);
         // println!("Next state: {:?}", self.state_controller);
-        output
+        // output
+        if let Some(a) = &self.short_term_mem().curr_action{
+            return a.description() == ProperAction::SLEEP.to_string()
+        }
+        false
     }
     pub fn movement_cooldown_max(&self) -> i64 {
         self.movement_cooldown_input

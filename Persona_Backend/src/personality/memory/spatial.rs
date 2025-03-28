@@ -1,6 +1,9 @@
 use std::{collections::HashMap, fmt::Display, iter::Map};
 
-use crate::world::world_map::{Region, Room, WorldMap};
+use crate::world::{
+    navigation::Navigator,
+    world_map::{Region, Room, WorldMap},
+};
 
 #[derive(Debug)]
 pub struct SpatialMemory {
@@ -14,12 +17,12 @@ impl Default for SpatialMemory {
     }
 }
 impl SpatialMemory {
-    pub fn god(world: &WorldMap) -> Self {
+    pub fn god(navigator: &Navigator) -> Self {
         let mut output = Self {
             spatial_mem_tree: HashMap::new(),
         };
 
-        for region in &world.regions() {
+        for region in &navigator.regions() {
             let region_name = region.name();
             if !output.spatial_mem_tree.contains_key(&region_name) {
                 output
@@ -37,7 +40,7 @@ impl SpatialMemory {
 
                 let room_objects = region_map.get_mut(&room_name).unwrap();
 
-                for object in world.objects() {
+                for object in navigator.objects() {
                     let (obj_region, obj_room) = (object.region(), object.room());
                     if obj_region == region_name && obj_room == room_name {
                         room_objects.push(object.name().clone());
@@ -72,15 +75,9 @@ impl SpatialMemory {
 }
 impl Display for SpatialMemory {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (region, rooms) in &self.spatial_mem_tree {
-            writeln!(f, "Region: {}", region)?;
-            for (room, objects) in rooms {
-                writeln!(f, "\tRoom: {}", room)?;
-                for object in objects {
-                    writeln!(f, "\t\tObject: {}", object)?;
-                }
-            }
+        match serde_json::to_string_pretty(&self.spatial_mem_tree) {
+            Ok(json) => write!(f, "{}", json),
+            Err(err) => write!(f, "Error serializing to JSON: {}", err),
         }
-        Ok(())
     }
 }

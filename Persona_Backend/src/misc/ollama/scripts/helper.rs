@@ -142,15 +142,16 @@ impl Character {
         location: (String, String),
     ) -> Result<String, Box<dyn Error>> {
         let surrounding = self.short_term_mem().surrounding_tasks(datetime.1);
-        println!("{:?}", surrounding);
+        // println!("{:?}", surrounding);
+        // println!("{:?}", self.spatial_mem());
         if let Some(curr_acction) = surrounding.get(1) {
             // let location = self.get_location(map);
             let source = format!(
                 "{common}
                 Today is {weekday} {date}.
                 {name} is planning on {curr_action}
-                Here are a list of regions, rooms, and objects that are present on the map: {spatial}. You are currently in ({region}, {room}).
-                Please output the region and room you want to execute the given action in.",
+                Here are a list of known regions, rooms, and objects that are present on the map: {spatial} in the format of {{Regions: {{Rooms: {{Objects }}}}}}. You are currently in ({region}, {room}).
+                Please decide on the most fitting location in the format of {{'region': {{}}, 'room': {{}}}} you want to execute the given action in.",
                 common = self,
                 name = self.name(),
                 weekday = weekday(&datetime.0),
@@ -161,6 +162,7 @@ impl Character {
                 // action = curr_acction.description,
                 spatial = self.spatial_mem(),
             );
+            // println!("{}", source);
             Ok(source)
         } else {
             Err("Helper Error".into())

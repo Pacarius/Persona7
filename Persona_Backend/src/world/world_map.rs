@@ -156,6 +156,7 @@ pub struct Room {
     size: Coordinates,
     holes: Vec<Coordinates>,
     pub region_name: Option<String>,
+    walled: bool,
 }
 impl Display for Room {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -170,6 +171,7 @@ impl Default for Room {
             size: Coordinates(0, 0),
             holes: vec![],
             region_name: Some("Void".to_string()),
+            walled: true,
         }
     }
 }
@@ -180,6 +182,7 @@ impl Room {
         size: Coordinates,
         holes: Vec<Coordinates>,
         region_name: Option<String>,
+        walled: bool,
     ) -> Self {
         Self {
             name,
@@ -187,6 +190,7 @@ impl Room {
             size,
             holes,
             region_name,
+            walled,
         }
     }
     pub fn name(&self) -> String {
@@ -229,23 +233,25 @@ impl WorldMap {
         let mut holes = vec![];
         for region in &self.regions {
             for room in &region.rooms {
-                let (x_top, y_top) = (room.position.0, room.position.1);
-                let (x_size, y_size) = (room.size.0, room.size.1);
-                holes.extend(&room.holes);
-                // Add top and bottom walls
-                let mut walls = vec![];
-                for x in x_top..(x_top + x_size) {
-                    walls.push(Coordinates(x, y_top));
-                    walls.push(Coordinates(x, y_top + y_size - 1));
+                if room.walled {
+                    let (x_top, y_top) = (room.position.0, room.position.1);
+                    let (x_size, y_size) = (room.size.0, room.size.1);
+                    holes.extend(&room.holes);
+                    // Add top and bottom walls
+                    let mut walls = vec![];
+                    for x in x_top..(x_top + x_size) {
+                        walls.push(Coordinates(x, y_top));
+                        walls.push(Coordinates(x, y_top + y_size - 1));
+                    }
+                    // Add left and right walls
+                    for y in y_top..(y_top + y_size) {
+                        walls.push(Coordinates(x_top, y));
+                        walls.push(Coordinates(x_top + x_size - 1, y));
+                    }
+                    self.walls.extend(walls);
                 }
-                // Add left and right walls
-                for y in y_top..(y_top + y_size) {
-                    walls.push(Coordinates(x_top, y));
-                    walls.push(Coordinates(x_top + x_size - 1, y));
-                }
-                self.walls.extend(walls);
             }
-            // holes.dedup();
+            holes.dedup();
             self.walls.retain(|w| !holes.contains(&w));
         }
     }
@@ -298,7 +304,7 @@ impl WorldMap {
 
             for i in 0..vertical {
                 for j in 0..horizontal {
-                    let (x_pos, y_pos) = (x - i, y + j);
+                    let (x_pos, y_pos) = (x + i, y + j);
                     if self.colliders[x_pos][y_pos].is_none() {
                         self.colliders[x_pos][y_pos] = Some(o.name.clone());
                     } else {
@@ -603,12 +609,18 @@ impl WorldMap {
         )
         .await;
     }
-    pub async fn update(&mut self, datetime: &DateTime, llama: &Ollama) {
+    pub fn ascend_all(&mut self) {
+        let navigator = &Navigator::new(&self);
+        self.get_characters_mut()
+            .iter_mut()
+            .for_each(|f| f.ascend(navigator));
+    }
+    pub async fn update(&mut self, datetime: &DateTime, llama: &Ollama) -> bool{
         // let (new_time, _) = self.datetime.1 + Time::from_seconds(TIME_STEP);
         // self.datetime.1 = new_time;
         let navigator = Navigator::new(self);
-        let objects_buffer = self.objects_buffer.clone();
-        let object_updates = join_all(
+        // let objects_buffer = self.objects_buffer.clone();
+        let mut all_sleep = join_all(
             self
                 // .get_map_mut()
                 .get_characters_mut()
@@ -616,19 +628,22 @@ impl WorldMap {
                 .map(|f| f.tick(datetime, &navigator, llama)),
         )
         .await;
-        objects_buffer.iter().for_each(|s| {
-            self.set_object(s.to_string(), None);
-        });
-        self.objects_buffer.clear();
-        object_updates.iter().for_each(|p| {
-            if let Some(p) = p {
-                if let Ok(()) = self.set_object(p.1.clone(), Some(p.0.clone())) {
-                    self.objects_buffer.push(p.1.clone());
-                }
-            }
-        });
-
-        self.calculate_colliders();
+    self.calculate_colliders();
+    all_sleep.dedup();
+    if all_sleep.len() == 1{
+        *all_sleep.iter().nth(0).unwrap()
+    } else {false}
+        // objects_buffer.iter().for_each(|s| {
+        //     self.set_object(s.to_string(), None);
+        // });
+        // self.objects_buffer.clear();
+        // object_updates.iter().for_each(|p| {
+        //     if let Some(p) = p {
+        //         if let Ok(()) = self.set_object(p.1.clone(), Some(p.0.clone())) {
+        //             self.objects_buffer.push(p.1.clone());
+        //         }
+        //     }
+        // });
     }
     // pub async fn test(&mut self, llama: &Ollama, datetime: &DateTime){
     //     self.characters.iter_mut().for_each(|f|{
@@ -697,10 +712,9 @@ impl Display for WorldMap {
             .join("; ");
         write!(
             f,
-            // "Regions: 
-            // {}, 
-            "Colliders
-            {}",
+            // "Regions:
+            // {},
+            "Colliders:\n{}",
             // Rooms: [{}]",
             // regions,
             colliders,
