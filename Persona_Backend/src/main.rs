@@ -52,8 +52,8 @@ async fn main() {
     // let ollama = Ollama::new("192.168.33.132:11434".to_string(), false);
     // let ollama = Ollama::new("localhost:11434".to_string(), false);
     let mut world = yeong();
-    println!("{}", world.get_map());
-    // world.day(&ollama).await;
+    // println!("{}", world.get_map());
+    world.day(&ollama).await;
 
     // world.day_start(&ollama).await;
     // let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));

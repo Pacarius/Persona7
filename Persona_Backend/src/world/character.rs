@@ -460,6 +460,7 @@ impl Display for Character {
 }
 
 #[derive(Debug)]
+#[allow(non_camel_case_types)]
 enum Decision {
     WAKE,
     ROOM,

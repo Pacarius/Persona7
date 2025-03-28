@@ -128,6 +128,66 @@ impl Navigator {
         });
         None
     }
+    // pub fn get_visible_objects(
+    //     &self,
+    //     character: &Character,
+    // ) -> HashMap<String, (bool, Vec<Coordinates>)> {
+    //     let (source_name, source_pos, v_range): (&String, &Coordinates, &i64) =
+    //         (character.name(), character.position(), character.v_range());
+    //     let mut visible_objects: HashMap<String, (bool, Vec<Coordinates>)> = HashMap::new();
+
+    //     for object in &self.objects {
+    //         let object_pos = object.position();
+    //         let distance = ((object_pos.0 as i64 - source_pos.0 as i64).pow(2)
+    //             + (object_pos.1 as i64 - source_pos.1 as i64).pow(2))
+    //         .isqrt() as i64;
+    //         // println!("{}", distance);
+    //         if distance <= *v_range {
+    //             let mut obstructed = false;
+    //             let (x0, y0) = (source_pos.0 as i64, source_pos.1 as i64);
+    //             let (x1, y1) = (object_pos.0 as i64, object_pos.1 as i64);
+
+    //             // Bresenham's line algorithm to check for walls
+    //             let dx = (x1 - x0).abs();
+    //             let dy = -(y1 - y0).abs();
+    //             let mut err = dx + dy;
+    //             let mut x = x0;
+    //             let mut y = y0;
+
+    //             let sx = if x0 < x1 { 1 } else { -1 };
+    //             let sy = if y0 < y1 { 1 } else { -1 };
+
+    //             while x != x1 || y != y1 {
+    //                 if let Some(collider) = &self.colliders()[x as usize][y as usize] {
+    //                     if collider == "Wall" {
+    //                         obstructed = true;
+    //                         break;
+    //                     }
+    //                 }
+
+    //                 let e2 = 2 * err;
+    //                 if e2 >= dy {
+    //                     err += dy;
+    //                     x += sx;
+    //                 }
+    //                 if e2 <= dx {
+    //                     err += dx;
+    //                     y += sy;
+    //                 }
+    //             }
+
+    //             if !obstructed && *object.owner() == None {
+    //                 visible_objects
+    //                     .entry(object.name().clone())
+    //                     .or_insert_with(|| (object.collision(), Vec::new()))
+    //                     .1
+    //                     .push(object.position().clone());
+    //             }
+    //         }
+    //     }
+
+    //     visible_objects
+    // }
     pub fn get_visible_objects(
         &self,
         character: &Character,
@@ -136,52 +196,26 @@ impl Navigator {
             (character.name(), character.position(), character.v_range());
         let mut visible_objects: HashMap<String, (bool, Vec<Coordinates>)> = HashMap::new();
 
-        for object in &self.objects {
-            let object_pos = object.position();
-            let distance = ((object_pos.0 as i64 - source_pos.0 as i64).pow(2)
-                + (object_pos.1 as i64 - source_pos.1 as i64).pow(2))
-            .isqrt() as i64;
-            // println!("{}", distance);
-            if distance <= *v_range {
-                let mut obstructed = false;
-                let (x0, y0) = (source_pos.0 as i64, source_pos.1 as i64);
-                let (x1, y1) = (object_pos.0 as i64, object_pos.1 as i64);
+        // Get the room the character is currently in
+        if let Some((_, room_name)) = self.get_position_info(source_pos) {
+            for object in &self.objects {
+                // Check if the object is in the same room
+                if let Some((_, object_room_name)) = self.get_position_info(object.position()) {
+                    if object_room_name == room_name {
+                        // Calculate the distance between the character and the object
+                        let distance = ((object.position().0 as i64 - source_pos.0 as i64).pow(2)
+                            + (object.position().1 as i64 - source_pos.1 as i64).pow(2))
+                        .isqrt() as i64;
 
-                // Bresenham's line algorithm to check for walls
-                let dx = (x1 - x0).abs();
-                let dy = -(y1 - y0).abs();
-                let mut err = dx + dy;
-                let mut x = x0;
-                let mut y = y0;
-
-                let sx = if x0 < x1 { 1 } else { -1 };
-                let sy = if y0 < y1 { 1 } else { -1 };
-
-                while x != x1 || y != y1 {
-                    if let Some(collider) = &self.colliders()[x as usize][y as usize] {
-                        if collider == "Wall" {
-                            obstructed = true;
-                            break;
+                        // If the object is within the character's visibility range, add it
+                        if distance <= *v_range {
+                            visible_objects
+                                .entry(object.name().clone())
+                                .or_insert_with(|| (object.collision(), Vec::new()))
+                                .1
+                                .push(object.position().clone());
                         }
                     }
-
-                    let e2 = 2 * err;
-                    if e2 >= dy {
-                        err += dy;
-                        x += sx;
-                    }
-                    if e2 <= dx {
-                        err += dx;
-                        y += sy;
-                    }
-                }
-
-                if !obstructed && *object.owner() == None {
-                    visible_objects
-                        .entry(object.name().clone())
-                        .or_insert_with(|| (object.collision(), Vec::new()))
-                        .1
-                        .push(object.position().clone());
                 }
             }
         }

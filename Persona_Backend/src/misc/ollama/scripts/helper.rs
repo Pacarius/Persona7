@@ -118,6 +118,7 @@ impl Character {
                     {curr_object}
                     You are planning on {curr_action}
                     Here is a list of objects that you can see {object_list:?}.
+                    If any objects are containers, you are suggested to automatically generate their contents.
                     Return a singular appropriate object for the event, or if no valid objects are present, return 'NONE'.",
                     common = self,
                     curr_object = match &self.short_term_mem().curr_object{
@@ -149,7 +150,7 @@ impl Character {
                 Today is {weekday} {date}.
                 {name} is planning on {curr_action}
                 Here are a list of regions, rooms, and objects that are present on the map: {spatial}. You are currently in ({region}, {room}).
-                Please output the names of the region and room you want to execute the given action in.",
+                Please output the region and room you want to execute the given action in.",
                 common = self,
                 name = self.name(),
                 weekday = weekday(&datetime.0),

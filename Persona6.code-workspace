@@ -7,7 +7,8 @@
 	"settings": {
 		"python-envs.defaultEnvManager": "ms-python.python:conda",
 		"python-envs.defaultPackageManager": "ms-python.python:conda",
-		"python-envs.pythonProjects": []
+		"python-envs.pythonProjects": [],
+		// "editor.fontFamily": "monospace, tektur"
 	},
 	"launch": {
 		"version": "0.2.0",

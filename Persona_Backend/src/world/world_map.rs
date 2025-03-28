@@ -660,24 +660,52 @@ impl WorldMap {
     // pub fn map_info_slice(&self) -> (Vec<Region>, Vec<Room>, Vec<Vec<Option<String>>>){
     //     (self.region_slice(),)
     // }
+    pub fn color(c: &char) -> String {
+        match c.to_ascii_lowercase() {
+            'a' => "⬛".into(),
+            's' => "🧱".into(),
+            'g' => "🏴‍☠️".into(),
+            'o' => "🏢".into(),
+            _ => "".into(),
+        }
+    }
 }
 impl Display for WorldMap {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        // let regions = self
-        //     .regions_as_chars()
-        //     .iter()
-        //     .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
-        //     .collect::<Vec<String>>()
-        //     .join("\n");
-        //
+        let regions = self
+            .regions_as_chars()
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|&c| format!("{} ", WorldMap::color(&c)))
+                    .collect::<String>()
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+
         let colliders = self
             .as_chars()
             .iter()
             .map(|row| row.iter().map(|&c| format!("{} ", c)).collect::<String>())
             .collect::<Vec<String>>()
             .join("\n");
-
-        write!(f, "Colliders:\n{}", colliders)
+        let rooms = self
+            .room_slice()
+            .iter()
+            .map(|r| r.name())
+            .collect::<Vec<String>>()
+            .join("; ");
+        write!(
+            f,
+            // "Regions: 
+            // {}, 
+            "Colliders
+            {}",
+            // Rooms: [{}]",
+            // regions,
+            colliders,
+            // rooms
+        )
     }
 }
 // pub struct MapInfoSlice(Vec<Region>, Vec<Room>, Vec<Vec<Option<String>>>);
