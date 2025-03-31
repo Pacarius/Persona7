@@ -275,7 +275,10 @@ impl Character {
                 Decision::ACT
             }
             Decision::ACT => {
-                if datetime.1 < self.short_term_mem().plan_vague.last().unwrap().start - Time::from_seconds(10 * 60){
+                if datetime.1
+                    < self.short_term_mem().plan_vague.last().unwrap().start
+                        - Time::from_seconds(10 * 60)
+                {
                     if let Some(task) = self
                         .short_term_mem()
                         .surrounding_tasks(datetime.1)
@@ -330,11 +333,10 @@ impl Character {
                         // No surrounding tasks found, transition to ROOM state
                         Decision::ROOM
                     }
-                }
-                else {
+                } else {
                     Decision::GO_HOME
                 }
-                }
+            }
             Decision::GO_HOME => match &self.short_term_mem().curr_action {
                 None => {
                     if let Some(target) = &self.home_location {
@@ -414,7 +416,7 @@ impl Character {
             },
             Decision::SLEEP => match &self.short_term_mem().curr_action {
                 None => {
-                    let duration  = Time::from_seconds(DAY_LENGTH - 1) - datetime.1;
+                    let duration = Time::from_seconds(DAY_LENGTH - 1) - datetime.1;
                     // println!("Set action to sleeping. {}", duration);
                     self.short_term_mem_mut().curr_action = Some(Action::new(
                         navigator.get_position_info(self.position()).unwrap(),
@@ -427,7 +429,9 @@ impl Character {
                     Decision::SLEEP
                 }
                 Some(a) => {
-                    if a.completed(&datetime.1) && a.description() == ProperAction::SLEEP.to_string() {
+                    if a.completed(&datetime.1)
+                        && a.description() == ProperAction::SLEEP.to_string()
+                    {
                         self.short_term_mem_mut().curr_action = None;
                         Decision::WAKE
                     } else {
@@ -439,8 +443,8 @@ impl Character {
         // println!("Tick completed for character: {}", self.name);
         // println!("Next state: {:?}", self.state_controller);
         // output
-        if let Some(a) = &self.short_term_mem().curr_action{
-            return a.description() == ProperAction::SLEEP.to_string()
+        if let Some(a) = &self.short_term_mem().curr_action {
+            return a.description() == ProperAction::SLEEP.to_string();
         }
         false
     }

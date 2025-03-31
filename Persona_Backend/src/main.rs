@@ -19,16 +19,19 @@ use world::{
     world_map::{Coordinates, WorldMap},
     worlds::yeong::yeong,
 };
+// use server::*;
 // use crate::world::helpers::MapHelper;
-use xcf::Xcf;
+// use xcf::Xcf;
 
 // use sqlite::data::{DBData, DBDataMap, DBDataType};
 
 mod misc;
 mod personality;
 mod world;
+mod server;
 const TEXT_MODEL: &str = "llama3.2";
 const EMBEDDING_MODEL: &str = "nomic-embed-text";
+const OLLAMA_ENDPOINT: &str = "192.168.50.84";
 const TIME_STEP: i64 = 20;
 
 #[tokio::main]
@@ -54,7 +57,7 @@ async fn main() {
     let mut world = yeong();
     // println!("{}", world.get_map());
     world.get_map_mut().ascend_all();
-    world.day(&ollama).await;
+    world.day(&ollama, true).await;
 
     // world.day_start(&ollama).await;
     // let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));

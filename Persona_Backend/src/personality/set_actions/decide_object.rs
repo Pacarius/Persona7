@@ -63,7 +63,8 @@ impl crate::world::character::Character {
                                                     TryInto::<usize>::try_into(pos.1 as isize + dy),
                                                 ) {
                                                     Self::decide_object_ex(
-                                                        self, navigator, valid_x, valid_y, datetime, object
+                                                        self, navigator, valid_x, valid_y,
+                                                        datetime, object,
                                                     );
                                                     return output;
                                                 }
@@ -73,8 +74,12 @@ impl crate::world::character::Character {
                                 } else {
                                     for pos in &target.1 {
                                         Self::decide_object_ex(
-                                            self, navigator, pos.0, pos.1, datetime,
-                                             object.clone()
+                                            self,
+                                            navigator,
+                                            pos.0,
+                                            pos.1,
+                                            datetime,
+                                            object.clone(),
                                         );
                                     }
                                 }
@@ -96,7 +101,7 @@ impl crate::world::character::Character {
         valid_x: usize,
         valid_y: usize,
         datetime: &DateTime,
-        object: String
+        object: String,
     ) {
         if let Some(valid_path) =
             navigator.get_path(character.position().clone(), Coordinates(valid_x, valid_y))

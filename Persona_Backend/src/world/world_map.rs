@@ -615,7 +615,7 @@ impl WorldMap {
             .iter_mut()
             .for_each(|f| f.ascend(navigator));
     }
-    pub async fn update(&mut self, datetime: &DateTime, llama: &Ollama) -> bool{
+    pub async fn update(&mut self, datetime: &DateTime, llama: &Ollama) -> bool {
         // let (new_time, _) = self.datetime.1 + Time::from_seconds(TIME_STEP);
         // self.datetime.1 = new_time;
         let navigator = Navigator::new(self);
@@ -628,11 +628,13 @@ impl WorldMap {
                 .map(|f| f.tick(datetime, &navigator, llama)),
         )
         .await;
-    self.calculate_colliders();
-    all_sleep.dedup();
-    if all_sleep.len() == 1{
-        *all_sleep.iter().nth(0).unwrap()
-    } else {false}
+        self.calculate_colliders();
+        all_sleep.dedup();
+        if all_sleep.len() == 1 {
+            *all_sleep.iter().nth(0).unwrap()
+        } else {
+            false
+        }
         // objects_buffer.iter().for_each(|s| {
         //     self.set_object(s.to_string(), None);
         // });
