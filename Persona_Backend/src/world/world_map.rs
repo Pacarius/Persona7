@@ -22,6 +22,7 @@ use crate::misc::time::{Date, DateTime, Time};
 
 use super::character::Character;
 use super::navigation::Navigator;
+use super::utils::{MapObject, Region};
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 //AT SOME POINT THE X,Y COORDINATES OF EVERYTHING FLIPPED KILL ME
@@ -32,177 +33,6 @@ impl Display for Coordinates {
     }
 }
 // pub struct Character(Identity, String);
-#[derive(Debug, Clone)]
-pub struct MapObject {
-    vertical: i64,
-    horizontal: i64,
-    // rotation: Rotation,
-    position: Coordinates,
-    name: String,
-    collision: bool,
-    action: Option<String>,
-    region: String,
-    room: String,
-    owner: Option<String>,
-}
-impl MapObject {
-    pub fn new(
-        vertical: i64,
-        horizontal: i64,
-        // rotation: Rotation,
-        position: Coordinates,
-        name: String,
-        collision: bool,
-    ) -> Self {
-        Self {
-            vertical,
-            horizontal,
-            // rotation,
-            position,
-            name,
-            collision,
-            action: None,
-            region: "".to_string(),
-            room: "".to_string(),
-            owner: None,
-        }
-    }
-    pub fn name(&self) -> &String {
-        &self.name
-    }
-    pub fn action(&self) -> &Option<String> {
-        &self.action
-    }
-    pub fn late(&mut self, region: String, room: String) {
-        // if let Some((region, room)) = map.get_position_info(&self.position){
-        self.region = region;
-        self.room = room;
-        // }
-    }
-    pub fn collision(&self) -> bool {
-        self.collision
-    }
-    pub fn room(&self) -> String {
-        self.room.clone()
-    }
-    pub fn region(&self) -> String {
-        self.region.clone()
-    }
-    pub fn position(&self) -> &Coordinates {
-        &self.position
-    }
-    pub fn owner(&self) -> &Option<String> {
-        &self.owner
-    }
-    pub fn set_owner(&mut self, name: Option<String>) {
-        self.owner = name;
-    }
-}
-#[derive(Debug, Clone)]
-pub struct Region {
-    name: String,
-    position: Coordinates,
-    size: Coordinates,
-    rooms: Vec<Room>,
-}
-impl Display for Region {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name)
-    }
-}
-impl Default for Region {
-    fn default() -> Self {
-        Self {
-            name: "Void".to_string(),
-            position: Coordinates(0, 0),
-            size: Coordinates(0, 0),
-            rooms: vec![],
-        }
-    }
-}
-impl Region {
-    pub fn new(name: String, position: Coordinates, size: Coordinates) -> Self {
-        Self {
-            name,
-            position,
-            size,
-            rooms: Vec::new(),
-        }
-    }
-    pub fn add_room(&mut self, mut room: Room) {
-        if room.region_name.is_none() {
-            room.region_name = Some(self.name.clone())
-        }
-        self.rooms.push(room);
-    }
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-    pub fn rooms(&self) -> Vec<&Room> {
-        self.rooms.iter().map(|r| r).collect()
-    }
-    pub fn position(&self) -> &Coordinates {
-        &self.position
-    }
-    pub fn size(&self) -> &Coordinates {
-        &self.size
-    }
-}
-#[derive(PartialEq, Eq, Hash, Debug, Clone)]
-pub struct Room {
-    //Position: (XTop, YTop); Size: (XSize, YSize)
-    name: String,
-    position: Coordinates,
-    size: Coordinates,
-    holes: Vec<Coordinates>,
-    pub region_name: Option<String>,
-    walled: bool,
-}
-impl Display for Room {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name)
-    }
-}
-impl Default for Room {
-    fn default() -> Self {
-        Self {
-            name: "Void".to_string(),
-            position: Coordinates(0, 0),
-            size: Coordinates(0, 0),
-            holes: vec![],
-            region_name: Some("Void".to_string()),
-            walled: true,
-        }
-    }
-}
-impl Room {
-    pub fn new(
-        name: String,
-        position: Coordinates,
-        size: Coordinates,
-        holes: Vec<Coordinates>,
-        region_name: Option<String>,
-        walled: bool,
-    ) -> Self {
-        Self {
-            name,
-            position,
-            size,
-            holes,
-            region_name,
-            walled,
-        }
-    }
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-    pub fn position(&self) -> &Coordinates {
-        &self.position
-    }
-    pub fn size(&self) -> &Coordinates {
-        &self.size
-    }
-}
 pub struct WorldMap {
     size: Coordinates,
     regions: Vec<Region>,
@@ -232,11 +62,11 @@ impl WorldMap {
     pub fn add_walls(&mut self) {
         let mut holes = vec![];
         for region in &self.regions {
-            for room in &region.rooms {
-                if room.walled {
-                    let (x_top, y_top) = (room.position.0, room.position.1);
-                    let (x_size, y_size) = (room.size.0, room.size.1);
-                    holes.extend(&room.holes);
+            for room in &region.rooms() {
+                if room.is_walled() {
+                    let (x_top, y_top) = (room.position().0, room.position().1);
+                    let (x_size, y_size) = (room.size().0, room.size().1);
+                    holes.extend(room.holes());
                     // Add top and bottom walls
                     let mut walls = vec![];
                     for x in x_top..(x_top + x_size) {
@@ -288,17 +118,17 @@ impl WorldMap {
             .objects
             .iter()
             .map(|o| {
-                let Coordinates(x, y) = o.position;
-                let position_info = self.get_position_info(&Coordinates(x, y));
-                (x, y, position_info)
+                let Coordinates(x, y) = o.position();
+                let position_info = self.get_position_info(&Coordinates(*x, *y));
+                (*x, *y, position_info)
             })
-            .collect();
+            .collect::<Vec<(usize, usize, Option<(String, String)>)>>();
 
         for (i, o) in self.objects.iter_mut().enumerate() {
-            if !o.collision {
+            if !o.collision() {
                 continue;
             }
-            let Coordinates(x, y) = o.position;
+            let Coordinates(x, y) = o.position();
             let vertical = o.horizontal as usize;
             let horizontal = o.vertical as usize;
 
@@ -584,22 +414,22 @@ impl WorldMap {
 
     //     visible_objects
     // }
-    pub fn set_object(
-        &mut self,
-        object_name: String,
-        owner_name: Option<String>,
-    ) -> Result<(), Box<dyn Error>> {
-        if let Some(o) = self
-            .objects
-            .iter_mut()
-            .filter(|o| *o.name() == object_name)
-            .nth(0)
-        {
-            o.set_owner(owner_name);
-            return Ok(());
-        }
-        Err(("Object Doesn't Exist.".into()))
-    }
+    // pub fn set_object(
+    //     &mut self,
+    //     object_name: String,
+    //     owner_name: Option<String>,
+    // ) -> Result<(), Box<dyn Error>> {
+    //     if let Some(o) = self
+    //         .objects
+    //         .iter_mut()
+    //         .filter(|o| *o.name() == object_name)
+    //         .nth(0)
+    //     {
+    //         o.set_owner(owner_name);
+    //         return Ok(());
+    //     }
+    //     Err(("Object Doesn't Exist.".into()))
+    // }
     pub async fn day_start(&mut self, llama: &Ollama, date: Date) {
         let navigator = &Navigator::new(&self);
         join_all(

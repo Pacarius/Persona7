@@ -3,7 +3,7 @@ use std::error::Error;
 use reqwest::Client;
 use serde_json::{json, Value};
 
-use crate::TEXT_MODEL;
+use crate::{OLLAMA_ENDPOINT, TEXT_MODEL};
 
 use super::options::{self, ChatOptions, ChatRole, GenerateOptions, Message};
 
@@ -13,9 +13,9 @@ pub struct Ollama {
     logging: bool,
 }
 impl Ollama {
-    pub fn new(endpoint: String, logging: bool) -> Ollama {
+    pub fn new(logging: bool) -> Ollama {
         Ollama {
-            endpoint: format!("http://{}/api/", endpoint),
+            endpoint: format!("http://{}/api/", OLLAMA_ENDPOINT),
             client: Client::new(),
             logging,
         }

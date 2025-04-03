@@ -1,6 +1,6 @@
 // use misc::time::{Month, Time};
 
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 use misc::{
     ollama::{
@@ -13,6 +13,7 @@ use misc::{
 use personality::action::fmt_abv;
 use serde::Serialize;
 use serde_json::{json, Value};
+use server::Server;
 use world::{
     // test::test_char,
     navigation::Navigator,
@@ -27,8 +28,8 @@ use world::{
 
 mod misc;
 mod personality;
-mod world;
 mod server;
+mod world;
 const TEXT_MODEL: &str = "llama3.2";
 const EMBEDDING_MODEL: &str = "nomic-embed-text";
 const OLLAMA_ENDPOINT: &str = "192.168.50.84";
@@ -51,13 +52,15 @@ async fn main() {
     // adapter.main().await;
 
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
-    let ollama = Ollama::new("192.168.50.84:11434".to_string(), false);
+    let ollama = Ollama::new(false);
     // let ollama = Ollama::new("192.168.33.132:11434".to_string(), false);
     // let ollama = Ollama::new("localhost:11434".to_string(), false);
     let mut world = yeong();
     // println!("{}", world.get_map());
     world.get_map_mut().ascend_all();
-    world.day(&ollama, true).await;
+    let mut server = Server::new("0.0.0.0", Arc::new(world),  None).await.unwrap();
+    server.main().await.unwrap();
+    // world.day(&ollama, true).await;
 
     // world.day_start(&ollama).await;
     // let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));

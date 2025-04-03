@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Client Module</h1>
+
+<!-- Display the response message if it exists -->
+{% if message %}
+    <p style="color: green;">{{ message }}</p>
+{% endif %}
+
+<!-- <p>Default IP: {{ ip }}</p> -->
+<!-- <p>Default Port: {{ port }}</p> -->
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Connect</button>
+</form>
+{% endblock %}

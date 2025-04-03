@@ -14,7 +14,7 @@ use super::world_map::WorldMap;
 pub struct World {
     map: WorldMap,
     pub datetime: DateTime,
-    running: bool
+    running: bool,
 }
 impl World {
     pub fn new(map: WorldMap) -> Self {
@@ -24,7 +24,7 @@ impl World {
                 Date::new(1, crate::misc::time::Month::January),
                 Time::from_hms((0, 0, 0)),
             ),
-        running: false
+            running: false,
         }
     }
     pub fn get_map(&self) -> &WorldMap {
@@ -53,8 +53,10 @@ impl World {
         day_start_time.sort();
         **day_start_time.iter().nth(0).unwrap()
     }
-    pub async fn tick(&mut self, llama: &Ollama) -> bool{
-        if !self.running{return false}
+    pub async fn tick(&mut self, llama: &Ollama) -> bool {
+        if !self.running {
+            return false;
+        }
         let new_datetime = self.datetime.clone() + Time::from_seconds(TIME_STEP);
         let o = self.get_map_mut().update(&new_datetime, llama).await;
         self.datetime = new_datetime;
@@ -74,10 +76,10 @@ impl World {
     pub async fn day(&mut self, llama: &Ollama, enable_logging: bool) {
         let start_time = self.day_start(llama).await;
         self.datetime.1 = start_time - Time::from_seconds(1);
-    
+
         let log_interval = 200;
         let mut log_cooldown = 0;
-    
+
         while !self.tick(llama).await {
             if enable_logging && log_cooldown >= log_interval {
                 self.get_map().get_characters().iter().for_each(|c| {
@@ -91,7 +93,7 @@ impl World {
                 log_cooldown += 1;
             }
         }
-    
+
         if enable_logging {
             println!("{}", self.get_map());
         }

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Submodule Navigation</title>
+    <style>
+        body {
+            display: flex;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 15px;
+            height: 100vh;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        .sidebar a {
+            display: block;
+            margin: 10px 0;
+            text-decoration: none;
+            color: #333;
+        }
+        .sidebar a:hover {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>Navigation</h3>
+        <li><a href="{% url 'client_view' %}">Client</a></li>
+        <li><a href="{% url 'settings_view' %}">Settings</a></li>
+    </div>
+    <div class="content">
+        {% block content %}
+        <!-- Submodule content will be injected here -->
+        {% endblock %}
+    </div>
+</body>
+</html>
