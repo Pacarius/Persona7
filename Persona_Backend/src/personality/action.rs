@@ -4,7 +4,7 @@ use futures::future::Map;
 
 use crate::{
     misc::time::Time,
-    world::world_map::{MapObject, Region, Room},
+    world::utils::{MapObject, Region, Room}
 };
 #[derive(Debug)]
 pub struct Chat {

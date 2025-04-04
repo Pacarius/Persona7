@@ -2,7 +2,8 @@ use crate::personality::{action::Action, memory::short_term::ShortTerm};
 
 use crate::world::character::{Character, Direction, Placeholder};
 use crate::world::world::World;
-use crate::world::world_map::{Coordinates, MapObject, Region, Room, WorldMap};
+use crate::world::world_map::{Coordinates, WorldMap};
+    use crate::world::utils::{MapObject, Region, Room};
 // pub fn test_char() -> Character {
 //     Character::new(
 //        22,

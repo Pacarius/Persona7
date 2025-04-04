@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .client import Client
 from dome.settings.models import Setting  # Import the Setting model
+from .world import World
 
 def client_view(request):
     # Fetch default IP and port from the database
@@ -18,7 +19,13 @@ def client_view(request):
             client = Client(default_ip, default_port)
             client.connect()
             # Receive a message from the server
-            message = f"Message: {client.receive_message()}"
+            messages = [client.receive_message() for i in range(3)]
+            message = {"messages": messages}
+            # print(messages[0])
+            world = World()
+            world.parse_debug_string(messages[1])
+            world.generate_image()
+            # World.test()
             client.close_connection()
         except Exception as e:
             message = f"Failed to connect: {e}"

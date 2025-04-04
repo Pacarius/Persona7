@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Client Module</h1>
+<h1>Client</h1>
 
-<!-- Display the response message if it exists -->
 {% if message %}
     <p style="color: green;">{{ message }}</p>
+    <script>
+        console.log("{{ message|escapejs }}");
+    </script>
 {% endif %}
 
 <!-- <p>Default IP: {{ ip }}</p> -->

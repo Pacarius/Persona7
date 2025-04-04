@@ -22,7 +22,7 @@ use crate::misc::time::{Date, DateTime, Time};
 
 use super::character::Character;
 use super::navigation::Navigator;
-use super::utils::{MapObject, Region};
+use super::utils::{MapObject, Region, Room};
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 //AT SOME POINT THE X,Y COORDINATES OF EVERYTHING FLIPPED KILL ME
@@ -129,14 +129,14 @@ impl WorldMap {
                 continue;
             }
             let Coordinates(x, y) = o.position();
-            let vertical = o.horizontal as usize;
-            let horizontal = o.vertical as usize;
+            let vertical = o.horizontal() as usize;
+            let horizontal = o.vertical() as usize;
 
             for i in 0..vertical {
                 for j in 0..horizontal {
                     let (x_pos, y_pos) = (x + i, y + j);
                     if self.colliders[x_pos][y_pos].is_none() {
-                        self.colliders[x_pos][y_pos] = Some(o.name.clone());
+                        self.colliders[x_pos][y_pos] = Some(o.name().clone());
                     } else {
                         println!(
                             "Collider already exists at ({}, {}): {}",
@@ -193,13 +193,13 @@ impl WorldMap {
         let mut region_map = vec![vec![' '; self.size.0]; self.size.1];
 
         for region in &self.regions {
-            let Coordinates(x_top, y_top) = region.position;
-            let Coordinates(x_size, y_size) = region.size;
+            let Coordinates(x_top, y_top) = region.position().clone();
+            let Coordinates(x_size, y_size) = region.size().clone();
 
-            for x in x_top..(x_top + x_size) {
+            for x in x_top..((x_top + x_size)) {
                 for y in y_top..(y_top + y_size) {
                     if x < self.size.0 && y < self.size.1 {
-                        region_map[y][x] = region.name.chars().next().unwrap_or(' ');
+                        region_map[y][x] = region.name().chars().next().unwrap_or(' ');
                     }
                 }
             }
@@ -488,10 +488,10 @@ impl WorldMap {
     pub fn room_slice(&self) -> Vec<Room> {
         let mut container = vec![];
         self.regions.iter().for_each(|f| {
-            f.rooms
+            f.rooms()
                 .iter()
-                .filter(|r| r.region_name.is_some())
-                .for_each(|r| container.push(r.clone()))
+                .filter(|r| r.region_name().is_some())
+                .for_each(|r| container.push((*r).clone()))
         });
         container
     }

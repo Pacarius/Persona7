@@ -33,7 +33,7 @@ class Client:
         else:
             print("Client is not connected to the server.")
 
-    def receive_message(self, buffer_size=1024):
+    def receive_message(self, buffer_size=4096):
         """
         Receive a message from the server.
         """
@@ -47,7 +47,22 @@ class Client:
         else:
             print("Client is not connected to the server.")
         return None
-
+    # def receive_messages(self, buffer_size=4096):
+    #     """
+    #     Continuously receive all messages from the server until the connection is closed.
+    #     """
+    #     if self.client_socket:
+    #         try:
+    #             while True:
+    #                 response = self.client_socket.recv(buffer_size).decode('utf-8')
+    #                 if not response:
+    #                     print("Server closed the connection.")
+    #                     break
+    #             print(f"Received: {response}")
+    #         except Exception as e:
+    #             print(f"Error while receiving messages - {e}")
+    #     else:
+    #         print("Client is not connected to the server.")
     def close_connection(self):
         """
         Close the connection to the server.

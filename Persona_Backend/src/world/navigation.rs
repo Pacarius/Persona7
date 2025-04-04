@@ -2,7 +2,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use super::{
     character::Character,
-    world_map::{Coordinates, MapObject, Region, Room, WorldMap},
+    world_map::{Coordinates, WorldMap},
+    utils::{MapObject, Region, Room},
 };
 
 pub struct Navigator {
@@ -41,6 +42,9 @@ impl Navigator {
     }
     pub fn regions(&self) -> Vec<&Region> {
         self.regions.iter().map(|r| r).collect()
+    }
+    pub fn size(&self) -> &Coordinates {
+        &self.size
     }
     // pub fn update_colliders(&mut self, map: &WorldMap) {
     //     self.colliders = map.collider_slice();

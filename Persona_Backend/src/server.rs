@@ -21,7 +21,7 @@ pub struct Server {
 }
 pub struct Client {
     stream: TcpStream,
-    initialised: bool,
+    // initialised: bool,
 }
 impl Server {
     pub async fn main(&mut self) -> Result<(), Box<dyn Error>> {
@@ -69,21 +69,26 @@ impl Client {
     pub fn new(stream: TcpStream) -> Self {
         Self {
             stream,
-            initialised: false,
+            // initialised: false,
         }
     }
     pub async fn init(&mut self, navigator: &Navigator) -> Result<(), Box<dyn Error>>{
-        if !self.initialised{
-            let source = format!("{:?}", navigator.regions());
+        // if !self.initialised{
+        let targets = vec![format!("{:?}", navigator.size()), format!("{:?}", navigator.regions()),  format!("{:?}", navigator.objects())];
             // if self.stream.readable().await{
             //     let mut buffer = b"";
             //     self.stream.try_read(buffer)
             // }
-            self.stream.write_all(source.as_bytes()).await?;
-            self.initialised = true;
+        for t in targets{
+            self.stream.write_all(t.as_bytes()).await?;
+            // self.stream.write_all(b"\n").await?;
+        }
+        // self.stream.shutdown().await?;
+            // println!("Sent {}.", source);
+            // self.initialised = true;
             // self.stream.shutdown().await?;
             // Ok(())
-        }
+        // }
         return Ok(());
     }
 }

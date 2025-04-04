@@ -3,7 +3,8 @@ use std::collections::VecDeque;
 use crate::{
     misc::time::Time,
     personality::action::{Action, ActionBare},
-    world::world_map::{Coordinates, MapObject},
+    world::world_map::Coordinates,
+    world::utils::MapObject
 };
 #[derive(Debug)]
 pub struct Path {

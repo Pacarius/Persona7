@@ -1,8 +1,8 @@
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 use crate::Coordinates;
 
-#[derive(Debug, Clone)]
+#[derive( Clone)]
 pub struct MapObject {
     vertical: i64,
     horizontal: i64,
@@ -13,7 +13,16 @@ pub struct MapObject {
     action: Option<String>,
     region: String,
     room: String,
-    owner: Option<String>,
+    // owner: Option<String>,
+}
+impl Debug for MapObject{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MapObject")
+        .field("name", self.name())
+        .field("pos", self.position())
+        .field("size", &(self.vertical(), self.horizontal()))
+        .finish()
+    }
 }
 impl MapObject {
     pub fn new(
@@ -34,7 +43,7 @@ impl MapObject {
             action: None,
             region: "".to_string(),
             room: "".to_string(),
-            owner: None,
+            // owner: None,
         }
     }
     pub fn name(&self) -> &String {
@@ -61,12 +70,18 @@ impl MapObject {
     pub fn position(&self) -> &Coordinates {
         &self.position
     }
-    pub fn owner(&self) -> &Option<String> {
-        &self.owner
+    pub fn horizontal(&self) -> i64 {
+        self.horizontal
     }
-    pub fn set_owner(&mut self, name: Option<String>) {
-        self.owner = name;
+    pub fn vertical(&self) -> i64 {
+        self.vertical
     }
+    // pub fn owner(&self) -> &Option<String> {
+    //     &self.owner
+    // }
+    // pub fn set_owner(&mut self, name: Option<String>) {
+    //     self.owner = name;
+    // }
 }
 #[derive(Debug, Clone)]
 pub struct Region {
@@ -116,6 +131,9 @@ impl Region {
     }
     pub fn size(&self) -> &Coordinates {
         &self.size
+    }
+    pub fn region_name(&self) -> &String {
+        &self.name
     }
 }
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]

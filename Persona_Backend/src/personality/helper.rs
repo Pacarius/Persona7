@@ -7,7 +7,8 @@ use crate::{
     personality::action::fmt_abv,
     world::{
         character::Character,
-        world_map::{MapObject, WorldMap},
+        world_map::WorldMap,
+        utils::MapObject
     },
 };
 impl Character {

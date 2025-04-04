@@ -19,8 +19,9 @@ use crate::{
 };
 
 use super::{
-    navigation::{self, Navigator},
-    world_map::{Coordinates, Room, WorldMap},
+    navigation::Navigator,
+    world_map::Coordinates,
+    utils::Room,
 };
 
 // use super::world::WorldListener;

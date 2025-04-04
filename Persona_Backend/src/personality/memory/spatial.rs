@@ -2,7 +2,8 @@ use std::{collections::HashMap, fmt::Display, iter::Map};
 
 use crate::world::{
     navigation::Navigator,
-    world_map::{Region, Room, WorldMap},
+    world_map::WorldMap,
+    utils::{Region, Room}
 };
 
 #[derive(Debug)]
