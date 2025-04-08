@@ -1,0 +1,20 @@
+{
+    "background": [
+        "plank",
+        "grass",
+        "water"
+    ],
+    "layout" : [
+        "wall",
+        "door",
+        "outdoor",
+        "living_room",
+        "bedroom_1",
+        "bedroom_2",
+        "storage"
+    ],
+    "object" : [
+        "bed",
+        "table"
+    ]
+}

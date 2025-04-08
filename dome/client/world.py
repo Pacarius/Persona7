@@ -57,42 +57,39 @@ class World:
         max_height = max(region["position"][1] + region["size"][1] for region in self.regions)
         image_width = max_width * tile_size
         image_height = max_height * tile_size
-
+    
+        # Debug: Print image dimensions
+        # print(f"Image dimensions: {image_width}x{image_height}")
+    
         # Create a blank image
         img = Image.new("RGB", (image_width, image_height), "white")
         draw = ImageDraw.Draw(img)
-
+    
         # Define some colors for regions
         colors = ["red", "blue", "green", "yellow", "purple", "orange"]
-
+    
         # Draw each region and its rooms
         for region_index, region in enumerate(self.regions):
-            # print(region_color)
             region_color = colors[region_index % len(colors)]
-            print(f"Using color {region_color} for region {region['name']}")  # Debugging output
-
+            # print(f"Processing region: {region['name']} at {region['position']} with size {region['size']}")
             for room in region["rooms"]:
                 room_x, room_y = room["position"]
                 room_w, room_h = room["size"]
-                print(f"Drawing room: {room} at {room_x}, {room_y}. Size: {room_w}, {room_h}")
-
+                # print(f"  Drawing room: {room['name']} at {room_x}, {room_y} (relative to region) with size {room_w}x{room_h}")
                 # Draw the room tiles
                 for i in range(room_w):
                     for j in range(room_h):
-                        tile_x = (region["position"][0] + room_x + i) * tile_size
-                        tile_y = (region["position"][1] + room_y + j) * tile_size
-                        # if (room_x + i, room_y + j) not in room["holes"]:  # Skip holes
-                            # print(f"Drawing tile at ({tile_x}, {tile_y}) with color {region_color}")  # Debugging output
+                        # Corrected tile position calculation
+                        tile_x = (room_x + i) * tile_size
+                        tile_y = (room_y + j) * tile_size
                         draw.rectangle(
                             [tile_x, tile_y, tile_x + tile_size, tile_y + tile_size],
                             fill=region_color,
                             outline="black"
                         )
-            # region_color = None
-
+    
         # Save the image
         img.save(output_file)
-        print(f"World image saved to {output_file}")
 
     def test(self):
         """

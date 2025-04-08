@@ -3,3 +3,6 @@ Persona_Backend/target
 .vscode/launch.json
 .vscode/settings.json
 ref
+*.pyc
+dome/__pycache__/
+Jonkler/__pycache__/

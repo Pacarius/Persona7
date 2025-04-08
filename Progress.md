@@ -10,7 +10,7 @@ World{
     Objects✅,
     Pathing✅,
     Day Loop✅,
-    **Populate Map,**
+    Populate Map✅,
 }
 Personality Simulation{
     Action Decision:(📰) {
@@ -29,6 +29,7 @@ Personality Simulation{
         Long(8),
         Spatial✅
     }
+    ***Daily Reflection Dude
 }
 Frontend(🎯)(3){
     Sprites,
