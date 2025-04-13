@@ -110,15 +110,20 @@ impl crate::world::character::Character {
                 Some(l) => l,
                 None => ("Error".to_string(), "Error".to_string()),
             };
+            let cd = character.movement_cooldown_max().clone();
+            let name = character.name().clone();
             // Found a valid path
-            character.short_term_mem_mut().curr_action = Some(Action::new(
-                loc,
-                datetime.1,
-                valid_path.len() as i64 * (character.movement_cooldown_max() + 1) * TIME_STEP,
-                ProperAction::MOVE.to_string(),
-                Some(object),
-                None,
-            ));
+            character.short_term_mem_mut().set_action(
+                Some(Action::new(
+                    loc,
+                    datetime.1,
+                    valid_path.len() as i64 * (cd + 1) * TIME_STEP,
+                    ProperAction::MOVE.to_string(),
+                    Some(object),
+                    None,
+                )),
+                name,
+            );
             character.set_path(valid_path);
         }
     }

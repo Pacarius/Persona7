@@ -8,6 +8,9 @@
 		"python-envs.defaultEnvManager": "ms-python.python:conda",
 		"python-envs.defaultPackageManager": "ms-python.python:conda",
 		"python-envs.pythonProjects": [],
+		// "basedpyright.analysis.extraPaths": ["~/.conda/envs/Persona/bin"],
+		"basedpyright.analysis.include": ["~/.conda/envs/"]
+		// "basedpyright.importStrategy": "useBundled"
 		// "editor.fontFamily": "monospace, tektur"
 	},
 	"launch": {

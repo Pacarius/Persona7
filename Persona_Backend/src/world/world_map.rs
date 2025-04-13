@@ -19,6 +19,7 @@ use tokio::join;
 
 use crate::misc::ollama::ollama::Ollama;
 use crate::misc::time::{Date, DateTime, Time};
+use crate::personality::action::ActionEntry;
 
 use super::character::Character;
 use super::navigation::Navigator;
@@ -196,7 +197,7 @@ impl WorldMap {
             let Coordinates(x_top, y_top) = region.position().clone();
             let Coordinates(x_size, y_size) = region.size().clone();
 
-            for x in x_top..((x_top + x_size)) {
+            for x in x_top..(x_top + x_size) {
                 for y in y_top..(y_top + y_size) {
                     if x < self.size.0 && y < self.size.1 {
                         region_map[y][x] = region.name().chars().next().unwrap_or(' ');
@@ -445,12 +446,12 @@ impl WorldMap {
             .iter_mut()
             .for_each(|f| f.ascend(navigator));
     }
-    pub async fn update(&mut self, datetime: &DateTime, llama: &Ollama) -> bool {
+    pub async fn update(&mut self, datetime: &DateTime, llama: &Ollama) -> (bool, Vec<ActionEntry>) {
         // let (new_time, _) = self.datetime.1 + Time::from_seconds(TIME_STEP);
         // self.datetime.1 = new_time;
         let navigator = Navigator::new(self);
         // let objects_buffer = self.objects_buffer.clone();
-        let mut all_sleep = join_all(
+        let results = join_all(
             self
                 // .get_map_mut()
                 .get_characters_mut()
@@ -458,13 +459,17 @@ impl WorldMap {
                 .map(|f| f.tick(datetime, &navigator, llama)),
         )
         .await;
+        let mut all_sleep: Vec<bool> = results.iter().map(|(sleep, _)| *sleep).collect();
+        let entries: Vec<ActionEntry> =
+            results.iter().filter_map(|(_, e)| e.clone()).collect();
         self.calculate_colliders();
         all_sleep.dedup();
-        if all_sleep.len() == 1 {
+        let all_sleep = if all_sleep.len() == 1 {
             *all_sleep.iter().nth(0).unwrap()
         } else {
             false
-        }
+        };
+        (all_sleep, entries)
         // objects_buffer.iter().for_each(|s| {
         //     self.set_object(s.to_string(), None);
         // });

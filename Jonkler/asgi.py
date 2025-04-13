@@ -8,9 +8,20 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-
+from websockets.routing import router
+from channels.routing import ProtocolTypeRouter
+from channels.auth import AuthMiddlewareStack
+from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
+# from .dome import 
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Jonkler.settings')
 
-application = get_asgi_application()
+raw = get_asgi_application()
+application = ProtocolTypeRouter({
+    "http": raw,
+    "websocket" : AuthMiddlewareStack(
+        # dome.client.urls.router
+        URLRouter(router)
+    )
+})

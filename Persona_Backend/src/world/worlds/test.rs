@@ -1,9 +1,9 @@
 use crate::personality::{action::Action, memory::short_term::ShortTerm};
 
 use crate::world::character::{Character, Direction, Placeholder};
+use crate::world::utils::{MapObject, Region, Room};
 use crate::world::world::World;
 use crate::world::world_map::{Coordinates, WorldMap};
-    use crate::world::utils::{MapObject, Region, Room};
 // pub fn test_char() -> Character {
 //     Character::new(
 //        22,
@@ -31,7 +31,7 @@ pub fn test_world() -> World {
             Coordinates(10, 10),
             vec![Coordinates(9, 5), Coordinates(9, 6)],
             None,
-            true
+            true,
         );
         let (region_name, room_name) = (region.name(), room.name());
         region.add_room(room);

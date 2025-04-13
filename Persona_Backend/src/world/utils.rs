@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 
 use crate::Coordinates;
 
-#[derive( Clone)]
+#[derive(Clone)]
 pub struct MapObject {
     vertical: i64,
     horizontal: i64,
@@ -15,13 +15,13 @@ pub struct MapObject {
     room: String,
     // owner: Option<String>,
 }
-impl Debug for MapObject{
+impl Debug for MapObject {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MapObject")
-        .field("name", self.name())
-        .field("pos", self.position())
-        .field("size", &(self.vertical(), self.horizontal()))
-        .finish()
+            .field("name", self.name())
+            .field("pos", self.position())
+            .field("size", &(self.vertical(), self.horizontal()))
+            .finish()
     }
 }
 impl MapObject {

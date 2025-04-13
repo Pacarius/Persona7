@@ -1,8 +1,8 @@
 use crate::world::{
     character::Character,
+    utils::{MapObject, Region, Room},
     world::World,
     world_map::{Coordinates, WorldMap},
-    utils::{MapObject, Region, Room}
 };
 
 pub fn yeong() -> World {

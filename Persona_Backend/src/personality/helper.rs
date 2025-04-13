@@ -5,11 +5,7 @@ use futures::future::LocalBoxFuture;
 use crate::{
     misc::time::{weekday, Date, DateTime, Time},
     personality::action::fmt_abv,
-    world::{
-        character::Character,
-        world_map::WorldMap,
-        utils::MapObject
-    },
+    world::{character::Character, utils::MapObject, world_map::WorldMap},
 };
 impl Character {
     pub fn rest_wake(&self) -> String {

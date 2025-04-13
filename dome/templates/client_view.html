@@ -10,10 +10,22 @@
     </script>
 {% endif %}
 
-<!-- <p>Default IP: {{ ip }}</p> -->
-<!-- <p>Default Port: {{ port }}</p> -->
+<p>Current IP: {{ ip }}</p>
+<p>Current Port: {{ port }}</p>
 <form method="post">
     {% csrf_token %}
     <button type="submit">Connect</button>
 </form>
+<!-- <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.86.0/phaser.min.js"></script>
+</head>
+<script>
+    var conf = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+
+    }
+</script> -->
+
 {% endblock %}

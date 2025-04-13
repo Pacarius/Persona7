@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use super::{
     character::Character,
-    world_map::{Coordinates, WorldMap},
     utils::{MapObject, Region, Room},
+    world_map::{Coordinates, WorldMap},
 };
 
 pub struct Navigator {

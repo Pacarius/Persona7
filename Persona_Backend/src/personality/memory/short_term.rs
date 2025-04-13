@@ -1,10 +1,9 @@
 use std::collections::VecDeque;
 
 use crate::{
-    misc::time::Time,
-    personality::action::{Action, ActionBare},
-    world::world_map::Coordinates,
-    world::utils::MapObject
+    misc::time::{DateTime, Time},
+    personality::action::{Action, ActionBare, ActionEntry, ProperAction},
+    world::{utils::MapObject, world_map::Coordinates},
 };
 #[derive(Debug)]
 pub struct Path {
@@ -17,6 +16,7 @@ impl Path {
         self.path.remove(0);
     }
 }
+
 #[derive(Debug)]
 pub struct ShortTerm {
     //Daily
@@ -24,13 +24,38 @@ pub struct ShortTerm {
     pub plan_vague: Vec<ActionBare>,
     // pub plan_detailed: Vec<ActionBare>,
     pub action_buffer: VecDeque<ActionBare>,
-    pub curr_action: Option<Action>,
+    curr_action: Option<Action>,
     pub curr_object: Option<String>,
     //Constant. Path only contains something when character is actively moving.
     pub path: Option<Path>,
     chat_target_buffer: Vec<String>,
 }
 impl ShortTerm {
+    pub fn set_action(
+        &mut self,
+        action: Option<Action>,
+        character_name: String,
+    ) -> Option<ActionEntry> {
+        let entry = match action {
+            Some(a) => {
+                // ActionEntry::new("ACTION".into(), character_name, a., intended_duration, description, object, location)
+                // Some(ActionEntry(a, character_name))
+                Some(ActionEntry::new(
+                    character_name,
+                    a,
+                    self.curr_object.clone(),
+                ))
+            }
+            None => None,
+        };
+        entry
+    }
+    pub fn get_action(&self) -> Option<&Action> {
+        self.curr_action.as_ref()
+    }
+    pub fn clear_action(&mut self) {
+        self.curr_action = None;
+    }
     pub fn surrounding_tasks(&self, time: Time) -> &[ActionBare] {
         let mut start_index = None;
         let mut end_index = None;

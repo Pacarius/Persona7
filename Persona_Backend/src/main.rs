@@ -13,7 +13,8 @@ use misc::{
 use personality::action::fmt_abv;
 use serde::Serialize;
 use serde_json::{json, Value};
-use server::Server;
+use server::{server::Server, test};
+// use server::{client, server};
 use world::{
     // test::test_char,
     navigation::Navigator,
@@ -35,7 +36,33 @@ const EMBEDDING_MODEL: &str = "nomic-embed-text";
 const OLLAMA_ENDPOINT: &str = "192.168.50.84";
 const TIME_STEP: i64 = 20;
 
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::net::TcpListener;
+
 #[tokio::main]
+// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//     let listener = TcpListener::bind("127.0.0.1:1234").await?;
+//     println!("Server listening on 127.0.0.1:1234");
+
+//     loop {
+//         let (mut socket, _) = listener.accept().await?;
+//         let (mut read, mut write) = socket.into_split();
+//         println!("New client connected");
+//         tokio::spawn(async move {
+//             let mut reader = BufReader::new(&mut read);
+//             loop {
+//                 if let Err(e) = write.write_all(b"Hello, client!\n").await {
+//                     eprintln!("Failed to send message: {}", e);
+//                 }
+//                 let mut line = String::new();
+//                 if let Err(r) = reader.read_line(&mut line).await {
+//                 } else if line.len() > 0 {
+//                     println!("{}", line);
+//                     line.clear();
+//                 }
+//             }
+//         });
+//     }
 async fn main() {
     // let xcf = Xcf::open("test/Sample.xcf").unwrap();
     // println!("{:?}", xcf.layers.iter().nth(0).unwrap().pixel(0, 0));
@@ -51,17 +78,27 @@ async fn main() {
     // adapter.initialise().await;
     // adapter.main().await;
 
+    // let ollama = Ollama::new(false);
+    // let mut world = yeong();
+    // world.get_map_mut().ascend_all();
+    // // let mut server = Server::new("0.0.0.0", world, None).await.unwrap();
+    // // server.main().await.unwrap();
+    // loop{
+    //     world.tick(&ollama, false).await;
+    // }
+
+    // let mut server = Server::new().await;
+    // server.main().await;
+
+    let mut server = test::Server::new().await;
+    server.main().await;
+
+    // world.day(&ollama, true).await;
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
-    let ollama = Ollama::new(false);
+
     // let ollama = Ollama::new("192.168.33.132:11434".to_string(), false);
     // let ollama = Ollama::new("localhost:11434".to_string(), false);
-    let mut world = yeong();
     // println!("{}", world.get_map());
-    world.get_map_mut().ascend_all();
-    let mut server = Server::new("0.0.0.0", Arc::new(world),  None).await.unwrap();
-    server.main().await.unwrap();
-    // world.day(&ollama, true).await;
-
     // world.day_start(&ollama).await;
     // let datetime = DateTime(Date::new(1, Month::January), Time::from_hms((10, 0, 0)));
     // let map = world.get_map_mut();

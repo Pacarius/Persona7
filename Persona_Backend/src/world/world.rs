@@ -1,4 +1,5 @@
 use futures::future::join_all;
+use serde_json::Value;
 
 use crate::misc::ollama::ollama::Ollama;
 use crate::misc::time::{Date, DateTime, Time, DAY_LENGTH};
@@ -15,6 +16,7 @@ pub struct World {
     map: WorldMap,
     pub datetime: DateTime,
     running: bool,
+    event_queue: Vec<String>,
 }
 impl World {
     pub fn new(map: WorldMap) -> Self {
@@ -25,6 +27,7 @@ impl World {
                 Time::from_hms((0, 0, 0)),
             ),
             running: false,
+            event_queue: vec![],
         }
     }
     pub fn get_map(&self) -> &WorldMap {
@@ -53,14 +56,27 @@ impl World {
         day_start_time.sort();
         **day_start_time.iter().nth(0).unwrap()
     }
-    pub async fn tick(&mut self, llama: &Ollama) -> bool {
+    pub async fn tick(&mut self, llama: &Ollama, enable_logging: bool) {
         if !self.running {
-            return false;
+            return;
         }
-        let new_datetime = self.datetime.clone() + Time::from_seconds(TIME_STEP);
-        let o = self.get_map_mut().update(&new_datetime, llama).await;
+        // let mut day_over = true;
+        // if day_over{
+        //     self.datetime.0.add_days(1);
+        //     self.day_start(llama).await;
+        // }
+
+        let (new_datetime, day) = self.datetime.clone() + Time::from_seconds(TIME_STEP);
+        if day {
+            self.day_start(llama).await;
+        }
+        // else{
+        let day_logic_over = self.get_map_mut().update(&new_datetime, llama).await;
+        println!("{:?}", day_logic_over.1);
         self.datetime = new_datetime;
-        o
+
+        // }
+        // o
     }
     // pub async fn set_day_end(&self) -> Time {
     //     let mut day_end_time: Vec<&Time> = self
@@ -73,29 +89,29 @@ impl World {
     //     **day_end_time.iter().last().unwrap()
     // }
     //Test Function
-    pub async fn day(&mut self, llama: &Ollama, enable_logging: bool) {
-        let start_time = self.day_start(llama).await;
-        self.datetime.1 = start_time - Time::from_seconds(1);
+    // pub async fn day(&mut self, llama: &Ollama, enable_logging: bool) {
+    //     let start_time = self.day_start(llama).await;
+    //     self.datetime.1 = start_time - Time::from_seconds(1);
 
-        let log_interval = 200;
-        let mut log_cooldown = 0;
+    //     let log_interval = 200;
+    //     let mut log_cooldown = 0;
 
-        while !self.tick(llama).await {
-            if enable_logging && log_cooldown >= log_interval {
-                self.get_map().get_characters().iter().for_each(|c| {
-                    println!("{:?}", c.short_term_mem().curr_action);
-                    println!("{:?}", c.position());
-                });
-                println!("{}", self.get_map());
-                println!("{}", self.datetime);
-                log_cooldown = 0;
-            } else if enable_logging {
-                log_cooldown += 1;
-            }
-        }
+    //     while !self.tick(llama).await {
+    //         if enable_logging && log_cooldown >= log_interval {
+    //             self.get_map().get_characters().iter().for_each(|c| {
+    //                 println!("{:?}", c.short_term_mem().curr_action);
+    //                 println!("{:?}", c.position());
+    //             });
+    //             println!("{}", self.get_map());
+    //             println!("{}", self.datetime);
+    //             log_cooldown = 0;
+    //         } else if enable_logging {
+    //             log_cooldown += 1;
+    //         }
+    //     }
 
-        if enable_logging {
-            println!("{}", self.get_map());
-        }
-    }
+    //     if enable_logging {
+    //         println!("{}", self.get_map());
+    //     }
+    // }
 }

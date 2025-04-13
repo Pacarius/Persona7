@@ -3,16 +3,21 @@ use std::fmt::Display;
 use futures::future::Map;
 
 use crate::{
-    misc::time::Time,
-    world::utils::{MapObject, Region, Room}
+    misc::time::{Date, DateTime, Time},
+    world::{
+        character,
+        utils::{MapObject, Region, Room},
+        world_map::Coordinates,
+    },
+    TIME_STEP,
 };
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Chat {
     target: String,
     log: Vec<String>,
     end_time: i64,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Action {
     location: (String, String),
     start_time: Time,
@@ -78,6 +83,98 @@ impl Action {
         self.object.clone()
     }
 }
+#[derive(Clone, Debug)]
+// pub struct ActionEntry(pub String, pub Action, pub String);
+pub struct ActionEntry {
+    character_name: String,
+    action: Action,
+    object: Option<String>,
+}
+impl ActionEntry {
+    pub fn new(character_name: String, action: Action, object: Option<String>) -> Self {
+        Self {
+            character_name,
+            action,
+            object,
+        }
+    }
+
+    pub fn character_name(&self) -> String {
+        self.character_name.clone()
+    }
+
+    pub fn action(&self) -> Action {
+        self.action.clone()
+    }
+
+    pub fn object(&self) -> Option<String> {
+        self.object.clone()
+    }
+}
+// pub struct ActionEntry {
+//     action_type: String,
+//     character: String,
+//     start_time: DateTime,
+//     // In seconds
+//     intended_duration: i64,
+//     description: String,
+//     object: Option<String>,
+//     location: Coordinates
+// }
+// impl ActionEntry {
+//     pub fn new(
+//         action_type: String,
+//         character: String,
+//         start_time: DateTime,
+//         intended_duration: i64,
+//         description: String,
+//         object: Option<String>,
+//         location: Coordinates
+//     ) -> Self {
+//         Self {
+//             action_type,
+//             character,
+//             start_time,
+//             intended_duration,
+//             description,
+//             object,
+//             location
+//         }
+//     }
+//     pub fn movement(
+//         character: String,
+//         from: Coordinates,
+//         to: Coordinates,
+//         curr_time: DateTime,
+//     ) -> Self {
+//         ActionEntry::new(
+//             ProperAction::MOVE.to_string(),
+//             character,
+//             curr_time,
+//             TIME_STEP,
+//             format!("MOVE|{}|{}", from, to),
+//             None,
+//             from
+//         )
+//     }
+//     pub fn character(&self) -> String {
+//         self.character.clone()
+//     }
+// }
+// impl Display for ActionEntry {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(
+//             f,
+//             "{}|{}|{}|{}|{}",
+//             self.action_type,
+//             self.character,
+//             self.start_time,
+//             self.intended_duration,
+//             self.description
+//         )
+//     }
+// }
+// fn to_entry(action: &Action, character: &String, )
 // impl Default for Action {
 //     fn default() -> Self {
 //         Action {

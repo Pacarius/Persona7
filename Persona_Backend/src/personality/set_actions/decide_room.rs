@@ -50,17 +50,23 @@ impl crate::world::character::Character {
                             navigator.get_pos_room((region.to_string(), room.to_string()))
                         {
                             let path = navigator.get_path(self.position().clone(), target).unwrap();
-                            self.short_term_mem_mut().curr_action = Some(Action::new(
-                                (
-                                    navigator.get_position_info(self.position()).unwrap().1,
-                                    room.to_string(),
-                                ),
-                                datetime.1,
-                                path.len() as i64 * (self.movement_cooldown_max() + 1) * TIME_STEP,
-                                ProperAction::MOVE.to_string(),
-                                None,
-                                None,
-                            ));
+                            let pos = self.position().clone();
+                            let cd = self.movement_cooldown_max().clone();
+                            let name = self.name().clone();
+                            self.short_term_mem_mut().set_action(
+                                Some(Action::new(
+                                    (
+                                        navigator.get_position_info(&pos).unwrap().1,
+                                        room.to_string(),
+                                    ),
+                                    datetime.1,
+                                    path.len() as i64 * (cd + 1) * TIME_STEP,
+                                    ProperAction::MOVE.to_string(),
+                                    None,
+                                    None,
+                                )),
+                                name,
+                            );
                             self.set_path(path);
                         };
                         Ok(())

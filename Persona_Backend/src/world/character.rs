@@ -12,17 +12,13 @@ use crate::{
         time::{Date, DateTime, Time, DAY_LENGTH},
     },
     personality::{
-        action::{Action, ActionBare, ProperAction},
+        action::{Action, ActionBare, ActionEntry, ProperAction},
         memory::{short_term::ShortTerm, spatial::SpatialMemory},
     },
     TEXT_MODEL, TIME_STEP,
 };
 
-use super::{
-    navigation::Navigator,
-    world_map::Coordinates,
-    utils::Room,
-};
+use super::{navigation::Navigator, utils::Room, world_map::Coordinates};
 
 // use super::world::WorldListener;
 
@@ -132,22 +128,33 @@ impl Character {
     pub fn action_buffer_mut(&mut self) -> &mut VecDeque<ActionBare> {
         &mut self.short_term_mem_mut().action_buffer
     }
-    pub fn _move(&mut self) -> Option<(Coordinates, Coordinates)> {
+    pub fn _move(&mut self, timestamp: &Time) -> Option<((Coordinates, Coordinates), Action)> {
         if let Some(path) = &mut self.path {
             if path.len() >= 2 {
                 let (from, to) = (path[0].clone(), path[1].clone());
                 path.pop_front();
                 //Add to database
                 // todo!();
+
                 self.position = to.clone();
-                Some((from, to))
+                return Some((
+                    (from.clone(), to.clone()),
+                    Action::new(
+                        self.location
+                            .clone()
+                            .unwrap_or(("NONE".into(), "NONE".into())),
+                        timestamp.clone(),
+                        TIME_STEP,
+                        format!("{}|{}", from, to),
+                        None,
+                        None,
+                    ),
+                ));
             } else {
                 path.clear();
-                None
             }
-        } else {
-            None
         }
+        None
     }
     pub fn set_path(&mut self, path: VecDeque<Coordinates>) {
         self.path = Some(path)
@@ -169,14 +176,18 @@ impl Character {
         datetime: &DateTime,
         navigator: &Navigator,
         llama: &Ollama,
-    ) -> bool {
+    ) -> (bool, Option<ActionEntry>) {
+        let mut entry = None;
+        let name = self.name.clone();
+        let curr_position = self.position().clone();
+        let cd = self.movement_cooldown.clone();
         // println!("Tick started for character: {}", self.name);
         // println!("Current state: {:?}", self.state_controller);
 
         // let mut output = None;
 
         self.state_controller = match &self.state_controller {
-            Decision::WAKE => match &self.short_term_mem().curr_action {
+            Decision::WAKE => match self.short_term_mem().get_action() {
                 None => {
                     println!("State: WAKE - Setting current action to waking up...");
                     // self.short_term_mem_mut().curr_action = Action::new(navigator.get_position_info(), start_time, intended_duration, description, object, chat)
@@ -187,26 +198,29 @@ impl Character {
                         Some(l) => l,
                         None => ("ERROR".to_string(), "ERROR".to_string()),
                     };
-                    self.short_term_mem_mut().curr_action = Some(Action::new(
-                        loc,
-                        datetime.1,
-                        5 * 60,
-                        ProperAction::WAKE.to_string(),
-                        None,
-                        None,
-                    ));
+                    entry = self.short_term_mem_mut().set_action(
+                        Some(Action::new(
+                            loc,
+                            datetime.1,
+                            5 * 60,
+                            ProperAction::WAKE.to_string(),
+                            None,
+                            None,
+                        )),
+                        name,
+                    );
                     Decision::WAKE
                 }
                 Some(a) => {
                     if a.completed(&datetime.1) {
-                        self.short_term_mem_mut().curr_action = None;
+                        self.short_term_mem_mut().clear_action();
                         Decision::ROOM
                     } else {
                         Decision::WAKE
                     }
                 }
             },
-            Decision::ROOM => match &self.short_term_mem().curr_action {
+            Decision::ROOM => match &self.short_term_mem().get_action() {
                 None => {
                     println!("State: ROOM - Deciding room...");
                     if let Err(e) = self.decide_room(llama, datetime, navigator).await {
@@ -217,15 +231,15 @@ impl Character {
                     Decision::ROOM
                 }
                 Some(a) => {
-                    if a.description() == "MOVE".to_string() && self._move().is_some() {
+                    if a.description() == "MOVE".to_string() && self._move(&datetime.1).is_some() {
                         Decision::ROOM
                     } else {
-                        self.short_term_mem_mut().curr_action = None;
+                        self.short_term_mem_mut().clear_action();
                         Decision::OBJECT
                     }
                 }
             },
-            Decision::OBJECT => match &self.short_term_mem().curr_action {
+            Decision::OBJECT => match &self.short_term_mem().get_action() {
                 None => {
                     println!("State: OBJECT - Deciding object...");
                     match self.decide_object(llama, datetime, navigator).await {
@@ -243,10 +257,10 @@ impl Character {
                     Decision::DECOMPOSE
                 }
                 Some(a) => {
-                    if a.description() == "MOVE".to_string() && self._move().is_some() {
+                    if a.description() == "MOVE".to_string() && self._move(&datetime.1).is_some() {
                         Decision::OBJECT
                     } else {
-                        self.short_term_mem_mut().curr_action = None;
+                        self.short_term_mem_mut().clear_action();
                         Decision::DECOMPOSE
                     }
                 }
@@ -257,19 +271,23 @@ impl Character {
                 if let Err(e) = self.decompose_task(llama, datetime).await {
                     // println!("Error while decomposing task: {:?}", e);
                 }
-                if let Some(decomposed_task) = self.short_term_mem().action_buffer.front() {
-                    let current_object = match &self.short_term_mem().curr_object {
+                if let Some(decomposed_task) = self.short_term_mem().action_buffer.front().cloned()
+                {
+                    let current_object = match self.short_term_mem().curr_object.clone() {
                         Some(o) => Some(o),
                         None => None,
                     };
-                    self.short_term_mem_mut().curr_action = Some(Action::new(
-                        navigator.get_position_info(&self.position).unwrap(),
-                        decomposed_task.start,
-                        (decomposed_task.end - decomposed_task.start).in_seconds(),
-                        decomposed_task.description.clone(),
-                        current_object.cloned(),
-                        None,
-                    ));
+                    self.short_term_mem_mut().set_action(
+                        Some(Action::new(
+                            navigator.get_position_info(&curr_position).unwrap(),
+                            decomposed_task.start,
+                            (decomposed_task.end - decomposed_task.start).in_seconds(),
+                            decomposed_task.description.clone(),
+                            current_object,
+                            None,
+                        )),
+                        name,
+                    );
                     self.short_term_mem_mut().action_buffer.pop_front();
                 }
                 // println!("Task decomposition completed.");
@@ -280,32 +298,32 @@ impl Character {
                     < self.short_term_mem().plan_vague.last().unwrap().start
                         - Time::from_seconds(10 * 60)
                 {
-                    if let Some(task) = self
-                        .short_term_mem()
-                        .surrounding_tasks(datetime.1)
-                        .iter()
-                        .nth(1)
-                    {
-                        if let Some(action) = &self.short_term_mem().curr_action {
+                    let mut_mem = self.short_term_mem_mut();
+                    if let Some(task) = mut_mem.surrounding_tasks(datetime.1).iter().nth(1) {
+                        if let Some(action) = &mut_mem.get_action() {
                             if action.completed(&datetime.1) {
                                 let action_buffer = self.action_buffer_mut();
                                 if let Some(new_action) = action_buffer.pop_front() {
-                                    let current_object = match &self.short_term_mem().curr_object {
-                                        Some(o) => Some(o),
-                                        None => None,
-                                    };
-                                    self.short_term_mem_mut().curr_action = Some(Action::new(
-                                        navigator.get_position_info(&self.position).unwrap(),
-                                        new_action.start,
-                                        (new_action.end - new_action.start).in_seconds(),
-                                        new_action.description,
-                                        current_object.cloned(),
-                                        None,
-                                    ));
+                                    let current_object =
+                                        match self.short_term_mem().curr_object.clone() {
+                                            Some(o) => Some(o),
+                                            None => None,
+                                        };
+                                    self.short_term_mem_mut().set_action(
+                                        Some(Action::new(
+                                            navigator.get_position_info(&curr_position).unwrap(),
+                                            new_action.start,
+                                            (new_action.end - new_action.start).in_seconds(),
+                                            new_action.description,
+                                            current_object,
+                                            None,
+                                        )),
+                                        name,
+                                    );
                                     Decision::ACT
                                 } else {
                                     // No new action found, transition to ROOM state
-                                    self.short_term_mem_mut().curr_action = None;
+                                    self.short_term_mem_mut().clear_action();
                                     Decision::ROOM
                                 }
                             } else if action.description() == "TALK".to_string() {
@@ -320,14 +338,17 @@ impl Character {
                             //     None => None,
                             // };
                             let current_object: Option<&String> = None;
-                            self.short_term_mem_mut().curr_action = Some(Action::new(
-                                navigator.get_position_info(&self.position).unwrap(),
-                                task.start,
-                                (task.end - task.start).in_seconds(),
-                                task.description.clone(),
-                                current_object.cloned(),
-                                None,
-                            ));
+                            mut_mem.set_action(
+                                Some(Action::new(
+                                    navigator.get_position_info(&curr_position).unwrap(),
+                                    task.start,
+                                    (task.end - task.start).in_seconds(),
+                                    task.description.clone(),
+                                    current_object.cloned(),
+                                    None,
+                                )),
+                                name,
+                            );
                             Decision::ACT
                         }
                     } else {
@@ -338,26 +359,27 @@ impl Character {
                     Decision::GO_HOME
                 }
             }
-            Decision::GO_HOME => match &self.short_term_mem().curr_action {
+            Decision::GO_HOME => match &self.short_term_mem().get_action() {
                 None => {
-                    if let Some(target) = &self.home_location {
+                    if let Some(target) = &self.home_location.clone() {
                         if let Some(position) = navigator.get_pos_room(target.clone()) {
                             if let Some(path) =
                                 navigator.get_path(self.position().clone(), position)
                             {
-                                self.short_term_mem_mut().curr_action = Some(Action::new(
-                                    (
-                                        navigator.get_position_info(self.position()).unwrap().1,
-                                        target.1.clone(),
-                                    ),
-                                    datetime.1,
-                                    path.len() as i64
-                                        * (self.movement_cooldown_max() + 1)
-                                        * TIME_STEP,
-                                    ProperAction::MOVE.to_string(),
-                                    None,
-                                    None,
-                                ));
+                                self.short_term_mem_mut().set_action(
+                                    Some(Action::new(
+                                        (
+                                            navigator.get_position_info(&curr_position).unwrap().1,
+                                            target.1.clone(),
+                                        ),
+                                        datetime.1,
+                                        path.len() as i64 * (cd + 1) * TIME_STEP,
+                                        ProperAction::MOVE.to_string(),
+                                        None,
+                                        None,
+                                    )),
+                                    name,
+                                );
                                 self.set_path(path);
                                 Decision::GO_HOME
                             } else {
@@ -374,29 +396,32 @@ impl Character {
                     // Decision::SLEEP
                 }
                 Some(a) => {
-                    if let Some(_) = self._move() {
+                    if let Some(_) = self._move(&datetime.1) {
                         Decision::GO_HOME
                     } else {
-                        self.short_term_mem_mut().curr_action = None;
+                        self.short_term_mem_mut().clear_action();
                         Decision::GO_TO_BED
                     }
                 }
             },
-            Decision::GO_TO_BED => match &self.short_term_mem().curr_action {
+            Decision::GO_TO_BED => match &self.short_term_mem().get_action() {
                 None => {
                     if let Some(bed_location) = navigator.get_visible_objects(&self).get("Bed") {
                         if let Some(path) = navigator.get_path(
                             self.position().clone(),
                             bed_location.1.first().unwrap().clone(),
                         ) {
-                            self.short_term_mem_mut().curr_action = Some(Action::new(
-                                navigator.get_position_info(self.position()).unwrap(),
-                                datetime.1,
-                                path.len() as i64 * (self.movement_cooldown_max() + 1) * TIME_STEP,
-                                ProperAction::MOVE.to_string(),
-                                None,
-                                None,
-                            ));
+                            self.short_term_mem_mut().set_action(
+                                Some(Action::new(
+                                    navigator.get_position_info(&curr_position).unwrap(),
+                                    datetime.1,
+                                    path.len() as i64 * (cd + 1) * TIME_STEP,
+                                    ProperAction::MOVE.to_string(),
+                                    None,
+                                    None,
+                                )),
+                                name,
+                            );
                             self.set_path(path);
                             Decision::GO_TO_BED
                         } else {
@@ -407,33 +432,36 @@ impl Character {
                     }
                 }
                 Some(a) => {
-                    if let Some(_) = self._move() {
+                    if let Some(_) = self._move(&datetime.1) {
                         Decision::GO_TO_BED
                     } else {
-                        self.short_term_mem_mut().curr_action = None;
+                        self.short_term_mem_mut().clear_action();
                         Decision::SLEEP
                     }
                 }
             },
-            Decision::SLEEP => match &self.short_term_mem().curr_action {
+            Decision::SLEEP => match &self.short_term_mem().get_action() {
                 None => {
                     let duration = Time::from_seconds(DAY_LENGTH - 1) - datetime.1;
                     // println!("Set action to sleeping. {}", duration);
-                    self.short_term_mem_mut().curr_action = Some(Action::new(
-                        navigator.get_position_info(self.position()).unwrap(),
-                        datetime.1,
-                        duration.in_seconds(),
-                        ProperAction::SLEEP.to_string(),
-                        None,
-                        None,
-                    ));
+                    self.short_term_mem_mut().set_action(
+                        Some(Action::new(
+                            navigator.get_position_info(&curr_position).unwrap(),
+                            datetime.1,
+                            duration.in_seconds(),
+                            ProperAction::SLEEP.to_string(),
+                            None,
+                            None,
+                        )),
+                        name,
+                    );
                     Decision::SLEEP
                 }
                 Some(a) => {
                     if a.completed(&datetime.1)
                         && a.description() == ProperAction::SLEEP.to_string()
                     {
-                        self.short_term_mem_mut().curr_action = None;
+                        self.short_term_mem_mut().clear_action();
                         Decision::WAKE
                     } else {
                         Decision::SLEEP
@@ -444,10 +472,12 @@ impl Character {
         // println!("Tick completed for character: {}", self.name);
         // println!("Next state: {:?}", self.state_controller);
         // output
-        if let Some(a) = &self.short_term_mem().curr_action {
-            return a.description() == ProperAction::SLEEP.to_string();
-        }
-        false
+        let sleeping = if let Some(a) = &self.short_term_mem().get_action() {
+            a.description() == ProperAction::SLEEP.to_string()
+        } else {
+            true
+        };
+        (sleeping, entry)
     }
     pub fn movement_cooldown_max(&self) -> i64 {
         self.movement_cooldown_input

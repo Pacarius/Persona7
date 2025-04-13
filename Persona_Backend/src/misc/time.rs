@@ -230,14 +230,14 @@ impl Display for DateTime {
     }
 }
 impl Add<Time> for DateTime {
-    type Output = DateTime;
+    type Output = (DateTime, bool);
     fn add(self, rhs: Time) -> Self::Output {
         // todo!()
         let (time, days) = self.1 + rhs;
         let mut new = DateTime(self.0, self.1);
         new.0.add_days(days);
         new.1 = time;
-        new
+        (new, days > 0)
     }
 }
 pub fn weekday(date: &Date) -> String {

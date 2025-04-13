@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Submodule Navigation</title>
+    <title>Persona (PLEASE DON'T SUE ME LOL) Client</title>
     <style>
         body {
             display: flex;
@@ -9,7 +9,7 @@
             font-family: Arial, sans-serif;
         }
         .sidebar {
-            width: 200px;
+            width: 100px;
             background-color: #f4f4f4;
             padding: 15px;
             height: 100vh;
@@ -34,6 +34,7 @@
     <div class="sidebar">
         <h3>Navigation</h3>
         <li><a href="{% url 'client_view' %}">Client</a></li>
+        <li><a href="{% url 'test_view' %}">Test</a></li>
         <li><a href="{% url 'settings_view' %}">Settings</a></li>
     </div>
     <div class="content">

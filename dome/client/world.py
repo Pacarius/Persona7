@@ -48,7 +48,7 @@ class World:
             })
         print(f"Parsed regions: {self.regions}")  # Debugging output
 
-    def generate_image(self, tile_size=16, output_file="world.png"):
+    def generate_image(self, tile_size=16, output_file="static/world.png"):
         """
         Generate a 2D image based on the parsed regions and rooms.
         """
@@ -62,7 +62,7 @@ class World:
         # print(f"Image dimensions: {image_width}x{image_height}")
     
         # Create a blank image
-        img = Image.new("RGB", (image_width, image_height), "white")
+        img = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
     
         # Define some colors for regions
