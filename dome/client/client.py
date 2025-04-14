@@ -1,4 +1,7 @@
+import asyncio
 import socket
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 class Client:
     def __init__(self, ip, port):
@@ -8,61 +11,86 @@ class Client:
         self.ip = ip
         self.port = int(port)
         self.client_socket = None
+        self.channel_layer = get_channel_layer()
+        self.group_name = "relay"
+        self.message_queue = asyncio.Queue()  # Queue for WebSocket messages
+        self.running = False
 
-    def connect(self):
+    async def connect(self):
         """
         Connect to the server using TCP.
         """
         try:
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client_socket.connect((self.ip, self.port))
+            self.client_socket.setblocking(False)  # Make the socket non-blocking
+            await asyncio.get_event_loop().sock_connect(self.client_socket, (self.ip, self.port))
+            self.running = True
             print(f"Connected to {self.ip}:{self.port}")
         except Exception as e:
             print(f"Failed to connect to {self.ip}:{self.port} - {e}")
 
-    def send_message(self, message):
+    async def send_message(self, message):
         """
         Send a message to the server.
         """
         if self.client_socket:
             try:
-                self.client_socket.sendall(message.encode('utf-8'))
+                await asyncio.get_event_loop().sock_sendall(self.client_socket, (message + "\n").encode('utf-8'))
                 print("Message sent successfully.")
             except Exception as e:
                 print(f"Failed to send message - {e}")
         else:
             print("Client is not connected to the server.")
 
-    def receive_message(self, buffer_size=4096):
+    async def receive_message(self, buffer_size=4096):
         """
-        Receive a message from the server.
+        Continuously receive messages from the server.
         """
-        if self.client_socket:
-            try:
-                response = self.client_socket.recv(buffer_size).decode('utf-8')
-                print("Message received successfully.")
-                return response
-            except Exception as e:
-                print(f"Failed to receive message - {e}")
-        else:
-            print("Client is not connected to the server.")
-        return None
-    # def receive_messages(self, buffer_size=4096):
-    #     """
-    #     Continuously receive all messages from the server until the connection is closed.
-    #     """
-    #     if self.client_socket:
-    #         try:
-    #             while True:
-    #                 response = self.client_socket.recv(buffer_size).decode('utf-8')
-    #                 if not response:
-    #                     print("Server closed the connection.")
-    #                     break
-    #             print(f"Received: {response}")
-    #         except Exception as e:
-    #             print(f"Error while receiving messages - {e}")
-    #     else:
-    #         print("Client is not connected to the server.")
+        while True:
+            if self.client_socket:
+                try:
+                    data = await asyncio.get_event_loop().sock_recv(self.client_socket, buffer_size)
+                    if data:
+                        message = data.decode('utf-8')
+                        print(f"Message received from TCP server: {message}")
+                        # Relay the message to WebSocket clients via the channel layer
+                        if self.channel_layer is not None:
+                            await self.channel_layer.group_send(
+                                self.group_name,
+                                {
+                                    "type": "outbound",  # Mark the message as outbound
+                                    "message": message,
+                                }
+                            )
+                        else:
+                            print("Channel layer is not configured. Unable to relay message.")
+                except Exception as e:
+                    print(f"Failed to receive message - {e}")
+            else:
+                print("Client is not connected to the server.")
+                await asyncio.sleep(1)  # Wait before retrying
+
+    async def relay_websocket_to_tcp(self):
+        """
+        Continuously listen for messages from the queue and send them to the TCP server.
+        """
+        while True:
+            message = await self.message_queue.get()
+            print(f"Relaying WebSocket message to TCP server: {message}")
+            await self.send_message(message)
+
+    async def run(self):
+        """
+        Run the client to handle both sending and receiving messages.
+        """
+        if not self.running:
+            await self.connect()
+            if self.client_socket:
+                await asyncio.gather(
+                    self.receive_message(),  # Continuously receive messages from the TCP server
+                    self.relay_websocket_to_tcp(),  # Continuously relay WebSocket messages to the TCP server
+                )
+
     def close_connection(self):
         """
         Close the connection to the server.
@@ -75,3 +103,6 @@ class Client:
                 print(f"Failed to close connection - {e}")
         else:
             print("Client is not connected to the server.")
+
+# Create a shared instance of the Client
+client_instance = Client("127.0.0.1", 1234)

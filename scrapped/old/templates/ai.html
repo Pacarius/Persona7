@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-    {% load static%}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lorem Ipsum</title>
-    <script src="{%static 'phaser.min.js' %}"></script>
+    <title>My Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
 </head>
 <body>
     <input type="text" id="messageInput" placeholder="Type your message here"/>
@@ -14,8 +13,8 @@
     <script>
         const config = {
             type: Phaser.AUTO,
-            width: 600,
-            height: 800,
+            width: 800,
+            height: 600,
             scene: {
                 preload: preload,
                 create: create,
@@ -28,12 +27,9 @@
 
         function preload() {
             // Load your assets here
-            this.load.image('map', '/static/world.png');
         }
-        
+
         function create() {
-            // this.add.image(512, 816, 'map');
-            this.add.image(0, 0, 'map').setOrigin(0, 0)
             // Establish WebSocket connection
             socket = new WebSocket('ws://' + window.location.host + '/ws/home/');
             
@@ -44,9 +40,7 @@
             socket.onmessage = function(event) {
                 const data = JSON.parse(event.data);
                 console.log(data.message);
-                // if (data.type === "message") { // Handle outbound messages
-                //     console.log("Received outbound message:", data.message);
-                // }
+                // Update the game state based on the received data
             };
 
             // Set up the button to send messages
@@ -56,19 +50,14 @@
                 const message = messageInput.value;
 
                 if (message) {
-                    const payload = {
-                        type: "inbound", // Mark the message as inbound
-                        message: message
-                    };
-                    socket.send(JSON.stringify(payload));
+                    socket.send(JSON.stringify({ message: message }));
                     messageInput.value = ''; // Clear the input after sending
                 }
             };
         }
 
         function update() {
-        //     console.log("SCREAM");
-        //     // Game logic updates
+            // Game logic updates
         }
     </script>
 </body>

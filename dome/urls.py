@@ -11,8 +11,8 @@ urlpatterns = [
     path('settings/', settings_view.settings_view, name='settings_view'),
     path('test/', test_view.test_view, name='test_view'),
 ]
-router = URLRouter(
-    [
-        path('ws/main', test.testConsumer.as_asgi())
-    ]
-)
+# router = URLRouter(
+#     [
+#         path('ws/main', test.testConsumer.as_asgi())
+#     ]
+# )
