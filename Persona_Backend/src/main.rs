@@ -33,8 +33,8 @@ mod server;
 mod world;
 const TEXT_MODEL: &str = "llama3.2";
 const EMBEDDING_MODEL: &str = "nomic-embed-text";
-const OLLAMA_ENDPOINT: &str = "192.168.50.84";
-const TIME_STEP: i64 = 20;
+const OLLAMA_ENDPOINT: &str = "192.168.50.84:11434";
+const TIME_STEP: i64 = 600;
 
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
@@ -78,11 +78,11 @@ async fn main() {
     // adapter.initialise().await;
     // adapter.main().await;
 
-    // let ollama = Ollama::new(false);
-    // let mut world = yeong();
-    // world.get_map_mut().ascend_all();
-    // // let mut server = Server::new("0.0.0.0", world, None).await.unwrap();
-    // // server.main().await.unwrap();
+    let ollama = Ollama::new(false);
+    let mut world = yeong();
+    world.get_map_mut().ascend_all();
+    let mut server = Server::new("0.0.0.0", world, None).await.unwrap();
+    server.main().await.unwrap();
     // loop{
     //     world.tick(&ollama, false).await;
     // }
@@ -90,8 +90,8 @@ async fn main() {
     // let mut server = Server::new().await;
     // server.main().await;
 
-    let mut server = test::Server::new().await;
-    server.main().await;
+    // let mut server = test::Server::new().await;
+    // server.main().await;
 
     // world.day(&ollama, true).await;
     // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });

@@ -44,7 +44,7 @@ impl Server {
                     *num = 0;
                 }
             }
-            let message= format!("i:  {}, j: {}\n", i, j);
+            let message = format!("i:  {}, j: {}\n", i, j);
             // println!("Sent: {}", message);
             tx.send(message);
             sleep(Duration::from_secs(3)).await;
@@ -93,38 +93,40 @@ impl Client {
             //         output
             //     }
             // };
-            if buffer != received{
+            if buffer != received {
                 buffer = received.clone();
-                    if let Err(e) = self.writer.write_all(buffer.as_bytes()).await {
+                if let Err(e) = self.writer.write_all(buffer.as_bytes()).await {
+                    eprintln!("Failed to send message to client: {}", e);
+                    return Err(Box::new(e));
+                    break;
+                } else {
+                    self.writer.flush().await.unwrap();
+                }
+            }
+            // let mut client_message = String::new();
+            let mut read_line = String::new();
+            let read = timeout(
+                Duration::from_secs(1),
+                self.reader.read_line(&mut read_line),
+            )
+            .await;
+            match read {
+                Err(_) => continue,
+                Ok(result) => match result {
+                    Err(e) => {
                         eprintln!("Failed to send message to client: {}", e);
                         return Err(Box::new(e));
                         break;
                     }
-                    else{
-                        self.writer.flush().await.unwrap();
-                    }
-            }
-            // let mut client_message = String::new();
-            let mut read_line = String::new();
-            let read = timeout(Duration::from_secs(1), self.reader.read_line(&mut read_line)).await;
-            match read{
-                Err(_) => continue,
-                Ok(result) => {
-                    match result{
-                        Err(e) => {
-                            eprintln!("Failed to send message to client: {}", e);
-                            return Err(Box::new(e));
+                    Ok(o) => {
+                        if o > 0 {
+                            println!("Received {}", read_line);
+                            read_line.clear();
+                        } else {
                             break;
                         }
-                        Ok(o) => {
-                            if o > 0{
-                                    println!("Received {}", read_line);
-                                    read_line.clear();
-                            }
-                            else {break}
-                        }
                     }
-                }
+                },
             }
             // let reader = &mut self.reader;
             // let mut read_lines = reader.lines();

@@ -12,6 +12,7 @@ pub struct Navigator {
     colliders: Vec<Vec<Option<String>>>,
     objects: Vec<MapObject>,
     size: Coordinates,
+    characters: Vec<Character>,
 }
 impl Navigator {
     pub fn new(map: &WorldMap) -> Self {
@@ -20,12 +21,14 @@ impl Navigator {
         let colliders = map.collider_slice();
         let objects = map.object_slice();
         let size = map.size();
+        let characters = map.get_characters_slice();
         Navigator {
             regions,
             rooms,
             colliders,
             objects,
             size,
+            characters,
         }
     }
     fn colliders(&self) -> &Vec<Vec<Option<String>>> {
@@ -45,6 +48,9 @@ impl Navigator {
     }
     pub fn size(&self) -> &Coordinates {
         &self.size
+    }
+    pub fn characters(&self) -> Vec<&Character> {
+        self.characters.iter().map(|c| c).collect()
     }
     // pub fn update_colliders(&mut self, map: &WorldMap) {
     //     self.colliders = map.collider_slice();

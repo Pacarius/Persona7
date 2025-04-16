@@ -22,7 +22,7 @@ use super::{navigation::Navigator, utils::Room, world_map::Coordinates};
 
 // use super::world::WorldListener;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub enum Placeholder {
     MALE,
     FEMALE,
@@ -36,7 +36,7 @@ pub enum Direction {
     WEST,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Character {
     // first_name: String,
     // last_name: String,
@@ -189,26 +189,45 @@ impl Character {
         self.state_controller = match &self.state_controller {
             Decision::WAKE => match self.short_term_mem().get_action() {
                 None => {
+                    // println!()
+                    let loc = match navigator.get_position_info(&self.position) {
+                        Some(l) => l,
+                        None => ("ERROR".to_string(), "ERROR".to_string()),
+                    };
+                    let name = self.name().clone();
+                    let stm = self.short_term_mem_mut();
+                    if let Some(action) = stm.surrounding_tasks(datetime.1).first() {
+                        if action.end > datetime.1 {
+                            entry = stm.set_action(
+                                Some(Action::new(
+                                    loc,
+                                    datetime.1,
+                                    (action.end - datetime.1).in_seconds(),
+                                    ProperAction::SLEEP.to_string(),
+                                    None,
+                                    None,
+                                )),
+                                name,
+                            );
+                        }
+                    } else {
+                        entry = self.short_term_mem_mut().set_action(
+                            Some(Action::new(
+                                loc,
+                                datetime.1,
+                                5 * 60,
+                                ProperAction::WAKE.to_string(),
+                                None,
+                                None,
+                            )),
+                            name,
+                        );
+                    }
                     println!("State: WAKE - Setting current action to waking up...");
                     // self.short_term_mem_mut().curr_action = Action::new(navigator.get_position_info(), start_time, intended_duration, description, object, chat)
                     // if let Some(position) = navigator.get_position_info(&self.position){
 
                     // }
-                    let loc = match navigator.get_position_info(&self.position) {
-                        Some(l) => l,
-                        None => ("ERROR".to_string(), "ERROR".to_string()),
-                    };
-                    entry = self.short_term_mem_mut().set_action(
-                        Some(Action::new(
-                            loc,
-                            datetime.1,
-                            5 * 60,
-                            ProperAction::WAKE.to_string(),
-                            None,
-                            None,
-                        )),
-                        name,
-                    );
                     Decision::WAKE
                 }
                 Some(a) => {
@@ -458,6 +477,7 @@ impl Character {
                     Decision::SLEEP
                 }
                 Some(a) => {
+                    // println!("{:?}", a.completed(&datetime.1));
                     if a.completed(&datetime.1)
                         && a.description() == ProperAction::SLEEP.to_string()
                     {
@@ -505,7 +525,7 @@ impl Display for Character {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(non_camel_case_types)]
 enum Decision {
     WAKE,

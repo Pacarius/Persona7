@@ -1,5 +1,6 @@
 use futures::future::join_all;
-use serde_json::Value;
+use serde_json::{json, Value};
+// use tokio::sync::broadcast::Sender;
 
 use crate::misc::ollama::ollama::Ollama;
 use crate::misc::time::{Date, DateTime, Time, DAY_LENGTH};
@@ -16,7 +17,8 @@ pub struct World {
     map: WorldMap,
     pub datetime: DateTime,
     running: bool,
-    event_queue: Vec<String>,
+    first_day: bool, // event_queue: Vec<String>,
+                     // tx: Option<tokio::sync::watch::Sender<Vec<String>>>
 }
 impl World {
     pub fn new(map: WorldMap) -> Self {
@@ -26,8 +28,8 @@ impl World {
                 Date::new(1, crate::misc::time::Month::January),
                 Time::from_hms((0, 0, 0)),
             ),
-            running: false,
-            event_queue: vec![],
+            running: true,
+            first_day: true, // event_queue: vec![],
         }
     }
     pub fn get_map(&self) -> &WorldMap {
@@ -44,7 +46,7 @@ impl World {
     // }
 }
 impl World {
-    pub async fn day_start(&mut self, llama: &Ollama) -> Time {
+    async fn day_start(&mut self, llama: &Ollama) -> Time {
         let date = self.datetime.0.clone();
         self.get_map_mut().day_start(llama, date).await;
         let mut day_start_time: Vec<&Time> = self
@@ -56,9 +58,10 @@ impl World {
         day_start_time.sort();
         **day_start_time.iter().nth(0).unwrap()
     }
-    pub async fn tick(&mut self, llama: &Ollama, enable_logging: bool) {
+    pub async fn tick(&mut self, llama: &Ollama, enable_logging: bool) -> Option<String> {
+        let mut output = None;
         if !self.running {
-            return;
+            return output;
         }
         // let mut day_over = true;
         // if day_over{
@@ -67,14 +70,26 @@ impl World {
         // }
 
         let (new_datetime, day) = self.datetime.clone() + Time::from_seconds(TIME_STEP);
-        if day {
+        if day || self.first_day {
             self.day_start(llama).await;
+            self.first_day = false;
         }
         // else{
         let day_logic_over = self.get_map_mut().update(&new_datetime, llama).await;
-        println!("{:?}", day_logic_over.1);
+        if !day_logic_over.1.is_empty() {
+            output = Some(
+                json![{
+                        "type": "WEB",
+                        "content": day_logic_over.1,
+                        "timestamp": new_datetime.to_string()
+                }]
+                .to_string(),
+            );
+            println!("{:?}", output);
+        }
+        // todo!("Messaing Formatting; Forwarding To Clients");
         self.datetime = new_datetime;
-
+        output
         // }
         // o
     }

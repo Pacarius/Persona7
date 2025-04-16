@@ -2,10 +2,10 @@ use std::collections::VecDeque;
 
 use crate::{
     misc::time::{DateTime, Time},
-    personality::action::{Action, ActionBare, ActionEntry, ProperAction},
+    personality::action::{Action, ActionBare, ActionEntry},
     world::{utils::MapObject, world_map::Coordinates},
 };
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Path {
     source: Coordinates,
     path: VecDeque<Coordinates>,
@@ -17,7 +17,7 @@ impl Path {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ShortTerm {
     //Daily
     pub goals: Vec<String>,
@@ -36,8 +36,10 @@ impl ShortTerm {
         action: Option<Action>,
         character_name: String,
     ) -> Option<ActionEntry> {
+        // self.curr_action = action;
         let entry = match action {
             Some(a) => {
+                self.curr_action = Some(a.clone());
                 // ActionEntry::new("ACTION".into(), character_name, a., intended_duration, description, object, location)
                 // Some(ActionEntry(a, character_name))
                 Some(ActionEntry::new(
@@ -46,7 +48,7 @@ impl ShortTerm {
                     self.curr_object.clone(),
                 ))
             }
-            None => None,
+            None => {self.clear_action(); None},
         };
         entry
     }
@@ -54,6 +56,7 @@ impl ShortTerm {
         self.curr_action.as_ref()
     }
     pub fn clear_action(&mut self) {
+        // println!("CLEARING ACTION");
         self.curr_action = None;
     }
     pub fn surrounding_tasks(&self, time: Time) -> &[ActionBare] {

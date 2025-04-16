@@ -236,6 +236,9 @@ impl WorldMap {
             .nth(0)
             .unwrap()
     }
+    pub fn get_characters_slice(&self) -> Vec<Character> {
+        self.characters.iter().cloned().collect()
+    }
     pub fn get_characters(&self) -> Vec<&Character> {
         self.characters.iter().collect()
     }
@@ -446,7 +449,11 @@ impl WorldMap {
             .iter_mut()
             .for_each(|f| f.ascend(navigator));
     }
-    pub async fn update(&mut self, datetime: &DateTime, llama: &Ollama) -> (bool, Vec<ActionEntry>) {
+    pub async fn update(
+        &mut self,
+        datetime: &DateTime,
+        llama: &Ollama,
+    ) -> (bool, Vec<ActionEntry>) {
         // let (new_time, _) = self.datetime.1 + Time::from_seconds(TIME_STEP);
         // self.datetime.1 = new_time;
         let navigator = Navigator::new(self);
@@ -460,8 +467,7 @@ impl WorldMap {
         )
         .await;
         let mut all_sleep: Vec<bool> = results.iter().map(|(sleep, _)| *sleep).collect();
-        let entries: Vec<ActionEntry> =
-            results.iter().filter_map(|(_, e)| e.clone()).collect();
+        let entries: Vec<ActionEntry> = results.iter().filter_map(|(_, e)| e.clone()).collect();
         self.calculate_colliders();
         all_sleep.dedup();
         let all_sleep = if all_sleep.len() == 1 {

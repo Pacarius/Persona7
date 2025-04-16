@@ -3,7 +3,9 @@ use std::{
     fmt::Display,
     ops::{Add, AddAssign, Sub},
 };
-#[derive(Clone, Copy, Debug, Eq)]
+
+use serde::Serialize;
+#[derive(Clone, Copy, Debug, Eq, Serialize)]
 pub struct Time {
     //Seconds Elapsed Since 0.0
     hour: i64,
@@ -119,7 +121,7 @@ impl Sub for Time {
     }
 }
 // #[derive(Debug)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, PartialOrd)]
 pub enum Month {
     January = 1,
     February = 2,
@@ -207,6 +209,10 @@ impl Date {
     }
     pub fn new(day: i64, month: Month) -> Self {
         Self { day, month }
+    }
+    pub fn cmp(&self, rhs: &Date) -> bool {
+        //>>//
+        self.month > rhs.month || self.day > rhs.day
     }
 }
 impl Display for Date {

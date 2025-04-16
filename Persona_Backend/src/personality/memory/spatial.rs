@@ -6,7 +6,7 @@ use crate::world::{
     world_map::WorldMap,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SpatialMemory {
     spatial_mem_tree: HashMap<String, HashMap<String, Vec<String>>>,
 }

@@ -1,11 +1,13 @@
-use std::error::Error;
+use std::{error::Error, fmt::format, time::Duration};
 
+use serde_json::{json, Value};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{
         tcp::{OwnedReadHalf, OwnedWriteHalf},
         TcpStream,
     },
+    time::timeout,
 };
 
 use crate::world::navigation::Navigator;
@@ -13,60 +15,96 @@ use crate::world::navigation::Navigator;
 pub struct Client {
     // stream: TcpStream,
     // initialised: bool,
-    reader: OwnedReadHalf,
+    reader: BufReader<OwnedReadHalf>,
     writer: OwnedWriteHalf,
-    cid: usize
+    cid: usize,
 }
 impl Client {
     pub fn new(stream: TcpStream, id: usize) -> Self {
         let (read, write) = stream.into_split();
+        let read = BufReader::new(read);
         Self {
             reader: read,
             writer: write,
-            cid: id
-            // initialised: false,
+            cid: id, // initialised: false,
         }
     }
-    // pub async fn read_all(&mut self) -> Result<Option<Vec<String>>, Box<dyn Error>>{
-    //     let mut reader = BufReader::new(&mut self.reader);
-    //     let mut output = None;
-    //     let mut line = String::new();
-    //     let result = reader.poll_read(line);
-    //     // while reader.read_line(&mut line).await? > 0{
-    //     //     if line.len() != 0{
-    //     //         output.push(line.clone());
-    //     //     }
-    //     //     line.clear();
-    //     // }
-    //     Ok(output)
-    // }
-    pub async fn read_messages(&mut self) -> Result<(), Box<dyn Error>> {
-        let mut reader = BufReader::new(&mut self.reader);
-        let mut line = String::new();
-
+    pub async fn main(
+        &mut self,
+        rx: tokio::sync::watch::Receiver<String>,
+        tx: tokio::sync::mpsc::Sender<String>,
+        navigator: &Navigator,
+    ) -> Result<(), Box<dyn Error>> {
+        //rx as in to client and tx as in to server LOL
+        // let mut buffer = String::new();
+        let mut buffer = String::new();
+        self.init(navigator).await?;
         loop {
-            let result = reader.read_line(&mut line).await?;
-            if result > 0 {
-                println!("Received from client: {}", line.trim());
-                println!("{}", result);
-                line.clear();
-            } else {
-                break;
+            let received = rx.borrow().clone();
+            if buffer != received {
+                buffer = received.clone();
+                if let Err(e) = self.writer.write_all(buffer.as_bytes()).await {
+                    eprintln!("Failed to send message to client: {}", e);
+                    return Err(Box::new(e));
+                    break;
+                } else {
+                    self.writer.flush().await.unwrap();
+                }
+            }
+            let mut read_line = String::new();
+            let read = timeout(
+                Duration::from_secs(1),
+                self.reader.read_line(&mut read_line),
+            )
+            .await;
+            match read {
+                Err(_) => continue,
+                Ok(result) => match result {
+                    Err(e) => {
+                        eprintln!("Failed to read message");
+                        return Err(Box::new(e));
+                        break;
+                    }
+                    Ok(o) => {
+                        if o > 0 {
+                            // println!("Received {}", read_line);
+                            tx.send(read_line.clone()).await;
+                            read_line.clear();
+                        } else {
+                            break;
+                        }
+                    }
+                },
             }
         }
-
         Ok(())
     }
-    pub async fn init(&mut self, navigator: &Navigator) -> Result<(), Box<dyn Error>> {
-        let targets = vec![
-            format!("{:?}", navigator.size()),
-            format!("{:?}", navigator.regions()),
-            format!("{:?}", navigator.objects()),
-        ];
-        for t in targets {
-            self.writer.write_all(t.as_bytes()).await?;
-            // self.stream.write_all(b"\n").await?;
-        }
+
+    async fn init(&mut self, navigator: &Navigator) -> Result<(), Box<dyn Error>> {
+        // let targets = vec![
+        //     format!("{:?}", navigator.size()),
+        //     format!("{:?}", navigator.regions()),
+        //     format!("{:?}", navigator.objects()),
+        // ];
+        // for t in targets {
+        //     self.writer.write_all(t.as_bytes()).await?;
+        //     // self.stream.write_all(b"\n").await?;
+        // }
+        let map_data = json!({
+            "size": format!("{:?}", navigator.size()),
+            "regions": format!("{:?}", navigator.regions()),
+            "objects": format!("{:?}", navigator.objects()),
+            "characters": format!("{:?}", navigator.characters())
+        });
+        self.writer
+            .write_all(
+                json!({
+                    "map": map_data
+                })
+                .to_string()
+                .as_bytes(),
+            )
+            .await?;
         return Ok(());
     }
 }

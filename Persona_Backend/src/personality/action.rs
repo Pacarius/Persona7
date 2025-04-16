@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use futures::future::Map;
+use serde::Serialize;
 
 use crate::{
     misc::time::{Date, DateTime, Time},
@@ -11,13 +12,13 @@ use crate::{
     },
     TIME_STEP,
 };
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Chat {
     target: String,
     log: Vec<String>,
     end_time: i64,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Action {
     location: (String, String),
     start_time: Time,
@@ -83,7 +84,7 @@ impl Action {
         self.object.clone()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 // pub struct ActionEntry(pub String, pub Action, pub String);
 pub struct ActionEntry {
     character_name: String,
