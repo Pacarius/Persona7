@@ -30,10 +30,12 @@ class DomeConfig(AppConfig):
         
         def start_client():
             try:
-                # This will only succeed in one process due to the lock
-                asyncio.run(get_client().run())
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(get_client().run())
             except Exception as e:
                 print(f"Client thread error: {e}")
+                traceback.print_exc()
         
         # Run the client in a separate thread
         client_thread = Thread(target=start_client, daemon=True)
