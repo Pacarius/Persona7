@@ -12,7 +12,7 @@ use crate::{
         },
         time::DateTime,
     },
-    personality::action::{Action, ProperAction},
+    personality::action::{Action, ActionEntry, ProperAction},
     world::{
         character::{self, Character},
         navigation::Navigator,
@@ -28,7 +28,7 @@ impl crate::world::character::Character {
         llama: &Ollama,
         datetime: &DateTime,
         navigator: &Navigator,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<(String, Option<ActionEntry>), Box<dyn Error>> {
         let objects = navigator.get_visible_objects(self);
         let prompt = self.pick_object(datetime, &objects.iter().map(|f| f.0).collect())?;
         let mut options = GenerateOptions::new(TEXT_MODEL.to_string(), prompt);
@@ -42,11 +42,10 @@ impl crate::world::character::Character {
                 if let Some(object) = response_json["Container"]["object"].as_str() {
                     // println!("{}", response_str);
                     match object.to_string() {
-                        val if val == "NONE".to_string() => {
-                            return Ok("NONE".to_string());
+                        val if val.to_uppercase() == "NONE".to_string() => {
+                            return Ok(("NONE".to_string(), None));
                         }
                         object => {
-                            let mut output = Ok(object.to_string());
                             if let Some(target) = &objects.get(&object) {
                                 println!("target: {}({:?})", object, target);
                                 if target.0 {
@@ -62,25 +61,37 @@ impl crate::world::character::Character {
                                                     TryInto::<usize>::try_into(pos.0 as isize + dx),
                                                     TryInto::<usize>::try_into(pos.1 as isize + dy),
                                                 ) {
-                                                    Self::decide_object_ex(
-                                                        self, navigator, valid_x, valid_y,
-                                                        datetime, object,
-                                                    );
-                                                    return output;
+                                                    if let Some(action_entry) =
+                                                        Self::decide_object_ex(
+                                                            self,
+                                                            navigator,
+                                                            valid_x,
+                                                            valid_y,
+                                                            datetime,
+                                                            object.clone(),
+                                                        )?
+                                                    {
+                                                        return Ok((
+                                                            object.to_string(),
+                                                            Some(action_entry),
+                                                        ));
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 } else {
                                     for pos in &target.1 {
-                                        Self::decide_object_ex(
+                                        if let Some(action_entry) = Self::decide_object_ex(
                                             self,
                                             navigator,
                                             pos.0,
                                             pos.1,
                                             datetime,
                                             object.clone(),
-                                        );
+                                        )? {
+                                            return Ok((object.to_string(), Some(action_entry)));
+                                        }
                                     }
                                 }
                             }
@@ -102,7 +113,7 @@ impl crate::world::character::Character {
         valid_y: usize,
         datetime: &DateTime,
         object: String,
-    ) {
+    ) -> Result<Option<ActionEntry>, Box<dyn Error>> {
         if let Some(valid_path) =
             navigator.get_path(character.position().clone(), Coordinates(valid_x, valid_y))
         {
@@ -113,7 +124,7 @@ impl crate::world::character::Character {
             let cd = character.movement_cooldown_max().clone();
             let name = character.name().clone();
             // Found a valid path
-            character.short_term_mem_mut().set_action(
+            let action_entry = character.short_term_mem_mut().set_action(
                 Some(Action::new(
                     loc,
                     datetime.1,
@@ -122,9 +133,12 @@ impl crate::world::character::Character {
                     Some(object),
                     None,
                 )),
+                None,
                 name,
             );
             character.set_path(valid_path);
+            return Ok(action_entry);
         }
+        Ok(None)
     }
 }

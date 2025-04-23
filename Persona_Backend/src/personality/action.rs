@@ -88,15 +88,26 @@ impl Action {
 // pub struct ActionEntry(pub String, pub Action, pub String);
 pub struct ActionEntry {
     character_name: String,
-    action: Action,
+    action_description: String,
     object: Option<String>,
+    // position: Coordinates,
+    action_type: Option<String>,
+    // action_description: String,
 }
 impl ActionEntry {
-    pub fn new(character_name: String, action: Action, object: Option<String>) -> Self {
+    pub fn new(
+        character_name: String,
+        // action: Action,
+        action_description: String,
+        object: Option<String>,
+        action_type: Option<String>,
+    ) -> Self {
         Self {
             character_name,
-            action,
+            // action,
             object,
+            action_type,
+            action_description,
         }
     }
 
@@ -104,8 +115,8 @@ impl ActionEntry {
         self.character_name.clone()
     }
 
-    pub fn action(&self) -> Action {
-        self.action.clone()
+    pub fn action_description(&self) -> String {
+        self.action_description.clone()
     }
 
     pub fn object(&self) -> Option<String> {

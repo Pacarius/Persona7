@@ -11,7 +11,7 @@ use crate::{
         },
         time::DateTime,
     },
-    personality::action::{Action, ProperAction},
+    personality::action::{Action, ActionEntry, ProperAction},
     world::{navigation::Navigator, world_map::WorldMap},
     TEXT_MODEL, TIME_STEP,
 };
@@ -23,7 +23,7 @@ impl crate::world::character::Character {
         datetime: &DateTime,
         // map: &WorldMap,
         navigator: &Navigator,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<ActionEntry, Box<dyn Error>> {
         if let Ok(ro) = self.ro(
             datetime,
             navigator.get_position_info(self.position()).unwrap(),
@@ -53,7 +53,7 @@ impl crate::world::character::Character {
                             let pos = self.position().clone();
                             let cd = self.movement_cooldown_max().clone();
                             let name = self.name().clone();
-                            self.short_term_mem_mut().set_action(
+                            let entry = self.short_term_mem_mut().set_action(
                                 Some(Action::new(
                                     (
                                         navigator.get_position_info(&pos).unwrap().1,
@@ -65,11 +65,19 @@ impl crate::world::character::Character {
                                     None,
                                     None,
                                 )),
+                                None,
                                 name,
                             );
                             self.set_path(path);
-                        };
-                        Ok(())
+                            // Ok(entry)
+                            if let Some(entry) = entry {
+                                Ok(entry)
+                            } else {
+                                Err(("Whatever.".into()))
+                            }
+                        } else {
+                            Err(("Whatever.".into()))
+                        }
                     } else {
                         Err(("Repsonse Format Error".into()))
                     }

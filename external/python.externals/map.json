@@ -1,0 +1,179 @@
+{
+  "objects": [
+    { "name": "Bed", "pos": { "x": 13, "y": 1 }, "size": { "width": 1, "height": 2 } },
+    { "name": "Yoga_Mat", "pos": { "x": 7, "y": 1 }, "size": { "width": 1, "height": 2 } },
+    { "name": "Plant", "pos": { "x": 10, "y": 1 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Candles", "pos": { "x": 7, "y": 3 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Photo", "pos": { "x": 10, "y": 6 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Desk", "pos": { "x": 14, "y": 3 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Bookshelf", "pos": { "x": 12, "y": 6 }, "size": { "width": 1, "height": 3 } },
+    { "name": "Couch", "pos": { "x": 13, "y": 8 }, "size": { "width": 1, "height": 3 } },
+    { "name": "Bean Bags", "pos": { "x": 17, "y": 8 }, "size": { "width": 1, "height": 3 } },
+    { "name": "TV", "pos": { "x": 14, "y": 11 }, "size": { "width": 1, "height": 5 } },
+    { "name": "Philosophy Bookshelf", "pos": { "x": 14, "y": 21 }, "size": { "width": 1, "height": 2 } },
+    { "name": "Science Bookshelf", "pos": { "x": 19, "y": 21 }, "size": { "width": 1, "height": 2 } },
+    { "name": "Interstellar Bookshelf", "pos": { "x": 14, "y": 24 }, "size": { "width": 5, "height": 1 } },
+    { "name": "Second Interstellar Bookshelf", "pos": { "x": 14, "y": 30 }, "size": { "width": 1, "height": 4 } },
+    { "name": "Lamp", "pos": { "x": 20, "y": 30 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Chair 1", "pos": { "x": 20, "y": 24 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Chair 2", "pos": { "x": 20, "y": 28 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Coffee Table", "pos": { "x": 20, "y": 26 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Broom", "pos": { "x": 12, "y": 30 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Closet", "pos": { "x": 11, "y": 26 }, "size": { "width": 2, "height": 1 } },
+    { "name": "Werid Stack of Boxes", "pos": { "x": 11, "y": 23 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Sink", "pos": { "x": 22, "y": 21 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Toilet", "pos": { "x": 22, "y": 26 }, "size": { "width": 1, "height": 1 } },
+    { "name": "Shower", "pos": { "x": 22, "y": 28 }, "size": { "width": 3, "height": 2 } },
+    { "name": "Reception Desk", "pos": { "x": 13, "y": 44 }, "size": { "width": 4, "height": 1 } },
+    { "name": "Printer_1", "pos": { "x": 16, "y": 44 }, "size": { "width": 2, "height": 1 } },
+    { "name": "Printer_2", "pos": { "x": 19, "y": 44 }, "size": { "width": 2, "height": 1 } },
+    { "name": "Office Desk", "pos": { "x": 16, "y": 48 }, "size": { "width": 1, "height": 2 } },
+    { "name": "Office Desk 1", "pos": { "x": 23, "y": 41 }, "size": { "width": 2, "height": 1 } },
+    { "name": "Office Desk 2", "pos": { "x": 22, "y": 44 }, "size": { "width": 1, "height": 1 } },
+    { "name": "DESK", "pos": { "x": 21, "y": 48 }, "size": { "width": 1, "height": 3 } }
+  ],
+  "regions": [
+    {
+      "name": "Apartment",
+      "position": { "x": 0, "y": 0 },
+      "size": { "width": 32, "height": 32 },
+      "rooms": [
+        {
+          "name": "Rm_001",
+          "position": { "x": 0, "y": 7 },
+          "size": { "width": 7, "height": 14 },
+          "holes": [{ "x": 6, "y": 10 }, { "x": 6, "y": 11 }, { "x": 6, "y": 12 }],
+          "region_name": "Apartment",
+          "walled": true
+        },
+        {
+          "name": "Rm_002",
+          "position": { "x": 6, "y": 0 },
+          "size": { "width": 10, "height": 8 },
+          "holes": [{ "x": 7, "y": 7 }, { "x": 8, "y": 7 }],
+          "region_name": "Apartment",
+          "walled": true
+        },
+        {
+          "name": "Living Room",
+          "position": { "x": 6, "y": 7 },
+          "size": { "width": 20, "height": 14 },
+          "holes": [
+            { "x": 7, "y": 20 },
+            { "x": 8, "y": 20 },
+            { "x": 11, "y": 20 },
+            { "x": 12, "y": 20 },
+            { "x": 16, "y": 20 },
+            { "x": 17, "y": 20 },
+            { "x": 18, "y": 20 },
+            { "x": 24, "y": 20 }
+          ],
+          "region_name": "Apartment",
+          "walled": true
+        },
+        {
+          "name": "Exit",
+          "position": { "x": 6, "y": 20 },
+          "size": { "width": 5, "height": 12 },
+          "holes": [{ "x": 7, "y": 31 }, { "x": 8, "y": 31 }, { "x": 9, "y": 31 }],
+          "region_name": "Apartment",
+          "walled": true
+        },
+        {
+          "name": "Storage_Closet",
+          "position": { "x": 10, "y": 20 },
+          "size": { "width": 4, "height": 12 },
+          "holes": [],
+          "region_name": "Apartment",
+          "walled": true
+        },
+        {
+          "name": "Library",
+          "position": { "x": 13, "y": 20 },
+          "size": { "width": 9, "height": 12 },
+          "holes": [],
+          "region_name": "Apartment",
+          "walled": true
+        },
+        {
+          "name": "Toilet",
+          "position": { "x": 21, "y": 20 },
+          "size": { "width": 5, "height": 12 },
+          "holes": [],
+          "region_name": "Apartment",
+          "walled": true
+        }
+      ]
+    },
+    {
+      "name": "Street",
+      "position": { "x": 6, "y": 32 },
+      "size": { "width": 4, "height": 19 },
+      "rooms": [
+        {
+          "name": "Street",
+          "position": { "x": 6, "y": 32 },
+          "size": { "width": 4, "height": 19 },
+          "holes": [],
+          "region_name": "Street",
+          "walled": false
+        }
+      ]
+    },
+    {
+      "name": "Gym",
+      "position": { "x": 10, "y": 32 },
+      "size": { "width": 16, "height": 8 },
+      "rooms": [
+        {
+          "name": "Boxing Ring",
+          "position": { "x": 10, "y": 31 },
+          "size": { "width": 16, "height": 10 },
+          "holes": [{ "x": 10, "y": 38 }, { "x": 10, "y": 39 }],
+          "region_name": "Gym",
+          "walled": true
+        }
+      ]
+    },
+    {
+      "name": "Office",
+      "position": { "x": 10, "y": 40 },
+      "size": { "width": 16, "height": 11 },
+      "rooms": [
+        {
+          "name": "Reception Area",
+          "position": { "x": 10, "y": 40 },
+          "size": { "width": 6, "height": 11 },
+          "holes": [{ "x": 10, "y": 48 }, { "x": 10, "y": 49 }],
+          "region_name": "Office",
+          "walled": true
+        },
+        {
+          "name": "Main Area",
+          "position": { "x": 15, "y": 40 },
+          "size": { "width": 6, "height": 11 },
+          "holes": [{ "x": 15, "y": 41 }, { "x": 15, "y": 42 }],
+          "region_name": "Office",
+          "walled": true
+        },
+        {
+          "name": "Office Area",
+          "position": { "x": 20, "y": 40 },
+          "size": { "width": 6, "height": 6 },
+          "holes": [{ "x": 20, "y": 41 }, { "x": 20, "y": 42 }],
+          "region_name": "Office",
+          "walled": true
+        },
+        {
+          "name": "Director's Office",
+          "position": { "x": 20, "y": 45 },
+          "size": { "width": 6, "height": 6 },
+          "holes": [{ "x": 23, "y": 45 }, { "x": 24, "y": 45 }],
+          "region_name": "Office",
+          "walled": true
+        }
+      ]
+    }
+  ],
+  "size": { "width": 200, "height": 200 }
+}

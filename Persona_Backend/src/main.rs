@@ -34,7 +34,7 @@ mod world;
 const TEXT_MODEL: &str = "llama3.2";
 const EMBEDDING_MODEL: &str = "nomic-embed-text";
 const OLLAMA_ENDPOINT: &str = "192.168.50.84:11434";
-const TIME_STEP: i64 = 600;
+const TIME_STEP: i64 = 20;
 
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
@@ -78,7 +78,7 @@ async fn main() {
     // adapter.initialise().await;
     // adapter.main().await;
 
-    let ollama = Ollama::new(false);
+    // let ollama = Ollama::new(false);
     let mut world = yeong();
     world.get_map_mut().ascend_all();
     let mut server = Server::new("0.0.0.0", world, None).await.unwrap();

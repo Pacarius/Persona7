@@ -12,6 +12,8 @@ use tokio::{
 
 use crate::world::navigation::Navigator;
 
+use super::message::Message;
+
 pub struct Client {
     // stream: TcpStream,
     // initialised: bool,
@@ -53,7 +55,7 @@ impl Client {
             }
             let mut read_line = String::new();
             let read = timeout(
-                Duration::from_secs(1),
+                Duration::from_micros(1),
                 self.reader.read_line(&mut read_line),
             )
             .await;
@@ -90,21 +92,48 @@ impl Client {
         //     self.writer.write_all(t.as_bytes()).await?;
         //     // self.stream.write_all(b"\n").await?;
         // }
-        let map_data = json!({
-            "size": format!("{:?}", navigator.size()),
-            "regions": format!("{:?}", navigator.regions()),
-            "objects": format!("{:?}", navigator.objects()),
-            "characters": format!("{:?}", navigator.characters())
-        });
-        self.writer
-            .write_all(
+
+        // let map_data = json!({
+        //     "size": format!("{:?}", navigator.size()),
+        //     "regions": format!("{:?}", navigator.regions()),
+        //     "objects": format!("{:?}", navigator.objects()),
+        //     "characters": format!("{:?}", navigator.characters())
+        // });
+        // self.writer
+        //     .write_all(
+        //         json!({
+        //             "map": map_data
+        //         })
+        //         .to_string()
+        //         .as_bytes(),
+        //     )
+        //     .await?;
+
+        let datas = vec![
+            //Map data doesn't need to be relayed
+            Message::new(
+                super::message::MessageType::PY,
                 json!({
-                    "map": map_data
+                        "size": format!("{:?}", navigator.size()),
+                "regions": format!("{:?}", navigator.regions()),
+                "objects": format!("{:?}", navigator.objects()),
                 })
-                .to_string()
-                .as_bytes(),
-            )
-            .await?;
+                .to_string(),
+                // navigator.timestamp().clone(),
+                None,
+            ),
+            Message::new(
+                super::message::MessageType::WEB,
+                json!({
+                    "characters": format!("{:?}", navigator.characters())
+                })
+                .to_string(),
+                None,
+            ),
+        ];
+        for init in datas{
+            self.writer.write_all(init.to_string().as_bytes()).await;
+        }
         return Ok(());
     }
 }

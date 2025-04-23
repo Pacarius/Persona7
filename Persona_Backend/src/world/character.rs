@@ -161,9 +161,14 @@ impl Character {
     }
     //Characters ticking : New Day; Activity Ended; if Activity is moving from point A to point B.
     pub async fn day_start(&mut self, llama: &Ollama, date: &Date, navigator: &Navigator) {
+        let name = self.name.clone();
+        self.short_term_mem_mut().action_buffer = vec![].into();
+        self.short_term_mem_mut().plan_vague = vec![];
+        self.short_term_mem_mut().set_action(None, None, name);
         self.wake_time(llama).await;
         self.daily_schedule(llama, date).await;
         self.home_location = navigator.get_position_info(self.position());
+        self.state_controller = Decision::WAKE;
     }
     // pub async fn decide(&mut self, llama: &Ollama, datetime: &DateTime) {}
 
@@ -207,21 +212,10 @@ impl Character {
                                     None,
                                     None,
                                 )),
+                                None,
                                 name,
                             );
                         }
-                    } else {
-                        entry = self.short_term_mem_mut().set_action(
-                            Some(Action::new(
-                                loc,
-                                datetime.1,
-                                5 * 60,
-                                ProperAction::WAKE.to_string(),
-                                None,
-                                None,
-                            )),
-                            name,
-                        );
                     }
                     println!("State: WAKE - Setting current action to waking up...");
                     // self.short_term_mem_mut().curr_action = Action::new(navigator.get_position_info(), start_time, intended_duration, description, object, chat)
@@ -231,27 +225,72 @@ impl Character {
                     Decision::WAKE
                 }
                 Some(a) => {
+                    let loc = match navigator.get_position_info(&self.position) {
+                        Some(l) => l,
+                        None => ("ERROR".to_string(), "ERROR".to_string()),
+                    };
                     if a.completed(&datetime.1) {
-                        self.short_term_mem_mut().clear_action();
-                        Decision::ROOM
+                        if a.description() == ProperAction::SLEEP.to_string() {
+                            // if a.completed(&datetime.1) {
+                            entry = self.short_term_mem_mut().set_action(
+                                Some(Action::new(
+                                    loc,
+                                    datetime.1,
+                                    5 * 60,
+                                    ProperAction::WAKE.to_string(),
+                                    None,
+                                    None,
+                                )),
+                                None,
+                                name,
+                            );
+                            Decision::WAKE
+                            // }
+                        } else if a.description() == ProperAction::WAKE.to_string() {
+                            // if a.completed(&datetime.1) {
+                            self.short_term_mem_mut().clear_action();
+                            Decision::ROOM
+                            // }
+                        } else {
+                            Decision::WAKE
+                        }
                     } else {
                         Decision::WAKE
                     }
+                    // Decision::WAKE
                 }
             },
-            Decision::ROOM => match &self.short_term_mem().get_action() {
+            Decision::ROOM => match &mut self.short_term_mem().get_action() {
                 None => {
                     println!("State: ROOM - Deciding room...");
-                    if let Err(e) = self.decide_room(llama, datetime, navigator).await {
-                        Decision::OBJECT;
-                        // println!("Error while deciding room: {:?}", e);
+                    match self.decide_room(llama, datetime, navigator).await {
+                        Err(e) => {
+                            println!("SOMETHING IS AMONG US");
+                            Decision::OBJECT
+                        }
+                        Ok(e) => {
+                            entry = Some(e);
+                            Decision::ROOM
+                        }
                     }
                     // println!("Room decision completed.");
-                    Decision::ROOM
                 }
                 Some(a) => {
-                    if a.description() == "MOVE".to_string() && self._move(&datetime.1).is_some() {
-                        Decision::ROOM
+                    let object = a.object().clone();
+                    if a.description() == ProperAction::MOVE.to_string() {
+                        if let Some(c_pair) = self._move(&datetime.1) {
+                            entry = Some(ActionEntry::new(
+                                name,
+                                json!([c_pair.0 .0.to_string(), c_pair.0 .1.to_string()])
+                                    .to_string(),
+                                object,
+                                Some(ProperAction::MOVE.to_string()),
+                            ));
+                            Decision::ROOM
+                        } else {
+                            self.short_term_mem_mut().clear_action();
+                            Decision::OBJECT
+                        }
                     } else {
                         self.short_term_mem_mut().clear_action();
                         Decision::OBJECT
@@ -264,10 +303,10 @@ impl Character {
                     match self.decide_object(llama, datetime, navigator).await {
                         Ok(target) => {
                             println!("Target decided: {:?}", target);
-                            if target == "NONE".to_string() {
+                            if target.0 == "NONE".to_string() {
                                 self.short_term_mem_mut().curr_object = None;
                             } else {
-                                self.short_term_mem_mut().curr_object = Some(target);
+                                self.short_term_mem_mut().curr_object = Some(target.0);
                             }
                             // Decision::DECOMPOSE
                         }
@@ -276,8 +315,21 @@ impl Character {
                     Decision::DECOMPOSE
                 }
                 Some(a) => {
-                    if a.description() == "MOVE".to_string() && self._move(&datetime.1).is_some() {
-                        Decision::OBJECT
+                    let object = a.object();
+                    if a.description() == ProperAction::MOVE.to_string() {
+                        if let Some(c_pair) = self._move(&datetime.1) {
+                            entry = Some(ActionEntry::new(
+                                name,
+                                json!([c_pair.0 .0.to_string(), c_pair.0 .1.to_string()])
+                                    .to_string(),
+                                object,
+                                Some(ProperAction::MOVE.to_string()),
+                            ));
+                            Decision::OBJECT
+                        } else {
+                            self.short_term_mem_mut().clear_action();
+                            Decision::DECOMPOSE
+                        }
                     } else {
                         self.short_term_mem_mut().clear_action();
                         Decision::DECOMPOSE
@@ -296,7 +348,7 @@ impl Character {
                         Some(o) => Some(o),
                         None => None,
                     };
-                    self.short_term_mem_mut().set_action(
+                    entry = self.short_term_mem_mut().set_action(
                         Some(Action::new(
                             navigator.get_position_info(&curr_position).unwrap(),
                             decomposed_task.start,
@@ -305,6 +357,7 @@ impl Character {
                             current_object,
                             None,
                         )),
+                        None,
                         name,
                     );
                     self.short_term_mem_mut().action_buffer.pop_front();
@@ -328,7 +381,7 @@ impl Character {
                                             Some(o) => Some(o),
                                             None => None,
                                         };
-                                    self.short_term_mem_mut().set_action(
+                                    entry = self.short_term_mem_mut().set_action(
                                         Some(Action::new(
                                             navigator.get_position_info(&curr_position).unwrap(),
                                             new_action.start,
@@ -337,6 +390,7 @@ impl Character {
                                             current_object,
                                             None,
                                         )),
+                                        None,
                                         name,
                                     );
                                     Decision::ACT
@@ -357,7 +411,7 @@ impl Character {
                             //     None => None,
                             // };
                             let current_object: Option<&String> = None;
-                            mut_mem.set_action(
+                            entry = mut_mem.set_action(
                                 Some(Action::new(
                                     navigator.get_position_info(&curr_position).unwrap(),
                                     task.start,
@@ -366,6 +420,7 @@ impl Character {
                                     current_object.cloned(),
                                     None,
                                 )),
+                                None,
                                 name,
                             );
                             Decision::ACT
@@ -385,7 +440,7 @@ impl Character {
                             if let Some(path) =
                                 navigator.get_path(self.position().clone(), position)
                             {
-                                self.short_term_mem_mut().set_action(
+                                entry = self.short_term_mem_mut().set_action(
                                     Some(Action::new(
                                         (
                                             navigator.get_position_info(&curr_position).unwrap().1,
@@ -397,6 +452,7 @@ impl Character {
                                         None,
                                         None,
                                     )),
+                                    None,
                                     name,
                                 );
                                 self.set_path(path);
@@ -415,7 +471,15 @@ impl Character {
                     // Decision::SLEEP
                 }
                 Some(a) => {
-                    if let Some(_) = self._move(&datetime.1) {
+                    let object = a.object();
+                    if let Some(c_pair) = self._move(&datetime.1) {
+                        entry = Some(ActionEntry::new(
+                            name,
+                            // a.description(),
+                            json!([c_pair.0 .0.to_string(), c_pair.0 .1.to_string()]).to_string(),
+                            object,
+                            Some(ProperAction::MOVE.to_string()),
+                        ));
                         Decision::GO_HOME
                     } else {
                         self.short_term_mem_mut().clear_action();
@@ -430,7 +494,7 @@ impl Character {
                             self.position().clone(),
                             bed_location.1.first().unwrap().clone(),
                         ) {
-                            self.short_term_mem_mut().set_action(
+                            entry = self.short_term_mem_mut().set_action(
                                 Some(Action::new(
                                     navigator.get_position_info(&curr_position).unwrap(),
                                     datetime.1,
@@ -439,6 +503,7 @@ impl Character {
                                     None,
                                     None,
                                 )),
+                                None,
                                 name,
                             );
                             self.set_path(path);
@@ -451,7 +516,14 @@ impl Character {
                     }
                 }
                 Some(a) => {
-                    if let Some(_) = self._move(&datetime.1) {
+                    let object = a.object();
+                    if let Some(c_pair) = self._move(&datetime.1) {
+                        entry = Some(ActionEntry::new(
+                            name,
+                            json!([c_pair.0 .0.to_string(), c_pair.0 .1.to_string()]).to_string(),
+                            object,
+                            Some(ProperAction::MOVE.to_string()),
+                        ));
                         Decision::GO_TO_BED
                     } else {
                         self.short_term_mem_mut().clear_action();
@@ -463,7 +535,7 @@ impl Character {
                 None => {
                     let duration = Time::from_seconds(DAY_LENGTH - 1) - datetime.1;
                     // println!("Set action to sleeping. {}", duration);
-                    self.short_term_mem_mut().set_action(
+                    entry = self.short_term_mem_mut().set_action(
                         Some(Action::new(
                             navigator.get_position_info(&curr_position).unwrap(),
                             datetime.1,
@@ -472,6 +544,7 @@ impl Character {
                             None,
                             None,
                         )),
+                        None,
                         name,
                     );
                     Decision::SLEEP

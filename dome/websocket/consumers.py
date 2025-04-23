@@ -16,6 +16,8 @@ class ClientConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
+        await self.chat_message({"message": client_instance.init_message})
+        # await self.outbound(client_instance.init_message)
         print(f"WebSocket connected and subscribed to group: {self.group_name}")
 
     async def disconnect(self, close_code):
@@ -44,6 +46,11 @@ class ClientConsumer(AsyncWebsocketConsumer):
         Handle outbound messages and send them to the WebSocket.
         """
         message = event["message"]
+
+        # Decode the message if it's in bytes
+        if isinstance(message, bytes):
+            message = message.decode('utf-8')  # Decode bytes to string
+
         print(f"Sending outbound message to WebSocket: {message}")
         await self.send(text_data=json.dumps({
             "message": message,

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import socket
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -15,6 +16,7 @@ class Client:
         self.group_name = "relay"
         self.message_queue = asyncio.Queue()  # Queue for WebSocket messages
         self.running = False
+        self.init_message = None
 
     async def connect(self):
         """
@@ -42,7 +44,7 @@ class Client:
         else:
             print("Client is not connected to the server.")
 
-    async def receive_message(self, buffer_size=4096):
+    async def receive_message(self, buffer_size=8192):
         """
         Continuously receive messages from the server.
         """
@@ -51,8 +53,11 @@ class Client:
                 try:
                     data = await asyncio.get_event_loop().sock_recv(self.client_socket, buffer_size)
                     if data:
+                        if self.init_message == None:
+                            self.init_message = data
                         message = data.decode('utf-8')
                         print(f"Message received from TCP server: {message}")
+                        
                         # Relay the message to WebSocket clients via the channel layer
                         if self.channel_layer is not None:
                             await self.channel_layer.group_send(

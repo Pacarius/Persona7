@@ -18,6 +18,7 @@
             type: Phaser.AUTO,
             width: 600,
             height: 800,
+            pixelArt: true,
             scene: {
                 preload: preload,
                 create: create,
@@ -35,7 +36,9 @@
         
         function create() {
             // this.add.image(512, 816, 'map');
-            this.add.image(0, 0, 'map').setOrigin(0, 0)
+            // this.cameras.main.zoom = 0.25;
+            const bg = this.add.image(0, 0, 'map').setOrigin(0, 0)
+            // bg.scale  = 0.25;
             // Establish WebSocket connection
             socket = new WebSocket('ws://' + window.location.host + '/ws/home/');
             

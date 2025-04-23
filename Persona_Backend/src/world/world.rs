@@ -5,6 +5,7 @@ use serde_json::{json, Value};
 use crate::misc::ollama::ollama::Ollama;
 use crate::misc::time::{Date, DateTime, Time, DAY_LENGTH};
 use crate::personality::action::Action;
+use crate::server::message::{Message, MessageType};
 use crate::TIME_STEP;
 
 use super::character::Character;
@@ -46,6 +47,9 @@ impl World {
     // }
 }
 impl World {
+    pub fn toggle_running(&mut self) {
+        self.running = !self.running;
+    }
     async fn day_start(&mut self, llama: &Ollama) -> Time {
         let date = self.datetime.0.clone();
         self.get_map_mut().day_start(llama, date).await;
@@ -71,6 +75,7 @@ impl World {
 
         let (new_datetime, day) = self.datetime.clone() + Time::from_seconds(TIME_STEP);
         if day || self.first_day {
+            println!("Starting day...");
             self.day_start(llama).await;
             self.first_day = false;
         }
@@ -78,15 +83,21 @@ impl World {
         let day_logic_over = self.get_map_mut().update(&new_datetime, llama).await;
         if !day_logic_over.1.is_empty() {
             output = Some(
-                json![{
-                        "type": "WEB",
-                        "content": day_logic_over.1,
-                        "timestamp": new_datetime.to_string()
-                }]
-                .to_string(),
+                Message::new(
+                    MessageType::WEB,
+                    format!("{:?}", day_logic_over.1),
+                    Some(new_datetime.clone()),
+                )
+                .to_string(), // json![{
+                              //         "type": "WEB",
+                              //         "content": day_logic_over.1,
+                              //         "timestamp": new_datetime.to_string()
+                              // }]
+                              // .to_string(),
             );
             println!("{:?}", output);
         }
+        println!("{}", new_datetime.to_string());
         // todo!("Messaing Formatting; Forwarding To Clients");
         self.datetime = new_datetime;
         output

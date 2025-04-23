@@ -34,6 +34,7 @@ impl ShortTerm {
     pub fn set_action(
         &mut self,
         action: Option<Action>,
+        action_type: Option<String>,
         character_name: String,
     ) -> Option<ActionEntry> {
         // self.curr_action = action;
@@ -44,11 +45,15 @@ impl ShortTerm {
                 // Some(ActionEntry(a, character_name))
                 Some(ActionEntry::new(
                     character_name,
-                    a,
+                    a.description(),
                     self.curr_object.clone(),
+                    action_type,
                 ))
             }
-            None => {self.clear_action(); None},
+            None => {
+                self.clear_action();
+                None
+            }
         };
         entry
     }

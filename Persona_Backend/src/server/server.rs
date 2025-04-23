@@ -72,16 +72,18 @@ impl Server {
                 });
         });
         loop {
-            if let Some(output) = self
-                .world
-                .clone()
-                .lock()
-                .await
-                .tick(&self.llama, false)
-                .await
-            {
+            let world_arc = self.world.clone();
+            let mut world = world_arc.lock().await;
+            while let Ok(command) = self.from_client.0.try_recv() {
+                println!("{}", command);
+                if command.contains("throbbing") {
+                    world.toggle_running();
+                    self.to_client.1.send("throbbing".to_string());
+                }
+            }
+            if let Some(output) = world.tick(&self.llama, false).await {
                 if let Ok(_) = self.to_client.1.send(output.clone()) {
-                    println!("Sent {} through channel.", output);
+                    // println!("Sent {} through channel.", output);
                 }
             };
             sleep(Duration::from_millis(100)).await;
