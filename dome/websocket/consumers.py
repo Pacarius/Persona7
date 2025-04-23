@@ -1,6 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from dome.client.client import client_instance  # Import the shared Client instance
+from dome.client.client import get_client
 
 class ClientConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -16,7 +16,7 @@ class ClientConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
-        await self.chat_message({"message": client_instance.init_message})
+        await self.chat_message({"message": get_client().init_message})
         # await self.outbound(client_instance.init_message)
         print(f"WebSocket connected and subscribed to group: {self.group_name}")
 
@@ -39,7 +39,7 @@ class ClientConsumer(AsyncWebsocketConsumer):
 
         if message:
             print(f"Adding message to Client queue: {message}")
-            await client_instance.message_queue.put(message)  # Add the message to the queue
+            await get_client().message_queue.put(message)  # Add the message to the queue
 
     async def chat_message(self, event):
         """

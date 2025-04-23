@@ -111,17 +111,17 @@ impl Client {
 
         let datas = vec![
             //Map data doesn't need to be relayed
-            Message::new(
-                super::message::MessageType::PY,
-                json!({
-                        "size": format!("{:?}", navigator.size()),
-                "regions": format!("{:?}", navigator.regions()),
-                "objects": format!("{:?}", navigator.objects()),
-                })
-                .to_string(),
-                // navigator.timestamp().clone(),
-                None,
-            ),
+            // Message::new(
+            //     super::message::MessageType::PY,
+            //     json!({
+            //             "size": format!("{:?}", navigator.size()),
+            //     "regions": format!("{:?}", navigator.regions()),
+            //     "objects": format!("{:?}", navigator.objects()),
+            //     })
+            //     .to_string(),
+            //     // navigator.timestamp().clone(),
+            //     None,
+            // ),
             Message::new(
                 super::message::MessageType::WEB,
                 json!({

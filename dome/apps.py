@@ -1,20 +1,42 @@
 from django.apps import AppConfig
 import asyncio
+import os
 from threading import Thread
-from .client.client import client_instance
+from .client.client import get_client
 
 class DomeConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'dome'
+    
+    # Track if we've already started the client in this process
+    client_started = False
 
     def ready(self):
         """
         Start the TCP client when the Django app is ready.
         """
-        # client = Client("127.0.0.1", 1234)
-
+        # Skip starting client in auto-reload process
+        if os.environ.get('RUN_MAIN') == 'true':
+            print("Skipping client start in Django auto-reloader process")
+            return
+            
+        # Skip if client is already started in this process
+        if DomeConfig.client_started:
+            print("Client already started in this process")
+            return
+            
+        DomeConfig.client_started = True
+        print(f"Starting client in process {os.getpid()}...")
+        
         def start_client():
-            asyncio.run(client_instance.run())
-
-        # Run the client in a separate thread to avoid blocking Django
-        Thread(target=start_client, daemon=True).start()
+            try:
+                # This will only succeed in one process due to the lock
+                asyncio.run(get_client().run())
+            except Exception as e:
+                print(f"Client thread error: {e}")
+        
+        # Run the client in a separate thread
+        client_thread = Thread(target=start_client, daemon=True)
+        client_thread.name = "TCPClientThread"
+        client_thread.start()
+        print(f"Client thread started: {client_thread.name} in process {os.getpid()}")

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .client import Client
+# from .client import Client
 from dome.settings.models import Setting  # Import the Setting model
 from .world import World
 

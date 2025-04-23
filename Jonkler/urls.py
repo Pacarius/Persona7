@@ -17,6 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
+# from django.urls import include, path 
+from debug_toolbar.toolbar import debug_toolbar_urls
+
 # from .websockets import temp_view# Import RedirectView
 # from .websockets import temp_view
 urlpatterns = [
@@ -24,4 +27,4 @@ urlpatterns = [
     path('dome/', include('dome.urls')),
     path('admin/', admin.site.urls),
     # path('phaser/', temp_view.TempView)
-]
+] + debug_toolbar_urls()
