@@ -1,5 +1,8 @@
+import asyncio
 import json
+from asgiref.sync import async_to_sync
 from channels.generic.websocket import AsyncWebsocketConsumer
+from dome.apps import Thread
 from dome.client.client import client_instance  # Import the shared Client instance
 
 class ClientConsumer(AsyncWebsocketConsumer):
@@ -16,6 +19,7 @@ class ClientConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
+        await client_instance.message_queue.put("NEED")
         print(f"WebSocket connected and subscribed to group: {self.group_name}")
 
     async def disconnect(self, close_code):
@@ -58,3 +62,9 @@ class ClientConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "message": message,
         }))
+        
+def start_client():
+    async_to_sync(client_instance.run)()
+# Run the client in a separate thread to avoid blocking Django
+Thread(target=start_client, daemon=True).start()
+

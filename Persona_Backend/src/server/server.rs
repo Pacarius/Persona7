@@ -2,6 +2,7 @@ use std::{error::Error, ops::Deref, sync::Arc, time::Duration};
 
 use futures::future::join_all;
 use rand::Rng;
+use serde_json::json;
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
     net::{
@@ -76,9 +77,20 @@ impl Server {
             let mut world = world_arc.lock().await;
             while let Ok(command) = self.from_client.0.try_recv() {
                 println!("{}", command);
-                if command.contains("throbbing") {
-                    world.toggle_running();
-                    self.to_client.1.send("throbbing".to_string());
+                // if command.contains("throbbing") {
+                //     world.toggle_running();
+                //     self.to_client.1.send("throbbing".to_string());
+                // }
+                match &command.trim() {
+                    val if val == &"throbbing" => {
+                        world.toggle_running();
+                        self.to_client.1.send("throbbing".to_string());
+                    }
+                    val if val == &"NEED" => {
+                        self.to_client.1.send(
+                            format!("{:?}", world.get_map().get_characters().iter().map(|c| json!({"name": c.name(),"position": c.position().to_string(),"plan": format!("{:?}", c.short_term_mem().plan_vague), "sprite": c.sprite()})).collect::<Vec<_>>()));
+                    }
+                    _ => {}
                 }
             }
             if let Some(output) = world.tick(&self.llama, false).await {

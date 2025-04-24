@@ -27,7 +27,11 @@ pub enum Placeholder {
     MALE,
     FEMALE,
 }
-
+impl Display for Placeholder{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 #[derive(Debug, Deserialize)]
 pub enum Direction {
     NORTH,
@@ -127,6 +131,9 @@ impl Character {
     }
     pub fn action_buffer_mut(&mut self) -> &mut VecDeque<ActionBare> {
         &mut self.short_term_mem_mut().action_buffer
+    }
+    pub fn sprite(&self) -> String{
+        self.sprite.to_string()
     }
     pub fn _move(&mut self, timestamp: &Time) -> Option<((Coordinates, Coordinates), Action)> {
         if let Some(path) = &mut self.path {

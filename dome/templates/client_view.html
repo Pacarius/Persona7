@@ -10,24 +10,37 @@
     <script src="{%static 'phaser.min.js' %}"></script>
 </head>
 <body>
-    <input type="text" id="messageInput" placeholder="Type your message here"/>
-    <button id="sendMessageButton">Send Message</button>
+    <!-- <input type="text" id="messageInput" placeholder="Type your message here"/>
+    <button id="sendMessageButton">Send Message</button> -->
     
     <script>
         const config = {
             type: Phaser.AUTO,
-            width: 600,
+            width: 1200,
             height: 800,
             pixelArt: true,
             scene: {
                 preload: preload,
                 create: create,
                 update: update
-            }
+            },
+            transparent: true
         };
 
         const game = new Phaser.Game(config);
         let socket;
+        function init_socket(){
+            socket = new WebSocket('ws://' + window.location.host + '/ws/home/');
+            
+            socket.onopen = function() {
+                console.log('WebSocket connection established');
+            };
+    
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log(data.message);
+            };
+        }
 
         function preload() {
             // Load your assets here
@@ -36,39 +49,27 @@
         
         function create() {
             // this.add.image(512, 816, 'map');
-            // this.cameras.main.zoom = 0.25;
+            this.cameras.main.zoom = 0.25;
             const bg = this.add.image(0, 0, 'map').setOrigin(0, 0)
+            init_socket()
             // bg.scale  = 0.25;
             // Establish WebSocket connection
-            socket = new WebSocket('ws://' + window.location.host + '/ws/home/');
-            
-            socket.onopen = function() {
-                console.log('WebSocket connection established');
-            };
-
-            socket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                console.log(data.message);
-                // if (data.type === "message") { // Handle outbound messages
-                //     console.log("Received outbound message:", data.message);
-                // }
-            };
 
             // Set up the button to send messages
-            const sendMessageButton = document.getElementById('sendMessageButton');
-            sendMessageButton.onclick = function() {
-                const messageInput = document.getElementById('messageInput');
-                const message = messageInput.value;
+            // const sendMessageButton = document.getElementById('sendMessageButton');
+            // sendMessageButton.onclick = function() {
+            //     const messageInput = document.getElementById('messageInput');
+            //     const message = messageInput.value;
 
-                if (message) {
-                    const payload = {
-                        type: "inbound", // Mark the message as inbound
-                        message: message
-                    };
-                    socket.send(JSON.stringify(payload));
-                    messageInput.value = ''; // Clear the input after sending
-                }
-            };
+            //     if (message) {
+            //         const payload = {
+            //             type: "inbound", // Mark the message as inbound
+            //             message: message
+            //         };
+            //         socket.send(JSON.stringify(payload));
+            //         messageInput.value = ''; // Clear the input after sending
+            //     }
+            // };
         }
 
         function update() {

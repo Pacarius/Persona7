@@ -42,14 +42,17 @@ class Client:
         else:
             print("Client is not connected to the server.")
 
-    async def receive_message(self, buffer_size=4096):
+    async def receive_message(self, buffer_size=8192):
         """
         Continuously receive messages from the server.
         """
         while True:
             if self.client_socket:
                 try:
-                    data = await asyncio.get_event_loop().sock_recv(self.client_socket, buffer_size)
+                    data = await asyncio.wait_for(
+                        asyncio.get_event_loop().sock_recv(self.client_socket, buffer_size),
+                        timeout=1
+                    )
                     if data:
                         message = data.decode('utf-8')
                         print(f"Message received from TCP server: {message}")
@@ -65,7 +68,8 @@ class Client:
                         else:
                             print("Channel layer is not configured. Unable to relay message.")
                 except Exception as e:
-                    print(f"Failed to receive message - {e}")
+                    {}
+                    #print(f"Failed to receive message - {e}")
             else:
                 print("Client is not connected to the server.")
                 await asyncio.sleep(1)  # Wait before retrying

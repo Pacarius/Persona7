@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use futures::future::join_all;
 use serde_json::{json, Value};
 // use tokio::sync::broadcast::Sender;
@@ -5,7 +7,7 @@ use serde_json::{json, Value};
 use crate::misc::ollama::ollama::Ollama;
 use crate::misc::time::{Date, DateTime, Time, DAY_LENGTH};
 use crate::personality::action::Action;
-use crate::server::message::{Message, MessageType};
+// use crate::server::message::{Message, MessageType};
 use crate::TIME_STEP;
 
 use super::character::Character;
@@ -83,17 +85,21 @@ impl World {
         let day_logic_over = self.get_map_mut().update(&new_datetime, llama).await;
         if !day_logic_over.1.is_empty() {
             output = Some(
-                Message::new(
-                    MessageType::WEB,
-                    format!("{:?}", day_logic_over.1),
-                    Some(new_datetime.clone()),
-                )
-                .to_string(), // json![{
-                              //         "type": "WEB",
-                              //         "content": day_logic_over.1,
-                              //         "timestamp": new_datetime.to_string()
-                              // }]
-                              // .to_string(),
+                json!({
+                    "content": format!("{:?}", day_logic_over.1),
+                    "timestamp": new_datetime.clone().to_string()
+                }).to_string()
+                // Message::new(
+                //     MessageType::WEB,
+                //     format!("{:?}", day_logic_over.1),
+                //     Some(new_datetime.clone()),
+                // )
+                // .to_string(), // json![{
+                //               //         "type": "WEB",
+                //               //         "content": day_logic_over.1,
+                //               //         "timestamp": new_datetime.to_string()
+                //               // }]
+                //               // .to_string(),
             );
             println!("{:?}", output);
         }

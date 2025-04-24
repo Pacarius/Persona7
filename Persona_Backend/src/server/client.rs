@@ -12,7 +12,7 @@ use tokio::{
 
 use crate::world::navigation::Navigator;
 
-use super::message::Message;
+// use super::message::Message;
 
 pub struct Client {
     // stream: TcpStream,
@@ -109,31 +109,31 @@ impl Client {
         //     )
         //     .await?;
 
-        let datas = vec![
-            //Map data doesn't need to be relayed
-            // Message::new(
-            //     super::message::MessageType::PY,
-            //     json!({
-            //             "size": format!("{:?}", navigator.size()),
-            //     "regions": format!("{:?}", navigator.regions()),
-            //     "objects": format!("{:?}", navigator.objects()),
-            //     })
-            //     .to_string(),
-            //     // navigator.timestamp().clone(),
-            //     None,
-            // ),
-            Message::new(
-                super::message::MessageType::WEB,
-                json!({
-                    "characters": format!("{:?}", navigator.characters())
-                })
-                .to_string(),
-                None,
-            ),
-        ];
-        for init in datas{
-            self.writer.write_all(init.to_string().as_bytes()).await;
-        }
+        // let datas = vec![
+        //     //Map data doesn't need to be relayed
+        //     // Message::new(
+        //     //     super::message::MessageType::PY,
+        //     //     json!({
+        //     //             "size": format!("{:?}", navigator.size()),
+        //     //     "regions": format!("{:?}", navigator.regions()),
+        //     //     "objects": format!("{:?}", navigator.objects()),
+        //     //     })
+        //     //     .to_string(),
+        //     //     // navigator.timestamp().clone(),
+        //     //     None,
+        //     // ),
+        //     Message::new(
+        //         super::message::MessageType::WEB,
+        //         json!({
+        //             "characters": format!("{:?}", navigator.characters().iter().map(|c| ( json!({"position" : c.position().to_string(), "plan": format!("{:?}", &c.short_term_mem().plan_vague)}))).collect::<Vec<_>>())
+        //         })
+        //         .to_string(),
+        //         None,
+        //     ),
+        // ];
+        // for init in datas{
+        //     self.writer.write_all(init.to_string().as_bytes()).await;
+        // }
         return Ok(());
     }
 }
