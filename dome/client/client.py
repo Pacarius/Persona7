@@ -39,6 +39,8 @@ class Client:
                 print("Message sent successfully.")
             except Exception as e:
                 print(f"Failed to send message - {e}")
+                self.running = False
+                self.client_socket = None
         else:
             print("Client is not connected to the server.")
 
@@ -46,7 +48,7 @@ class Client:
         """
         Continuously receive messages from the server.
         """
-        while True:
+        while self.running:
             if self.client_socket:
                 try:
                     data = await asyncio.wait_for(
@@ -67,21 +69,44 @@ class Client:
                             )
                         else:
                             print("Channel layer is not configured. Unable to relay message.")
+                    else:
+                        # Empty data means the connection was closed
+                        print("Connection closed by the server")
+                        self.running = False
+                        self.client_socket = None
+                        await asyncio.sleep(1)
+                except asyncio.TimeoutError:
+                    # Normal timeout, just continue the loop
+                    await asyncio.sleep(0.1)  # Small sleep to reduce CPU usage
+                except ConnectionResetError:
+                    print("Connection reset by the server")
+                    self.running = False
+                    self.client_socket = None
+                    await asyncio.sleep(1)
                 except Exception as e:
-                    {}
-                    #print(f"Failed to receive message - {e}")
+                    print(f"Failed to receive message - {e}")
+                    await asyncio.sleep(1)  # Wait before retrying
             else:
                 print("Client is not connected to the server.")
+                self.running = False
                 await asyncio.sleep(1)  # Wait before retrying
 
     async def relay_websocket_to_tcp(self):
         """
         Continuously listen for messages from the queue and send them to the TCP server.
         """
-        while True:
-            message = await self.message_queue.get()
-            print(f"Relaying WebSocket message to TCP server: {message}")
-            await self.send_message(message)
+        while self.running:
+            try:
+                # Use wait_for to make this cancellable
+                message = await asyncio.wait_for(self.message_queue.get(), timeout=1)
+                print(f"Relaying WebSocket message to TCP server: {message}")
+                await self.send_message(message)
+            except asyncio.TimeoutError:
+                # Just continue the loop
+                pass
+            except Exception as e:
+                print(f"Error in relay_websocket_to_tcp: {e}")
+                await asyncio.sleep(1)
 
     async def run(self):
         """
@@ -90,18 +115,25 @@ class Client:
         if not self.running:
             await self.connect()
             if self.client_socket:
-                await asyncio.gather(
-                    self.receive_message(),  # Continuously receive messages from the TCP server
-                    self.relay_websocket_to_tcp(),  # Continuously relay WebSocket messages to the TCP server
-                )
+                try:
+                    await asyncio.gather(
+                        self.receive_message(),  # Continuously receive messages from the TCP server
+                        self.relay_websocket_to_tcp(),  # Continuously relay WebSocket messages to the TCP server
+                    )
+                except Exception as e:
+                    print(f"Error in client run: {e}")
+                finally:
+                    self.close_connection()
 
     def close_connection(self):
         """
         Close the connection to the server.
         """
+        self.running = False
         if self.client_socket:
             try:
                 self.client_socket.close()
+                self.client_socket = None
                 print("Connection closed successfully.")
             except Exception as e:
                 print(f"Failed to close connection - {e}")

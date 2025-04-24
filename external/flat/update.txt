@@ -1,0 +1,3 @@
+{"content":"[ActionEntry { character_name: \"Ava Thompson\", action_description: \"Brainstorm ideas for the lesson\", object: Some(\"Candles\"), action_type: None }]","timestamp":"January 1 09:33:20","type":"update"}
+^^^content is always an array of updates for any valid character. the top-level-type of both messages are "update"
+{"content":"[ActionEntry { character_name: \"Ava Thompson\", action_description: \"[\\\"(14, 48)\\\",\\\"(13, 48)\\\"]\", object: None, action_type: Some(\"MOVE\") }]","timestamp":"January 1 08:43:20","type":"update"}

@@ -10,7 +10,7 @@ def parse_map_json(file_path):
         data = json.load(f)
     return data
 
-def generate_image(parsed_data, tile_size=64, output_file="world_debug.png", assets_dir="assets/"):
+def generate_image(parsed_data, tile_size=128, output_file="world_debug.png", assets_dir="assets/"):
     """
     Generate a 2D image using tiles from the assets directory, annotate map objects,
     and draw walls with holes around rooms.
@@ -85,7 +85,7 @@ def generate_image(parsed_data, tile_size=64, output_file="world_debug.png", ass
     # Draw map objects as annotated grey rectangles
     # font = ImageFont.load_default()  # Use a default font for annotations
     # font = ImageFont.truetype("Arial.ttf", size=16)  # Load a TrueType font with a larger size
-    font = ImageFont.truetype("/usr/share/fonts/TTF/Hack-Bold.ttf", size=16)
+    font = ImageFont.truetype("/usr/share/fonts/TTF/Hack-Bold.ttf", size=32)
     for obj in objects:
         obj_x, obj_y = obj["pos"]["x"], obj["pos"]["y"]
         obj_w, obj_h = obj["size"]["height"], obj["size"]["width"]

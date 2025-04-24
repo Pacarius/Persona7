@@ -2,17 +2,19 @@
 {% block content %}
 <!DOCTYPE html>
 <html lang="en">
-    {% load static%}
+{% load static%}
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lorem Ipsum</title>
     <script src="{%static 'phaser.min.js' %}"></script>
 </head>
+
 <body>
     <!-- <input type="text" id="messageInput" placeholder="Type your message here"/>
     <button id="sendMessageButton">Send Message</button> -->
-    
+
     <script>
         const config = {
             type: Phaser.AUTO,
@@ -26,57 +28,83 @@
             },
             transparent: true
         };
+        let characters = [];
+        // let characters_init = false;
 
         const game = new Phaser.Game(config);
         let socket;
-        function init_socket(){
+        function init_socket() {
             socket = new WebSocket('ws://' + window.location.host + '/ws/home/');
-            
-            socket.onopen = function() {
+
+            socket.onopen = function () {
                 console.log('WebSocket connection established');
             };
-    
-            socket.onmessage = function(event) {
+
+            socket.onmessage = function (event) {
                 const data = JSON.parse(event.data);
                 console.log(data.message);
+                if(characters.length < 1){
+                    init_characters(data.message)
+                }
+                else{
+
+                }
             };
+            socket.onclose = function(){
+                game.destroy()
+            }
+        }
+        function init_characters(data){
+
         }
 
         function preload() {
             // Load your assets here
             this.load.image('map', '/static/world.png');
+            this.load.image('MALE', '/static/sprites/MALE.png');
+            this.load.image('FEMALE', '/static/sprites/FEMALE.png');
         }
-        
+
         function create() {
             // this.add.image(512, 816, 'map');
             this.cameras.main.zoom = 0.25;
             const bg = this.add.image(0, 0, 'map').setOrigin(0, 0)
+            this.cameras.main.scrollX = 4096 / 3; // Set the horizontal position
+            this.cameras.main.scrollY = 6528 / 2;  // Set the vertical position
             init_socket()
-            // bg.scale  = 0.25;
-            // Establish WebSocket connection
 
-            // Set up the button to send messages
-            // const sendMessageButton = document.getElementById('sendMessageButton');
-            // sendMessageButton.onclick = function() {
-            //     const messageInput = document.getElementById('messageInput');
-            //     const message = messageInput.value;
+            // const container = this.add.container(4096, 6528)
+            // const container = this.add.container(0, 0)
+            const tile_scale = 128
+            // container.add(bg)
+            // const cursors = this.input.keyboard.createCursorKeys();
 
-            //     if (message) {
-            //         const payload = {
-            //             type: "inbound", // Mark the message as inbound
-            //             message: message
-            //         };
-            //         socket.send(JSON.stringify(payload));
-            //         messageInput.value = ''; // Clear the input after sending
-            //     }
-            // };
+            // Configure camera controls
+            const controlConfig = {
+                camera: this.cameras.main,
+                left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+                right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+                up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+                down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+                zoomIn: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
+                zoomOut: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+                // acceleration: 0.06,
+                // drag: 0.0005,
+                // maxSpeed: 1.0,
+                zoomSpeed: 0.003,
+                speed: 10
+            };
+
+            // Initialize camera controls
+            this.controls = new Phaser.Cameras.Controls.FixedKeyControl(controlConfig);
+
         }
 
-        function update() {
-        //     console.log("SCREAM");
-        //     // Game logic updates
+        function update(time, delta) {
+            this.controls.update(delta);
         }
     </script>
 </body>
+
 </html>
 {% endblock %}

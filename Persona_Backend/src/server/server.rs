@@ -88,12 +88,28 @@ impl Server {
                     }
                     val if val == &"NEED" => {
                         self.to_client.1.send(
-                            format!("{:?}", world.get_map().get_characters().iter().map(|c| json!({"name": c.name(),"position": c.position().to_string(),"plan": format!("{:?}", c.short_term_mem().plan_vague), "sprite": c.sprite()})).collect::<Vec<_>>()));
+                            // format!("{:?}", world.get_map().get_characters().iter().map(|c| json!({"name": c.name(),"position": c.position().to_string(),"plan": format!("{:?}", c.short_term_mem().plan_vague), "sprite": c.sprite()})).collect::<Vec<_>>()));
+                            json!({
+                                "type": "init",
+                                "content": format!("{:?}", world.get_map().get_characters().iter().map(|c| json!({"name": c.name(),"position": c.position().to_string(),"plan": format!("{:?}", c.short_term_mem().plan_vague), "sprite": c.sprite()})).collect::<Vec<_>>())
+                            }).to_string());
                     }
                     _ => {}
                 }
             }
-            if let Some(output) = world.tick(&self.llama, false).await {
+            let (new_day, relay) = world.tick(&self.llama, false).await;
+            if new_day {
+                // self.to_client.send()
+                // self.to_client.1.send(
+                //             format!("DAY_INIT: {:?}", world.get_map().get_characters().iter().map(|c| json!({"name": c.name(),"position": c.position().to_string(),"plan": format!("{:?}", c.short_term_mem().plan_vague), "sprite": c.sprite()})).collect::<Vec<_>>()));
+                        self.to_client.1.send(
+                            // format!("{:?}", world.get_map().get_characters().iter().map(|c| json!({"name": c.name(),"position": c.position().to_string(),"plan": format!("{:?}", c.short_term_mem().plan_vague), "sprite": c.sprite()})).collect::<Vec<_>>()));
+                            json!({
+                                "type": "init",
+                                "content": format!("{:?}", world.get_map().get_characters().iter().map(|c| json!({"name": c.name(),"position": c.position().to_string(),"plan": format!("{:?}", c.short_term_mem().plan_vague), "sprite": c.sprite()})).collect::<Vec<_>>())
+                            }).to_string());
+            }
+            if let Some(output) = relay {
                 if let Ok(_) = self.to_client.1.send(output.clone()) {
                     // println!("Sent {} through channel.", output);
                 }

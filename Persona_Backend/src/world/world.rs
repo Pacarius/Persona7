@@ -64,8 +64,8 @@ impl World {
         day_start_time.sort();
         **day_start_time.iter().nth(0).unwrap()
     }
-    pub async fn tick(&mut self, llama: &Ollama, enable_logging: bool) -> Option<String> {
-        let mut output = None;
+    pub async fn tick(&mut self, llama: &Ollama, enable_logging: bool) -> (bool, Option<String>) {
+        let mut output = (false, None);
         if !self.running {
             return output;
         }
@@ -79,27 +79,29 @@ impl World {
         if day || self.first_day {
             println!("Starting day...");
             self.day_start(llama).await;
+            output.0 = true;
             self.first_day = false;
         }
         // else{
         let day_logic_over = self.get_map_mut().update(&new_datetime, llama).await;
         if !day_logic_over.1.is_empty() {
-            output = Some(
+            output.1 = Some(
                 json!({
+                    "type": "update",
                     "content": format!("{:?}", day_logic_over.1),
                     "timestamp": new_datetime.clone().to_string()
-                }).to_string()
-                // Message::new(
-                //     MessageType::WEB,
-                //     format!("{:?}", day_logic_over.1),
-                //     Some(new_datetime.clone()),
-                // )
-                // .to_string(), // json![{
-                //               //         "type": "WEB",
-                //               //         "content": day_logic_over.1,
-                //               //         "timestamp": new_datetime.to_string()
-                //               // }]
-                //               // .to_string(),
+                })
+                .to_string(), // Message::new(
+                              //     MessageType::WEB,
+                              //     format!("{:?}", day_logic_over.1),
+                              //     Some(new_datetime.clone()),
+                              // )
+                              // .to_string(), // json![{
+                              //               //         "type": "WEB",
+                              //               //         "content": day_logic_over.1,
+                              //               //         "timestamp": new_datetime.to_string()
+                              //               // }]
+                              //               // .to_string(),
             );
             println!("{:?}", output);
         }
