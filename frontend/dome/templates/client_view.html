@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+{% load static%}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorem Ipsum</title>
+    <script src="{%static 'phaser.min.js' %}"></script>
+</head>
+
+<body>
+    <!-- <input type="text" id="messageInput" placeholder="Type your message here"/>
+    <button id="sendMessageButton">Send Message</button> -->
+
+    <style>
+        .ui {
+            position: absolute;
+            top: 32px;
+            right: 32px;
+            z-index: 100;
+        }
+    </style>
+    <div class="ui">
+        <img src="/static/sprites/play.svg" id="pp" width="64" height="64">
+    </div>
+
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: 1200,
+            height: 800,
+            pixelArt: true,
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            },
+            transparent: true
+        };
+        let characters = [];
+        // let characters_init = false;
+
+        const game = new Phaser.Game(config);
+        let socket;
+        function init_socket() {
+            socket = new WebSocket('ws://' + window.location.host + '/ws/home/');
+
+            socket.onopen = function () {
+                console.log('WebSocket connection established');
+            };
+
+            socket.onmessage = function (event) {
+                console.log('Raw message received:', event.data);
+                
+                try {
+                    // Check if we have concatenated JSON objects
+                    const messageStr = event.data;
+                    let jsonStart = 0;
+                    let bracketCount = 0;
+                    let inQuote = false;
+                    let escapeNext = false;
+                    let messages = [];
+                    
+                    // Parse through the message character by character to identify JSON objects
+                    for (let i = 0; i < messageStr.length; i++) {
+                        const char = messageStr[i];
+                        
+                        if (escapeNext) {
+                            escapeNext = false;
+                            continue;
+                        }
+                        
+                        if (char === '\\') {
+                            escapeNext = true;
+                            continue;
+                        }
+                        
+                        if (char === '"' && !escapeNext) {
+                            inQuote = !inQuote;
+                            continue;
+                        }
+                        
+                        if (!inQuote) {
+                            if (char === '{') {
+                                if (bracketCount === 0) {
+                                    jsonStart = i;
+                                }
+                                bracketCount++;
+                            } else if (char === '}') {
+                                bracketCount--;
+                                if (bracketCount === 0) {
+                                    // Found complete JSON object
+                                    const jsonStr = messageStr.substring(jsonStart, i + 1);
+                                    try {
+                                        const jsonObj = JSON.parse(jsonStr);
+                                        messages.push(jsonObj);
+                                    } catch (e) {
+                                        console.error('Failed to parse JSON object:', jsonStr);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    console.log(`Found ${messages.length} JSON messages in the websocket data`);
+                    
+                    // Process each message
+                    messages.forEach(outerData => {
+                        console.log('Processing message:', outerData);
+                        
+                        // Now parse the nested message
+                        if (outerData.message) {
+                            try {
+                                const data = JSON.parse(outerData.message);
+                                console.log('Parsed inner data:', data);
+                                
+                                // Process the messages based on type
+                                if (data.type === "init" && characters.length < 1) {
+                                    console.log('Processing init message');
+                                    processInitData(data.content);
+                                } 
+                                else if (data.type === "update") {
+                                    console.log('Processing update message');
+                                    processUpdateData(data.content);
+                                }
+                            } catch (e) {
+                                console.error('Error parsing inner message:', e);
+                            }
+                        } else {
+                            console.warn('Unexpected message format - missing "message" field:', outerData);
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error processing message:', e);
+                    console.error('Error details:', e.message);
+                }
+            };
+
+            socket.onclose = function(){
+                game.destroy()
+            }
+        }
+
+        // Process init data which is in Rust object format, not JSON
+        function processInitData(content) {
+            console.log('Raw init content:', content);
+            
+            try {
+                // Extract character data using regex since it's not valid JSON
+                const characters = [];
+                const nameRegex = /\"name\":\s*String\(\"([^\"]+)\"\)/g;
+                const positionRegex = /\"position\":\s*String\(\"([^\"]+)\"\)/g;
+                const spriteRegex = /\"sprite\":\s*String\(\"([^\"]+)\"\)/g;
+                const planRegex = /\"plan\":\s*String\(\"([^\"]+)\"\)/g;
+                
+                let nameMatch, posMatch, spriteMatch, planMatch;
+                
+                // Extract name
+                nameMatch = nameRegex.exec(content);
+                posMatch = positionRegex.exec(content);
+                spriteMatch = spriteRegex.exec(content);
+                planMatch = planRegex.exec(content);
+                
+                if (nameMatch && posMatch && spriteMatch) {
+                    const charData = {
+                        name: nameMatch[1],
+                        position: posMatch[1],
+                        sprite: spriteMatch[1],
+                        plan: planMatch ? planMatch[1] : ""
+                    };
+                    
+                    console.log('Extracted character data:', charData);
+                    init_characters([charData]);
+                } else {
+                    console.error('Failed to extract character data from init message');
+                }
+            } catch (e) {
+                console.error('Error processing init data:', e);
+            }
+        }
+
+        // Process update data which is in Rust object format, not JSON
+        function processUpdateData(content) {
+            console.log('Raw update content:', content);
+            
+            try {
+                // Extract update data using regex
+                const nameRegex = /character_name:\s*\"([^\"]+)\"/;
+                const objectRegex = /object:\s*Some\(\"([^\"]+)\"\)/;
+                const actionTypeRegex = /action_type:\s*Some\(\"([^\"]+)\"\)/;
+                
+                // Special regex for movement data which contains escaped quotes
+                const moveRegex = /action_description:\s*\"(\[.*?\])\"/;
+                const actionRegex = /action_description:\s*\"([^\"]+)\"/;
+                
+                const nameMatch = content.match(nameRegex);
+                const objectMatch = content.match(objectRegex);
+                const actionTypeMatch = content.match(actionTypeRegex);
+                
+                // First check if it's a move action
+                const isMoveAction = content.includes('action_type: Some("MOVE")');
+                
+                // Use the appropriate regex based on action type
+                let actionMatch;
+                if (isMoveAction) {
+                    // For MOVE actions, we need a more specific pattern
+                    actionMatch = content.match(moveRegex);
+                    console.log('Using move regex, match:', actionMatch);
+                } else {
+                    actionMatch = content.match(actionRegex);
+                }
+                
+                if (nameMatch && actionMatch) {
+                    // Clean up escaped characters in the action description
+                    let actionDescription = actionMatch[1];
+                    if (isMoveAction) {
+                        // For MOVE actions, unescape the string to prepare for parsing
+                        actionDescription = actionDescription.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+                        console.log('Cleaned move data:', actionDescription);
+                    }
+                    
+                    const updateData = {
+                        character_name: nameMatch[1],
+                        action_description: actionDescription,
+                        object: objectMatch ? objectMatch[1] : null,
+                        action_type: actionTypeMatch ? actionTypeMatch[1] : null
+                    };
+                    
+                    console.log('Extracted update data:', updateData);
+                    handle_updates([updateData]);
+                } else {
+                    console.error('Failed to extract update data');
+                }
+            } catch (e) {
+                console.error('Error processing update data:', e);
+            }
+        }
+
+        // Modify init_characters function to add text support
+        function init_characters(data) {
+            // Calculate grid center offsets since the grid is centered at (0,0)
+            const gridWidth = 32 * 128;
+            const gridHeight = 51 * 128;
+            const gridOffsetX = -gridWidth / 2;
+            const gridOffsetY = -gridHeight / 2;
+            
+            data.forEach(charData => {
+                // Parse position from string format "(x, y)"
+                const positionStr = charData.position;
+                const positionMatch = positionStr.match(/\((\d+),\s*(\d+)\)/);
+                if (!positionMatch) return;
+                
+                const gridX = parseInt(positionMatch[1]);
+                const gridY = parseInt(positionMatch[2]);
+                const gridSize = 128;
+                
+                // Calculate proper scale for 16x16 sprite to be 70% of grid cell
+                const targetSize = gridSize * 0.7;
+                const spriteScale = targetSize / 16;
+                
+                // Calculate pixel position based on grid coordinates, accounting for the centered grid
+                const pixelX = gridOffsetX + (gridX * gridSize) + (gridSize/2);
+                const pixelY = gridOffsetY + (gridY * gridSize) + (gridSize/2);
+                
+                console.log(`Creating character at grid (${gridX}, ${gridY}), adjusted pixels (${pixelX}, ${pixelY})`);
+                
+                // Create sprite at the adjusted position
+                const sprite = game.scene.scenes[0].add.image(pixelX, pixelY, charData.sprite).setScale(spriteScale);
+                
+                // Store character data with text support
+                characters.push({
+                    name: charData.name,
+                    sprite: sprite,
+                    plan: charData.plan,
+                    current_action: null,
+                    position: {x: gridX, y: gridY},
+                    texts: [],                     // Array to store text objects
+                    textValues: [`Name: ${charData.name}`]  // Default text values
+                });
+                
+                console.log(`Added character: ${charData.name} at grid (${gridX}, ${gridY}), pixel position: (${sprite.x}, ${sprite.y})`);
+            });
+        }
+
+        // Modify handle_updates to show text on non-MOVE actions
+        function handle_updates(updates) {
+            // Calculate grid center offsets since the grid is centered at (0,0)
+            const gridWidth = 32 * 128;
+            const gridHeight = 51 * 128;
+            const gridOffsetX = -gridWidth / 2;
+            const gridOffsetY = -gridHeight / 2;
+            
+            updates.forEach(update => {
+                // Find the character to update
+                const character = characters.find(char => char.name === update.character_name);
+                
+                if (!character) {
+                    console.error(`Character not found: ${update.character_name}`);
+                    return;
+                }
+                
+                if (update.action_type === "MOVE") {
+                    // Handle movement update
+                    try {
+                        console.log('Processing move data:', update.action_description);
+                        
+                        // Extract positions using regex
+                        const posRegex = /\((\d+),\s*(\d+)\)/g;
+                        const positions = [];
+                        let match;
+                        
+                        while ((match = posRegex.exec(update.action_description)) !== null) {
+                            positions.push({
+                                x: parseInt(match[1]),
+                                y: parseInt(match[2])
+                            });
+                            console.log('Found position:', match[0]);
+                        }
+                        
+                        if (positions.length >= 2) {
+                            const newX = positions[1].x; // Target position
+                            const newY = positions[1].y;
+                            const gridSize = 128;
+                            
+                            // Update character grid position
+                            character.position = {x: newX, y: newY};
+                            
+                            // Update sprite pixel position, accounting for the centered grid
+                            const pixelX = gridOffsetX + (newX * gridSize) + (gridSize/2);
+                            const pixelY = gridOffsetY + (newY * gridSize) + (gridSize/2);
+                            
+                            character.sprite.x = pixelX;
+                            character.sprite.y = pixelY;
+                            
+                            console.log(`${character.name} moved to grid (${newX}, ${newY}), pixel position: (${pixelX}, ${pixelY})`);
+                        } else {
+                            console.error('Not enough positions found in:', update.action_description);
+                        }
+                    } catch (e) {
+                        console.error("Error parsing movement data:", e);
+                    }
+                } else {
+                    // Handle regular action update
+                    character.current_action = {
+                        description: update.action_description,
+                        object: update.object
+                    };
+                    
+                    console.log(`${character.name} is now: ${update.action_description}`);
+                    
+                    // Update textValues with current action
+                    character.textValues = [
+                        // `Name: ${character.name}`,
+                        `${update.action_description}`
+                    ];
+                    
+                    // if (update.object) {
+                    //     character.textValues.push(`Object: ${update.object}`);
+                    // }
+                    
+                    // Show the text for this character
+                    showCharacterText(character);
+                }
+            });
+        }
+
+        // Add new helper functions for text display
+        function showCharacterText(character) {
+            // Clear any existing texts
+            character.texts.forEach(text => text.destroy());
+            character.texts = [];
+            
+            const scene = game.scene.scenes[0];
+            const spritesize = 128 * 0.7 / 16;
+            
+            // Create new text labels
+            character.textValues.forEach((textValue, index) => {
+                const yOffset = -((spritesize * 16) / 2) - 20 - (index * 20);
+                const text = scene.add.text(
+                    character.sprite.x,
+                    character.sprite.y + yOffset,
+                    textValue,
+                    { fontSize: '32px', fill: '#ffffff', stroke: '#000000', strokeThickness: 1 }
+                ).setOrigin(0.5);
+                
+                character.texts.push(text);
+            });
+            
+            // Auto-fade text after a delay
+            scene.time.delayedCall(3000, function() {
+                fadeOutCharacterText(character);
+            });
+        }
+        
+        function fadeOutCharacterText(character) {
+            const scene = game.scene.scenes[0];
+            
+            character.texts.forEach(text => {
+                scene.tweens.add({
+                    targets: text,
+                    alpha: 0,
+                    duration: 1000,
+                    ease: 'Power2',
+                    onComplete: function() {
+                        text.destroy();
+                    }
+                });
+            });
+            character.texts = [];
+        }
+        
+        // Placeholder functions for play/pause
+        function on_play() {
+            console.log("Play functionality placeholder");
+            // Add your play functionality here
+        }
+        
+        function on_pause() {
+            console.log("Pause functionality placeholder");
+            // Add your pause functionality here
+        }
+        
+        // Function to toggle button state
+        function toggleButton() {
+            const button = document.getElementById("pp");
+            
+            if (button.src.includes("play.svg")) {
+                button.src = "/static/sprites/pause.svg";
+                on_pause();
+            } else {
+                button.src = "/static/sprites/play.svg";
+                on_play();
+            }
+        }
+
+        function preload() {
+            // Load your assets here
+            this.load.image('map', '/static/world.png');
+            this.load.image('MALE', '/static/sprites/MALE.png');
+            this.load.image('FEMALE', '/static/sprites/FEMALE.png');
+        }
+
+        function create() {
+            // this.add.image(512, 816, 'map');
+            this.cameras.main.zoom = 0.1;
+            const bg = this.add.image(0, 0, 'map')
+            // this.cameras.main.scrollX = 4096 / 3; // Set the horizontal position 32
+            // this.cameras.main.scrollY = 6528 / 2;  // Set the vertical position 51
+            this.add.grid(
+                0, 0,                          // x, y position
+                32 * 128, 51 * 128,           // width, height
+                128, 128,                      // cellWidth, cellHeight
+                0x000000, 0,                   // fillColor, fillAlpha (0 = transparent)
+                0xffffff, 0.3                  // outlineColor, outlineAlpha
+            )
+
+            init_socket()
+            // const container = this.add.container(4096, 6528)
+            // const container = this.add.container(0, 0)
+            const tile_scale = 128
+            // container.add(bg)
+            // const cursors = this.input.keyboard.createCursorKeys();
+
+            // Configure camera controls
+            const controlConfig = {
+                camera: this.cameras.main,
+                left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+                right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+                up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+                down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+                zoomIn: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
+                zoomOut: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+                // acceleration: 0.06,
+                // drag: 0.0005,
+                // maxSpeed: 1.0,
+                zoomSpeed: 0.003,
+                speed: 10
+            };
+
+            // Initialize camera controls
+            this.controls = new Phaser.Cameras.Controls.FixedKeyControl(controlConfig);
+
+            // Add the button functionality
+            document.getElementById("pp").addEventListener("click", toggleButton);
+        }
+
+        // Update your update function to handle text positions
+        function update(time, delta) {
+            this.controls.update(delta);
+            
+            // Update text positions
+            characters.forEach(char => {
+                char.texts.forEach((text, index) => {
+                    const spritesize = 128 * 0.7 / 16;
+                    const yOffset = -((spritesize * 16) / 2) - 20 - (index * 20);
+                    text.setPosition(char.sprite.x, char.sprite.y + yOffset);
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>
+{% endblock %}

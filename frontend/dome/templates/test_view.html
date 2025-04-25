@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load static%}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorem Ipsum</title>
+    <script src="{%static 'phaser.min.js' %}"></script>
+</head>
+<style>
+    .ui {
+        position: absolute;
+        top: 32px;
+        right: 32px;
+    }
+</style>
+<div class="ui">
+    <img src="/static/sprites/play.svg" id="pp" width="64" height="64">
+</div>
+<!-- <h1>Test</h1> -->
+<script>
+    // let raw_address = prompt("Enter the target address in 'IP:PORT' form.", "localhost:1234");
+    // let ip, port = raw_address.split(":");
+    const config = {
+        type: Phaser.AUTO,
+        width: 1200,
+        height: 800,
+        transparent: true,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        // canvas: {
+        //     type: Phaser.WEBGL, // Explicitly setting renderer type fixes the error
+        //     // Add willReadFrequently attribute to fix the console warning
+        //     willReadFrequently: true
+        // }
+    };
+    const game = new Phaser.Game(config);
+
+    function preload() {
+        this.load.image('MALE', '/static/sprites/MALE.png');
+        this.load.image('FEMALE', '/static/sprites/FEMALE.png');
+        // this.getContext('2d', { willReadFrequently: true });
+    }
+    function create() {
+        this.game.canvas.getContext('2d', { willReadFrequently: true });
+        this.cameras.main.zoom = 0.6;
+        const spritesize = 128 * 0.7 / 16;
+        
+        // Define your characters with their sprites and text labels
+        window.characterData = [
+            {
+                name: 'Male',
+                spriteKey: 'MALE',
+                position: {x: 100, y: 100},
+                sprite: null,
+                texts: [],
+                textValues: ['Name: John', 'Role: Engineer', 'Age: 34']  // Multiple labels
+            },
+            {
+                name: 'Female',
+                spriteKey: 'FEMALE',
+                position: {x: 300, y: 300},
+                sprite: null,
+                texts: [],
+                textValues: ['Name: Sarah', 'Role: Doctor']  // Different number of labels
+            },
+            // You can add more characters here
+        ];
+        
+        // Create sprites for all characters
+        window.characterData.forEach(char => {
+            char.sprite = this.add.image(char.position.x, char.position.y, char.spriteKey)
+                .setScale(spritesize);
+                
+            // Create a tween for each character
+            this.tweens.add({
+                targets: char.sprite,
+                x: 1000,
+                y: 1000,
+                duration: 4500,
+                ease: 'Cubic.easeInOut',
+                yoyo: true,
+                repeat: -1,
+                delay: Math.random() * 1000  // Random delay for variety
+            });
+        });
+        
+        // Store scene globally
+        window.gameScene = this;
+        window.spritesize = spritesize;
+        
+        // Play/Pause button functionality
+        document.getElementById("pp").addEventListener("click", function() {
+            const button = document.getElementById("pp");
+            const scene = window.gameScene;
+            
+            if (button.src.includes("play.svg")) {
+                // Switch to PAUSE mode - create text for all characters
+                button.src = "/static/sprites/pause.svg";
+                
+                // Create text labels for each character
+                window.characterData.forEach(char => {
+                    // Clear any existing texts
+                    char.texts.forEach(text => text.destroy());
+                    char.texts = [];
+                    
+                    // Create new text labels
+                    char.textValues.forEach((textValue, index) => {
+                        const yOffset = -((window.spritesize * 16) / 2) - 20 - (index * 20);
+                        const text = scene.add.text(
+                            char.sprite.x,
+                            char.sprite.y + yOffset,
+                            textValue,
+                            { fontSize: '16px', fill: '#000' }
+                        ).setOrigin(0.5);
+                        
+                        char.texts.push(text);
+                    });
+                });
+                
+                // Auto-fade text after a delay
+                scene.time.delayedCall(1000, function() {
+                    // For each character, fade out all text labels
+                    window.characterData.forEach(char => {
+                        char.texts.forEach(text => {
+                            scene.tweens.add({
+                                targets: text,
+                                alpha: 0,
+                                duration: 1000,
+                                ease: 'Power2',
+                                onComplete: function() {
+                                    text.destroy();
+                                }
+                            });
+                        });
+                        char.texts = [];
+                    });
+                });
+            } else {
+                // Switch to PLAY mode
+                button.src = "/static/sprites/play.svg";
+            }
+        });
+    }
+
+    function update() {
+        // Update all text positions
+        if (window.characterData) {
+            window.characterData.forEach(char => {
+                char.texts.forEach((text, index) => {
+                    const yOffset = -((window.spritesize * 16) / 2) - 20 - (index * 20);
+                    text.setPosition(char.sprite.x, char.sprite.y + yOffset);
+                });
+            });
+        }
+    }
+</script>
+{% endblock %}

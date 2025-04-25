@@ -1,0 +1,9 @@
+json!({
+    "type": "update",
+    "content": format!("{:?}", day_logic_over.1),
+    "timestamp": new_datetime.clone().to_string()
+})
+json!({
+    "type": "init",
+    "content": format!("{:?}", world.get_map().get_characters().iter().map(|c| json!({"name": c.name(),"position": c.position().to_string(),"plan": format!("{:?}", c.short_term_mem().plan_vague), "sprite": c.sprite()})).collect::<Vec<_>>())
+}).to_string());

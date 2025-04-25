@@ -10,7 +10,7 @@
                 "build"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/Persona_Backend"
+                "cwd": "${workspaceFolder}/backend"
             },
             "group": {
                 "kind": "build",
