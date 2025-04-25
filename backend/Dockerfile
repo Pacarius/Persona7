@@ -1,7 +1,7 @@
-FROM rust:1.84-alpine as builder
+FROM rust:1.84-alpine AS builder
 WORKDIR /app/src
 RUN USER=root
-RUN apk add openssl-dev musl-dev sqlite-dev openssl-libs-static 
+RUN apk add openssl-dev musl-dev gcc sqlite-dev openssl-libs-static 
 COPY . .
 RUN cargo build --release
 
