@@ -1,4 +1,5 @@
 import asyncio
+import os
 import socket
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -141,4 +142,5 @@ class Client:
             print("Client is not connected to the server.")
 
 # Create a shared instance of the Client
-client_instance = Client("127.0.0.1", 1234)
+(ip, port) = (os.environ.get("IP", default="127.0.0.1"), os.environ.get("PORT", default=1234))
+client_instance = Client(ip, port)
