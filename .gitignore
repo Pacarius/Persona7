@@ -1,4 +1,5 @@
 backend/target
+backend/runs
 .stfolder/syncthing-folder-567ddb.txt
 .vscode/launch.json
 .vscode/settings.json
