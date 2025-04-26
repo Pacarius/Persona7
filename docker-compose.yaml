@@ -1,0 +1,18 @@
+version: "0.1"
+services:
+  backend:
+    image: pacificguardian/persona_backend:0.1
+    environment:
+      OLLAMA_IP: "172.17.0.1"
+      OLLAMA_PORT: "11434"
+      TICK_COOLDOWN_MS: 650
+    volumes:
+      - ./runs:/runs
+  frontend:
+    image: pacificguardian/persona_frontend:0.1
+    environment:
+      IP: "backend"
+      PORT: 1234
+      DJANGO_ALLOWED_HOSTS: "*"
+    ports:
+      - "8000:8000"

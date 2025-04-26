@@ -1,14 +1,10 @@
-FROM rust:1.84-alpine AS builder
-WORKDIR /app/src
-RUN USER=root
-RUN apk add openssl-dev musl-dev gcc sqlite-dev openssl-libs-static 
+FROM rust:1.84 AS builder
+WORKDIR /usr/src/backend
 COPY . .
-RUN cargo build --release
+RUN cargo install --path .
 
-FROM alpine:latest
-WORKDIR /app
-RUN apk update \
-	&& apk add openssl
-COPY --from=builder /app/src/target/release/backend /app/backend
-CMD ["/app/backend "]
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y libsqlite3-dev libssl-dev && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /usr/local/cargo/bin/backend /usr/local/bin/backend
+CMD ["backend"]
 
