@@ -41,7 +41,7 @@
             transparent: true
         };
         let characters = [];
-        // let characters_init = false;
+        let cameraFollowEnabled = true;
 
         const game = new Phaser.Game(config);
         let socket;
@@ -303,7 +303,6 @@
                 }
                 
                 if (update.action_type === "MOVE") {
-                    // Handle movement update
                     try {
                         console.log('Processing move data:', update.action_description);
                         
@@ -328,14 +327,21 @@
                             // Update character grid position
                             character.position = {x: newX, y: newY};
                             
-                            // Update sprite pixel position, accounting for the centered grid
+                            // Calculate new pixel position
                             const pixelX = gridOffsetX + (newX * gridSize) + (gridSize/2);
                             const pixelY = gridOffsetY + (newY * gridSize) + (gridSize/2);
                             
-                            character.sprite.x = pixelX;
-                            character.sprite.y = pixelY;
+                            // Create tween for smooth movement
+                            const scene = game.scene.scenes[0];
+                            scene.tweens.add({
+                                targets: character.sprite,
+                                x: pixelX,
+                                y: pixelY,
+                                duration: 500, // Movement time in milliseconds
+                                ease: 'Power2' // Easing function (can be Linear, Quad, Cubic, etc.)
+                            });
                             
-                            console.log(`${character.name} moved to grid (${newX}, ${newY}), pixel position: (${pixelX}, ${pixelY})`);
+                            console.log(`${character.name} moving to grid (${newX}, ${newY}), pixel position: (${pixelX}, ${pixelY})`);
                         } else {
                             console.error('Not enough positions found in:', update.action_description);
                         }
@@ -425,13 +431,16 @@
         
         // Function to toggle button state
         function toggleButton() {
+            socket.send('{"message": "throbbing"}');
             const button = document.getElementById("pp");
             
             if (button.src.includes("play.svg")) {
                 button.src = "/static/sprites/pause.svg";
+                cameraFollowEnabled = false; // Stop following when paused
                 on_pause();
             } else {
                 button.src = "/static/sprites/play.svg";
+                cameraFollowEnabled = true; // Resume following when played
                 on_play();
             }
         }
@@ -467,10 +476,10 @@
             // Configure camera controls
             const controlConfig = {
                 camera: this.cameras.main,
-                left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-                right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
-                up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-                down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+                // left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+                // right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+                // up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+                // down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
                 zoomIn: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
                 zoomOut: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
                 // acceleration: 0.06,
@@ -490,6 +499,18 @@
         // Update your update function to handle text positions
         function update(time, delta) {
             this.controls.update(delta);
+            
+            // Camera follow logic
+            if (cameraFollowEnabled && characters.length > 0) {
+                const firstChar = characters[0];
+                // Smoothly move camera to character position
+                this.cameras.main.pan(
+                    firstChar.sprite.x,
+                    firstChar.sprite.y,
+                    700, // duration in ms, slightly faster than movement
+                    'Power2'
+                );
+            }
             
             // Update text positions
             characters.forEach(char => {
