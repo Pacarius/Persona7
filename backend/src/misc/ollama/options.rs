@@ -3,6 +3,8 @@ use std::fmt::Display;
 use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use serde_json::{json, Map, Value};
 
+use crate::CONFIG;
+
 #[derive(Serialize)]
 pub struct ModelFile {
     mirostat: Option<i64>,
@@ -30,7 +32,7 @@ impl ModelFile {
             repeat_last_n: None,
             repeat_penalty: None,
             temperature: None,
-            seed: Some(5),
+            seed: Some(CONFIG.ollama_seed),
             stop: None,
             num_predict: None,
             top_k: None,

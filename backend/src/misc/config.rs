@@ -7,7 +7,8 @@ const DEFAULT_OLLAMA_IP: &str = "192.168.50.84";
 const DEFAULT_OLLAMA_PORT: &str = "11434";
 const DEFAULT_TIME_STEP: i64 = 60;
 const DEFAULT_TICK_COOLDOWN_MS: u64 = 1000;
-const SQLITE_PATH: &str = "runs";
+const DEFAULT_SQLITE_PATH: &str = "runs";
+const DEFAULT_OLLAMA_SEED: i64 = 5;
 
 // Config structure with command line parsing
 #[derive(Parser, Debug)]
@@ -38,6 +39,10 @@ pub struct Config {
     pub tick_cooldown_ms: u64,
 
     /// Sqlite file path
-    #[arg(long, default_value = SQLITE_PATH, env)]
+    #[arg(long, default_value = DEFAULT_SQLITE_PATH, env)]
     pub sqlite_path: String,
+
+    ///Ollama Seed
+    #[arg(long, default_value_t = DEFAULT_OLLAMA_SEED, env)]
+    pub ollama_seed: i64,
 }

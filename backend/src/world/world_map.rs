@@ -41,8 +41,7 @@ pub struct WorldMap {
     characters: Vec<Character>,
     walls: Vec<Coordinates>,
     pub colliders: Vec<Vec<Option<String>>>,
-    objects_buffer: Vec<String>, //This is fucking stupid but I'm out of ideas on how to do this elegantly.
-                                 // pub room_region_map: HashMap<Room, String>
+    objects_buffer: Vec<String>,
 }
 impl WorldMap {
     pub fn new(size: Coordinates) -> Self {
