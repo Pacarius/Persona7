@@ -3,9 +3,13 @@ services:
   backend:
     image: pacificguardian/persona_backend:0.1
     environment:
+      #DEFAULT DOCKER LOOPBACK ADDRESS
       OLLAMA_IP: "172.17.0.1"
       OLLAMA_PORT: "11434"
+      # TEXT_MODEL: "llama3.2"
+      # TIME_STEP: 60
       TICK_COOLDOWN_MS: 650
+      OLLAMA_SEED: 5
     volumes:
       - ./runs:/runs
   frontend:
