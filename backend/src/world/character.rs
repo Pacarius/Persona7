@@ -275,8 +275,8 @@ impl Character {
                     println!("State: ROOM - Deciding room...");
                     match self.decide_room(llama, datetime, navigator).await {
                         Err(e) => {
-                            println!("SOMETHING IS AMONG US");
-                            Decision::OBJECT
+                            // println!("SOMETHING IS AMONG US");
+                            Decision::ROOM
                         }
                         Ok(e) => {
                             entry = Some(e);
@@ -315,14 +315,16 @@ impl Character {
                             println!("Target decided: {:?}", target);
                             if target.0 == "NONE".to_string() {
                                 self.short_term_mem_mut().curr_object = None;
+                                Decision::DECOMPOSE
                             } else {
                                 self.short_term_mem_mut().curr_object = Some(target.0);
+                                Decision::DECOMPOSE
                             }
                             // Decision::DECOMPOSE
                         }
-                        Err(e) => {}
+                        Err(e) => {Decision::OBJECT}
                     }
-                    Decision::DECOMPOSE
+                    // Decision::DECOMPOSE
                 }
                 Some(a) => {
                     let object = a.object();
