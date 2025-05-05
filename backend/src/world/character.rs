@@ -610,7 +610,7 @@ impl Character {
     pub fn clear(&mut self) {
         self.short_term_mem_mut().action_buffer.clear();
         self.short_term_mem_mut().plan_vague.clear();
-        self.short_term_mem_mut().path = None;
+        // self.short_term_mem_mut().path = None;
     }
 }
 impl Display for Character {

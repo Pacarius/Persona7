@@ -84,7 +84,6 @@ impl Ord for Time {
         }
     }
 }
-
 impl Add for Time {
     type Output = (Time, i64);
 
@@ -121,6 +120,7 @@ impl Sub for Time {
     }
 }
 // #[derive(Debug)]
+
 #[derive(Clone, PartialEq, PartialOrd)]
 pub enum Month {
     January = 1,

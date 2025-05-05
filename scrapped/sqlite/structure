@@ -8,7 +8,6 @@
 //        Associative
 //    }
 //}
-Fuck that. 
 Data:
 Simulation_Name{
     Map(Oneshot)[Regions, Rooms, Objects, Characters]

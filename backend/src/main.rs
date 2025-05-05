@@ -111,7 +111,6 @@ async fn main() {
     // server.main().await;
 
     // world.day(&ollama, true).await;
-    // println!("{}", DBDataMap{ 0: HashMap::from([(String::from("FUCK"), DBDataType::BLOB), (String::from("SHIT"), DBDataType::TEXT)]) });
 
     // let ollama = Ollama::new("192.168.33.132:11434".to_string(), false);
     // let ollama = Ollama::new("localhost:11434".to_string(), false);

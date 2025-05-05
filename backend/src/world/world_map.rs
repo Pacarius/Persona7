@@ -475,17 +475,6 @@ impl WorldMap {
             false
         };
         (all_sleep, entries)
-        // objects_buffer.iter().for_each(|s| {
-        //     self.set_object(s.to_string(), None);
-        // });
-        // self.objects_buffer.clear();
-        // object_updates.iter().for_each(|p| {
-        //     if let Some(p) = p {
-        //         if let Ok(()) = self.set_object(p.1.clone(), Some(p.0.clone())) {
-        //             self.objects_buffer.push(p.1.clone());
-        //         }
-        //     }
-        // });
     }
     // pub async fn test(&mut self, llama: &Ollama, datetime: &DateTime){
     //     self.characters.iter_mut().for_each(|f|{

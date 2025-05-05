@@ -27,7 +27,7 @@ pub struct ShortTerm {
     curr_action: Option<Action>,
     pub curr_object: Option<String>,
     //Constant. Path only contains something when character is actively moving.
-    pub path: Option<Path>,
+    // pub path: Option<Path>,
     chat_target_buffer: Vec<String>,
 }
 impl ShortTerm {
@@ -97,7 +97,7 @@ impl Default for ShortTerm {
             plan_vague: vec![],
             action_buffer: VecDeque::new(),
             curr_action: None,
-            path: None,
+            // path: None,
             chat_target_buffer: vec![],
             curr_object: None,
         }

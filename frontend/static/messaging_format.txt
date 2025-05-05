@@ -1,5 +1,4 @@
 
-Oh my fucking god please actually shoot me in the head
 {'TARGET': [DATA, DATA]}
 DATA= {'TYPE'; CONTENT}
 TARGET = WEB/PY
